@@ -6,6 +6,7 @@ import FlowerCard from './FlowerCard.vue'
 import FlowerFormPopup from './FlowerFormPopup.vue'
 import HomeWeatherReminderPanel from './HomeWeatherReminderPanel.vue'
 import RecordCheckinPopup from './RecordCheckinPopup.vue'
+import SingleFlowerAiAdvicePanel from './SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 import TimeLine from './TimeLine.vue'
@@ -18,6 +19,7 @@ const globalComponents = {
   FlowerFormPopup,
   HomeWeatherReminderPanel,
   RecordCheckinPopup,
+  SingleFlowerAiAdvicePanel,
   SubmitBtn,
   TagLabel,
   TimeLine,
@@ -37,6 +39,7 @@ export {
   FlowerFormPopup,
   HomeWeatherReminderPanel,
   RecordCheckinPopup,
+  SingleFlowerAiAdvicePanel,
   SubmitBtn,
   TagLabel,
   TimeLine,

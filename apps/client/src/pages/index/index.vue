@@ -4,11 +4,13 @@ import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement } from '@florist/
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
-import { fetchAiCareAdvice } from '@/api'
+import { fetchGardenAiCareAdvice } from '@/api'
 import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
+import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
+import { useSingleFlowerAiAdvice } from '@/hooks/useSingleFlowerAiAdvice'
 import {
   FLOWER_CATEGORY_OPTIONS,
   FLOWER_PLACEMENT_OPTIONS,
@@ -23,11 +25,13 @@ import {
   getFlowerCategoryLabel,
   getFlowerPlacementLabel,
 } from '@/interfaces'
-import { useFlowerStore } from '@/store'
-import { formatDateTime, getTimeAgo } from '@/utils'
+import { useFlowerStore, useRecordStore } from '@/store'
+import { formatDateTime, getFlowerDisplayName, getTimeAgo } from '@/utils'
 
 const flowerStore = useFlowerStore()
+const recordStore = useRecordStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
+const { sortedRecords } = storeToRefs(recordStore)
 const { isOffline } = useNetworkStatus()
 const {
   state: weatherReminderState,
@@ -47,6 +51,14 @@ const deletingFlower = ref<LocalFlower | null>(null)
 const isSaving = ref(false)
 const aiAdvice = ref<IAiAdvice | null>(null)
 const loadingAiAdvice = ref(false)
+const aiAdviceMessage = ref('')
+const selectedAdviceFlowerId = ref<string | null>(null)
+
+const {
+  state: singleFlowerAiState,
+  scheduleFetch: scheduleSingleFlowerAiFetch,
+  refreshNow: refreshSingleFlowerAiNow,
+} = useSingleFlowerAiAdvice()
 
 const filterState = reactive<FlowerFilterState>({
   category: 'all',
@@ -56,6 +68,7 @@ const filterState = reactive<FlowerFilterState>({
 
 onShow(async () => {
   await flowerStore.initializeGarden()
+  await recordStore.initializeRecordCenter()
 
   if (weatherReminderState.city) {
     await refreshWeather(weatherReminderState.city)
@@ -69,27 +82,78 @@ watch(
   [
     () => weatherReminderState.weather?.fetchedAt ?? '',
     () => activeFlowers.value.map(flower => `${flower.id}:${flower.updatedAt}`).join('|'),
+    () => sortedRecords.value[0]?.createdAt ?? '',
+    () => isOffline.value,
   ],
   async ([weatherKey]) => {
     if (!weatherKey || !weatherReminderState.weather || activeFlowers.value.length === 0) {
       aiAdvice.value = null
+      aiAdviceMessage.value = ''
+      return
+    }
+
+    if (isOffline.value) {
+      aiAdvice.value = null
+      aiAdviceMessage.value = '当前是离线模式，AI 建议先暂停一下，先按天气和盆土状态照顾花园也很稳。'
       return
     }
 
     loadingAiAdvice.value = true
 
     try {
-      aiAdvice.value = await fetchAiCareAdvice({
+      aiAdvice.value = await fetchGardenAiCareAdvice({
         weather: weatherReminderState.weather,
         flowers: activeFlowers.value,
+        records: sortedRecords.value,
       })
+      aiAdviceMessage.value = ''
     }
-    catch {
+    catch (error) {
       aiAdvice.value = null
+      aiAdviceMessage.value = error instanceof Error
+        ? error.message
+        : 'AI 建议刚刚没有接上，先用天气卡片安排今天的照顾节奏。'
     }
     finally {
       loadingAiAdvice.value = false
     }
+  },
+  {
+    immediate: true,
+  },
+)
+
+const selectedAdviceFlower = computed<LocalFlower | null>(() => {
+  if (selectedAdviceFlowerId.value) {
+    const targetFlower = activeFlowers.value.find(flower => flower.id === selectedAdviceFlowerId.value)
+
+    if (targetFlower) {
+      return targetFlower
+    }
+  }
+
+  return filteredFlowers.value[0] ?? activeFlowers.value[0] ?? null
+})
+
+watch(
+  [
+    () => weatherReminderState.weather?.fetchedAt ?? '',
+    () => selectedAdviceFlower.value?.id ?? '',
+    () => sortedRecords.value.map(record => `${record.id}:${record.createdAt}`).join('|'),
+    () => isOffline.value,
+  ],
+  ([weatherKey, flowerId]) => {
+    if (!weatherKey || !flowerId || !selectedAdviceFlower.value || !weatherReminderState.weather) {
+      scheduleSingleFlowerAiFetch(null)
+      return
+    }
+
+    scheduleSingleFlowerAiFetch({
+      flower: selectedAdviceFlower.value,
+      weather: weatherReminderState.weather,
+      records: sortedRecords.value,
+      isOffline: isOffline.value,
+    })
   },
   {
     immediate: true,
@@ -234,6 +298,11 @@ function handleCardAction(flower: LocalFlower, actionKey: string): void {
     return
   }
 
+  if (actionKey === 'ai-advice') {
+    selectedAdviceFlowerId.value = flower.id
+    return
+  }
+
   if (actionKey === 'record') {
     uni.navigateTo({
       url: `/pages/record/index?flowerId=${flower.id}`,
@@ -331,6 +400,19 @@ function handleReminderTextInput(reminderText: string): void {
     reminderText,
   })
 }
+
+function handleRefreshSingleFlowerAiAdvice(): void {
+  if (!selectedAdviceFlower.value || !weatherReminderState.weather) {
+    return
+  }
+
+  refreshSingleFlowerAiNow({
+    flower: selectedAdviceFlower.value,
+    weather: weatherReminderState.weather,
+    records: sortedRecords.value,
+    isOffline: isOffline.value,
+  })
+}
 </script>
 
 <template>
@@ -369,11 +451,11 @@ function handleReminderTextInput(reminderText: string): void {
       </view>
 
       <HomeWeatherReminderPanel :state="weatherReminderState" :flowers="activeFlowers" :ai-advice="aiAdvice"
-        :loading-ai-advice="loadingAiAdvice" @locate="locateCity" @open-permission="requestLocationPermissionAgain"
-        @search-city="searchCities" @select-city="setManualCity" @toggle-reminder="handleToggleReminderEnabled"
-        @update-reminder-hour="handleReminderHourInput" @update-reminder-minute="handleReminderMinuteInput"
-        @update-quiet-start-hour="handleQuietStartHourInput" @update-quiet-end-hour="handleQuietEndHourInput"
-        @update-reminder-text="handleReminderTextInput" />
+        :loading-ai-advice="loadingAiAdvice" :ai-advice-message="aiAdviceMessage" @locate="locateCity"
+        @open-permission="requestLocationPermissionAgain" @search-city="searchCities" @select-city="setManualCity"
+        @toggle-reminder="handleToggleReminderEnabled" @update-reminder-hour="handleReminderHourInput"
+        @update-reminder-minute="handleReminderMinuteInput" @update-quiet-start-hour="handleQuietStartHourInput"
+        @update-quiet-end-hour="handleQuietEndHourInput" @update-reminder-text="handleReminderTextInput" />
 
       <view class="grid grid-cols-3 gap-3">
         <view v-for="card in summaryCards" :key="card.key"
@@ -459,6 +541,7 @@ function handleReminderTextInput(reminderText: string): void {
           :subtitle="`${getFlowerCategoryLabel(flower.category)} · ${getFlowerPlacementLabel(flower.placement)}`"
           :image-src="flower.images[0]?.url ?? ''" :status="flower.careStatus"
           :care-items="buildFlowerCardItems(flower)" :quick-actions="[
+            { key: 'ai-advice', label: selectedAdviceFlower?.id === flower.id ? '正在查看建议' : 'AI建议' },
             { key: 'record', label: '去打卡' },
             { key: 'preview', label: '预览图片', disabled: flower.images.length === 0 },
             { key: 'delete', label: '移入回收站' },
@@ -469,6 +552,11 @@ function handleReminderTextInput(reminderText: string): void {
       <EmptyEmpty v-else scene="flower" :title="activeFlowers.length === 0 ? '还没有植株入住' : '筛选后暂时没有结果'" :description="activeFlowers.length === 0
         ? '先添加第一盆植物吧，后续的图片、状态、养护信息都会自动收进本地花园。'
         : '可以换个筛选条件看看，或者新增一盆不同状态的小植物。'" action-text="去新增植株" @action="handleOpenCreate" />
+
+      <SingleFlowerAiAdvicePanel :flower="selectedAdviceFlower" :advice="singleFlowerAiState.advice"
+        :loading="singleFlowerAiState.loading"
+        :message="singleFlowerAiState.latestMessage || (selectedAdviceFlower ? `${getFlowerDisplayName(selectedAdviceFlower)} 的专属建议会结合天气、摆放位置和历史养护记录来写。` : '')"
+        :disabled="singleFlowerAiState.disabled" @refresh="handleRefreshSingleFlowerAiAdvice" />
 
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">

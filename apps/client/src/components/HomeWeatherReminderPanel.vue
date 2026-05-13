@@ -22,6 +22,7 @@ interface HomeWeatherReminderPanelProps {
   flowers: ReadonlyArray<LocalFlower>
   aiAdvice: IAiAdvice | null
   loadingAiAdvice: boolean
+  aiAdviceMessage: string
 }
 
 const props = defineProps<HomeWeatherReminderPanelProps>()
@@ -221,7 +222,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
         </view>
 
         <text v-else class="mt-3 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-          暂时还没有可用的 AI 建议，先用天气提示安排今天的巡园节奏。
+          {{ props.aiAdviceMessage || '暂时还没有可用的 AI 建议，先用天气提示安排今天的巡园节奏。' }}
         </text>
       </view>
     </view>
