@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { MemberBenefitType } from '@florist/contracts'
 import type { IImageAsset } from '@florist/contracts'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, ref } from 'vue'
-import { useFlowerStore, useRecordStore } from '@/store'
+import { useFlowerStore, useMemberStore, useRecordStore } from '@/store'
 import type {
   GrowthAlbumPhotoItem,
   GrowthPosterTemplateDefinition,
@@ -32,6 +33,7 @@ import {
 type CanvasContext2D = UniApp.CanvasContext
 
 const flowerStore = useFlowerStore()
+const memberStore = useMemberStore()
 const recordStore = useRecordStore()
 const { activeFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
@@ -44,7 +46,10 @@ const posterImagePath = ref('')
 const isGeneratingPoster = ref(false)
 const isSavingPoster = ref(false)
 const pageMessage = ref('')
-const isMemberUnlocked = ref(false)
+const isMemberUnlocked = computed(() => (
+  memberStore.hasBenefit(MemberBenefitType.NoWatermark)
+  || memberStore.hasBenefit(MemberBenefitType.GrowthPoster)
+))
 
 function createCareDayCount(flower: LocalFlower | null): number {
   if (!flower) {
@@ -440,7 +445,9 @@ async function handleSavePoster(): Promise<void> {
 }
 
 function handleOpenMemberPosterBenefits(): void {
-  pageMessage.value = '会员可解锁两套专属模板、无水印海报和高清保存。会员中心入口后续可以直接接上。'
+  uni.navigateTo({
+    url: '/pages/member/index',
+  })
 }
 
 onLoad((query) => {
@@ -450,6 +457,7 @@ onLoad((query) => {
 })
 
 onShow(async () => {
+  memberStore.syncMembershipStatus()
   await flowerStore.initializeGarden()
   await recordStore.initializeRecordCenter()
 
@@ -530,7 +538,7 @@ onBeforeUnmount(() => {
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
             <text class="block text-2xs text-slate-400 dark:text-slate-500">关键节点</text>
             <text class="mt-1 block text-xl font-800 text-slate-800 dark:text-slate-100">{{ timelineItems.length
-              }}</text>
+            }}</text>
           </view>
           <view
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
@@ -612,7 +620,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                      }}</text>
+                    }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="mint" />
                 </view>
@@ -628,7 +636,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                      }}</text>
+                    }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="cream" />
                 </view>

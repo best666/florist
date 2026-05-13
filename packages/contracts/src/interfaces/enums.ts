@@ -59,7 +59,9 @@ export enum WeatherCondition {
  */
 export enum MemberBenefitType {
   UnlimitedAiAdvice = 'unlimited_ai_advice',
+  NoWatermark = 'no_watermark',
   CloudBackup = 'cloud_backup',
+  AllThemes = 'all_themes',
   AdvancedTheme = 'advanced_theme',
   GrowthPoster = 'growth_poster',
   TripCarePlan = 'trip_care_plan',
@@ -83,6 +85,24 @@ export enum MemberStatus {
   Active = 'active',
   Expired = 'expired',
   GracePeriod = 'grace_period',
+}
+
+/**
+ * 会员支付渠道枚举。
+ */
+export enum MemberPaymentChannel {
+  MpWeixin = 'mp_weixin',
+  H5QrCode = 'h5_qr_code',
+}
+
+/**
+ * 会员支付订单状态枚举。
+ */
+export enum MemberPaymentStatus {
+  Pending = 'pending',
+  Paid = 'paid',
+  Expired = 'expired',
+  Closed = 'closed',
 }
 
 /**

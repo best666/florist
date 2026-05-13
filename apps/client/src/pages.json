@@ -41,6 +41,10 @@
       "type": "page"
     },
     {
+      "path": "pages/member/index",
+      "type": "page"
+    },
+    {
       "path": "pages/mine/index",
       "type": "page"
     },

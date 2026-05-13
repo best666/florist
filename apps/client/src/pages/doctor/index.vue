@@ -278,9 +278,8 @@ function handleCitySearchInput(event: { detail: { value: string } }): void {
 }
 
 function handleOpenMemberBenefits(): void {
-  uni.showToast({
-    title: '会员权益入口稍后补上，当前先保留温柔提示和免费次数限制。',
-    icon: 'none',
+  uni.navigateTo({
+    url: '/pages/member/index',
   })
 }
 
@@ -469,9 +468,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-            }}</text>
+          }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-            }}</text>
+          }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">

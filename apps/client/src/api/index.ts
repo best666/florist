@@ -1,6 +1,7 @@
 export * from './ai'
 export * from './app'
 export * from './flowers'
+export * from './member'
 export * from './plant-doctor'
 export * from './records'
 export * from './scheduler'

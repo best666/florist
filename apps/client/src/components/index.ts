@@ -4,7 +4,9 @@ import ConfirmPopup from './ConfirmPopup.vue'
 import EmptyEmpty from './EmptyEmpty.vue'
 import FlowerCard from './FlowerCard.vue'
 import FlowerFormPopup from './FlowerFormPopup.vue'
+import GlobalAdBanner from './GlobalAdBanner.vue'
 import HomeWeatherReminderPanel from './HomeWeatherReminderPanel.vue'
+import PaymentQrPanel from './PaymentQrPanel.vue'
 import RecordCheckinPopup from './RecordCheckinPopup.vue'
 import SingleFlowerAiAdvicePanel from './SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from './SubmitBtn.vue'
@@ -17,7 +19,9 @@ const globalComponents = {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
+  GlobalAdBanner,
   HomeWeatherReminderPanel,
+  PaymentQrPanel,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,
@@ -37,7 +41,9 @@ export {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
+  GlobalAdBanner,
   HomeWeatherReminderPanel,
+  PaymentQrPanel,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,

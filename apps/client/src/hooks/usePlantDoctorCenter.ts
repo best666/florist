@@ -1,9 +1,11 @@
+import { MemberBenefitType } from '@florist/contracts'
 import { reactive } from 'vue'
 import type {
   PlantDoctorCenterState,
   PlantDoctorHistoryItem,
   PlantDoctorUsageQuota,
 } from '@/interfaces'
+import { useMemberStore } from '@/store'
 import {
   DAILY_FREE_PLANT_DIAGNOSIS_LIMIT,
   MAX_PLANT_DOCTOR_HISTORY_COUNT,
@@ -65,14 +67,21 @@ function writeUsageCache(cache: PlantDoctorUsageCache): void {
 }
 
 export function usePlantDoctorCenter() {
+  const memberStore = useMemberStore()
+
+  function resolveUnlimitedQuota(): boolean {
+    memberStore.syncMembershipStatus()
+    return memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
+  }
+
   const state = reactive<PlantDoctorCenterState>({
     history: readHistory(),
-    quota: createQuotaStatus(readUsageCache(), false),
+    quota: createQuotaStatus(readUsageCache(), resolveUnlimitedQuota()),
     latestLimitMessage: '',
   })
 
   function refreshQuota(): PlantDoctorUsageQuota {
-    state.quota = createQuotaStatus(readUsageCache(), state.quota.isMemberUnlimited)
+    state.quota = createQuotaStatus(readUsageCache(), resolveUnlimitedQuota())
     return state.quota
   }
 

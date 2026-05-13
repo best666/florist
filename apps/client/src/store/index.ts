@@ -16,4 +16,5 @@ export default store
 
 export * from './app'
 export * from './flowers'
+export * from './member'
 export * from './records'
