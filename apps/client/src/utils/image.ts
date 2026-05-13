@@ -401,3 +401,68 @@ export async function removeCachedImage(filePath: string): Promise<void> {
   }
   // #endif
 }
+
+function resolveImageMimeType(filePath: string): string {
+  const normalizedPath = filePath.toLowerCase()
+
+  if (normalizedPath.includes('data:image/png')) {
+    return 'image/png'
+  }
+
+  if (normalizedPath.endsWith('.png')) {
+    return 'image/png'
+  }
+
+  if (normalizedPath.endsWith('.webp')) {
+    return 'image/webp'
+  }
+
+  if (normalizedPath.endsWith('.gif')) {
+    return 'image/gif'
+  }
+
+  return 'image/jpeg'
+}
+
+export async function readImageAsDataUrl(filePath: string): Promise<string> {
+  if (!isValidImageSource(filePath)) {
+    throw new Error('图片地址不可用，请重新选择一张清晰图片。')
+  }
+
+  // #ifdef H5
+  if (filePath.startsWith('data:image/')) {
+    return filePath
+  }
+
+  const imageBlob = await blobFromImageSource(filePath)
+  return blobToDataUrl(imageBlob)
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  if (filePath.startsWith('data:image/')) {
+    return filePath
+  }
+
+  const fileSystemManager = uni.getFileSystemManager()
+
+  return new Promise((resolve, reject) => {
+    fileSystemManager.readFile({
+      filePath,
+      encoding: 'base64',
+      success: (result) => {
+        const base64 = typeof result.data === 'string' ? result.data : ''
+
+        if (!base64) {
+          reject(new Error('图片读取失败，请重新选择一张图片。'))
+          return
+        }
+
+        resolve(`data:${resolveImageMimeType(filePath)};base64,${base64}`)
+      },
+      fail: () => reject(new Error('图片读取失败，请重新选择一张图片。')),
+    })
+  })
+  // #endif
+
+  throw new Error('当前平台暂不支持读取图片数据。')
+}

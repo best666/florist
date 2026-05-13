@@ -11,10 +11,13 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -122,6 +125,41 @@ export class RequestCareAdviceDto {
 }
 
 export class RequestSinglePlantCareAdviceDto {
+  @ValidateNested()
+  @Type(() => AdviceWeatherDto)
+  public weather!: AdviceWeatherDto;
+
+  @ValidateNested()
+  @Type(() => AdviceFlowerDto)
+  public flower!: AdviceFlowerDto;
+}
+
+export class RequestPlantDiagnosisDto {
+  @IsString()
+  public imageDataUrl!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  public imageName?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdviceWeatherDto)
+  public weather?: AdviceWeatherDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdviceFlowerDto)
+  public flower?: AdviceFlowerDto;
+}
+
+export class RequestTripCarePlanDto {
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  public travelDays!: number;
+
   @ValidateNested()
   @Type(() => AdviceWeatherDto)
   public weather!: AdviceWeatherDto;

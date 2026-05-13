@@ -413,6 +413,15 @@ function handleRefreshSingleFlowerAiAdvice(): void {
     isOffline: isOffline.value,
   })
 }
+
+function handleOpenPlantDoctor(): void {
+  const flowerId = selectedAdviceFlower.value?.id ?? ''
+  const suffix = flowerId ? `?flowerId=${flowerId}` : ''
+
+  uni.navigateTo({
+    url: `/pages/doctor/index${suffix}`,
+  })
+}
 </script>
 
 <template>
@@ -440,8 +449,9 @@ function handleRefreshSingleFlowerAiAdvice(): void {
           </view>
         </view>
 
-        <view class="mt-5">
+        <view class="mt-5 flex flex-wrap gap-3">
           <SubmitBtn text="新增植株" variant="sunrise" :block="false" @click="handleOpenCreate" />
+          <SubmitBtn text="AI 看病与出差方案" variant="blush" :block="false" @click="handleOpenPlantDoctor" />
         </view>
       </view>
 
