@@ -149,6 +149,39 @@ model FeedbackImage {
   @@index([feedbackId])
 }
 
+model AiDailyQuota {
+  id         String   @id @db.VarChar(128)
+  userId     String   @db.VarChar(64)
+  scope      String   @db.VarChar(32)
+  dateKey    String   @db.VarChar(16)
+  usedCount  Int      @default(0)
+  limitCount Int
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  updatedAt  DateTime @updatedAt @db.DateTime(3)
+
+  @@unique([userId, scope, dateKey])
+  @@index([dateKey, scope])
+}
+
+model ProxyRequestLog {
+  id               String   @id @db.VarChar(64)
+  scope            String   @db.VarChar(32)
+  endpoint         String   @db.VarChar(80)
+  userId           String?  @db.VarChar(64)
+  requestHash      String?  @db.VarChar(64)
+  cacheHit         Boolean  @default(false)
+  success          Boolean  @default(true)
+  statusCode       Int      @default(200)
+  durationMs       Int      @default(0)
+  quotaCost        Int      @default(0)
+  upstreamProvider String?  @db.VarChar(64)
+  errorMessage     String?  @db.VarChar(500)
+  createdAt        DateTime @default(now()) @db.DateTime(3)
+
+  @@index([scope, createdAt])
+  @@index([userId, createdAt])
+}
+
 model ReminderConfig {
   id                String            @id @db.VarChar(64)
   enabled           Boolean           @default(false)

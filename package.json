@@ -4,9 +4,13 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
-    "dev:client:h5": "pnpm --filter @florist/client dev:h5",
-    "dev:client:mp-weixin": "pnpm --filter @florist/client dev:mp-weixin",
+    "dev:h5": "pnpm --filter @florist/client dev:h5",
+    "dev:mp-weixin": "pnpm --filter @florist/client dev:mp-weixin",
     "dev:server": "pnpm --filter @florist/server start:dev",
+    "db:server:up": "pnpm --filter @florist/server db:up",
+    "db:server:down": "pnpm --filter @florist/server db:down",
+    "db:server:status": "pnpm --filter @florist/server prisma:migrate:status",
+    "db:server:deploy": "pnpm --filter @florist/server prisma:migrate:deploy",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
   }

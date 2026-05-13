@@ -17,6 +17,12 @@ export interface ServerEnvSource {
   readonly THROTTLE_LIMIT?: string;
   readonly AI_PROXY_BASE_URL?: string;
   readonly AI_PROXY_API_KEY?: string;
+  readonly AI_PROXY_MODEL?: string;
+  readonly AI_DAILY_QUOTA?: string;
+  readonly AI_CACHE_TTL_MS?: string;
+  readonly WEATHER_CACHE_TTL_MS?: string;
+  readonly IMAGE_CACHE_TTL_MS?: string;
+  readonly REQUEST_LOG_RETENTION_DAYS?: string;
 }
 
 export interface ServerEnvConfig {
@@ -33,13 +39,19 @@ export interface ServerEnvConfig {
   readonly throttleLimit: number;
   readonly aiProxyBaseUrl: string;
   readonly aiProxyApiKey: string;
+  readonly aiProxyModel: string;
+  readonly aiDailyQuota: number;
+  readonly aiCacheTtlMs: number;
+  readonly weatherCacheTtlMs: number;
+  readonly imageCacheTtlMs: number;
+  readonly requestLogRetentionDays: number;
 }
 
 export const SERVER_ENV_DEFAULTS = {
   port: 3000,
   globalPrefix: 'api',
   corsOrigin: 'http://localhost:9000',
-  databaseUrl: 'mysql://florist:florist123@127.0.0.1:3306/florist?connection_limit=5',
+  databaseUrl: 'mysql://florist:florist123@127.0.0.1:3307/florist?connection_limit=5',
   databaseEncryptionKey: 'replace-with-32-char-secret-key',
   databaseSslEnabled: false,
   backupCron: '0 30 3 * * *',
@@ -49,6 +61,12 @@ export const SERVER_ENV_DEFAULTS = {
   throttleLimit: 120,
   aiProxyBaseUrl: 'https://example.com',
   aiProxyApiKey: 'replace-with-local-key',
+  aiProxyModel: 'gpt-4o-mini',
+  aiDailyQuota: 60,
+  aiCacheTtlMs: 10 * 60 * 1000,
+  weatherCacheTtlMs: 15 * 60 * 1000,
+  imageCacheTtlMs: 60 * 60 * 1000,
+  requestLogRetentionDays: 14,
 } as const;
 
 function normalizeServerMode(nodeEnv?: string): ServerRuntimeMode {
@@ -146,6 +164,30 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.AI_PROXY_API_KEY,
       SERVER_ENV_DEFAULTS.aiProxyApiKey,
     ),
+    aiProxyModel: normalizeString(
+      envSource.AI_PROXY_MODEL,
+      SERVER_ENV_DEFAULTS.aiProxyModel,
+    ),
+    aiDailyQuota: normalizeNumber(
+      envSource.AI_DAILY_QUOTA,
+      SERVER_ENV_DEFAULTS.aiDailyQuota,
+    ),
+    aiCacheTtlMs: normalizeNumber(
+      envSource.AI_CACHE_TTL_MS,
+      SERVER_ENV_DEFAULTS.aiCacheTtlMs,
+    ),
+    weatherCacheTtlMs: normalizeNumber(
+      envSource.WEATHER_CACHE_TTL_MS,
+      SERVER_ENV_DEFAULTS.weatherCacheTtlMs,
+    ),
+    imageCacheTtlMs: normalizeNumber(
+      envSource.IMAGE_CACHE_TTL_MS,
+      SERVER_ENV_DEFAULTS.imageCacheTtlMs,
+    ),
+    requestLogRetentionDays: normalizeNumber(
+      envSource.REQUEST_LOG_RETENTION_DAYS,
+      SERVER_ENV_DEFAULTS.requestLogRetentionDays,
+    ),
   };
 }
 
@@ -170,6 +212,12 @@ export function validateServerEnv(
     THROTTLE_LIMIT: String(parsedEnv.throttleLimit),
     AI_PROXY_BASE_URL: parsedEnv.aiProxyBaseUrl,
     AI_PROXY_API_KEY: parsedEnv.aiProxyApiKey,
+    AI_PROXY_MODEL: parsedEnv.aiProxyModel,
+    AI_DAILY_QUOTA: String(parsedEnv.aiDailyQuota),
+    AI_CACHE_TTL_MS: String(parsedEnv.aiCacheTtlMs),
+    WEATHER_CACHE_TTL_MS: String(parsedEnv.weatherCacheTtlMs),
+    IMAGE_CACHE_TTL_MS: String(parsedEnv.imageCacheTtlMs),
+    REQUEST_LOG_RETENTION_DAYS: String(parsedEnv.requestLogRetentionDays),
   };
 }
 

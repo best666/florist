@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
+import { RequestMonitorService } from '../../common/services/request-monitor.service';
+import type { ServerEnvConfig } from '../../config/server-env';
 
 export interface CityOptionResponse {
   id: string;
@@ -92,24 +96,59 @@ function resolveWeatherText(weatherCode: number): string {
 
 @Injectable()
 export class WeatherService {
-  private async requestJson<TResponse>(baseUrl: string, query: Record<string, string | number>): Promise<TResponse> {
+  private readonly appEnv: ServerEnvConfig;
+
+  public constructor(
+    configService: ConfigService,
+    private readonly runtimeCacheService: RuntimeCacheService,
+    private readonly requestMonitorService: RequestMonitorService,
+  ) {
+    this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
+  }
+
+  private async requestJson<TResponse>(endpoint: string, baseUrl: string, query: Record<string, string | number>): Promise<TResponse> {
     const url = new URL(baseUrl);
 
     Object.entries(query).forEach(([key, value]) => {
       url.searchParams.set(key, String(value));
     });
 
-    const response = await fetch(url);
+    const requestHash = this.requestMonitorService.createPayloadHash('weather', {
+      endpoint,
+      query,
+    });
+    const startedAt = Date.now();
+    const { value, cacheHit } = await this.runtimeCacheService.remember<TResponse>(
+      `weather:${requestHash}`,
+      this.appEnv.weatherCacheTtlMs,
+      async () => {
+        const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new Error('天气服务请求失败');
-    }
+        if (!response.ok) {
+          throw new Error('天气服务请求失败');
+        }
 
-    return response.json() as Promise<TResponse>;
+        return response.json() as Promise<TResponse>;
+      },
+    );
+
+    await this.requestMonitorService.logProxyRequest({
+      scope: 'weather',
+      endpoint,
+      requestHash,
+      cacheHit,
+      success: true,
+      statusCode: 200,
+      durationMs: Date.now() - startedAt,
+      upstreamProvider: 'open-meteo',
+    });
+
+    return value;
   }
 
   public async searchCities(keyword: string): Promise<CityOptionResponse[]> {
     const response = await this.requestJson<OpenMeteoGeocodingResponse>(
+      'search',
       'https://geocoding-api.open-meteo.com/v1/search',
       {
         name: keyword.trim(),
@@ -124,6 +163,7 @@ export class WeatherService {
 
   public async reverseGeocode(latitude: number, longitude: number): Promise<CityOptionResponse | null> {
     const response = await this.requestJson<OpenMeteoGeocodingResponse>(
+      'reverse',
       'https://geocoding-api.open-meteo.com/v1/reverse',
       {
         latitude,
@@ -139,6 +179,7 @@ export class WeatherService {
 
   public async fetchWeather(city: CityOptionResponse): Promise<WeatherSnapshotResponse> {
     const response = await this.requestJson<OpenMeteoWeatherResponse>(
+      'current',
       'https://api.open-meteo.com/v1/forecast',
       {
         latitude: city.latitude,

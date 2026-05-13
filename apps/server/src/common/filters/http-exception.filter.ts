@@ -6,18 +6,21 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { RequestMonitorService } from '../services/request-monitor.service';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
-  public catch(exception: unknown, host: ArgumentsHost): void {
+  public constructor(private readonly requestMonitorService: RequestMonitorService) {}
+
+  public async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     const httpContext = host.switchToHttp();
     const response = httpContext.getResponse<{
       status: (statusCode: number) => { json: (payload: unknown) => void };
       getHeader?: (name: string) => string | number | string[] | undefined;
     }>();
-    const request = httpContext.getRequest<{ url?: string; method?: string }>();
+    const request = httpContext.getRequest<{ url?: string; method?: string; originalUrl?: string }>();
     const isHttpException = exception instanceof HttpException;
     const statusCode = isHttpException
       ? exception.getStatus()
@@ -33,6 +36,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         exception instanceof Error ? exception.stack : undefined,
       );
     }
+
+    await this.requestMonitorService.logException({
+      endpoint: `${request.method ?? 'UNKNOWN'} ${request.originalUrl ?? request.url ?? '/'}`,
+      statusCode,
+      ...(requestId ? { requestId: String(requestId) } : {}),
+      errorMessage: message,
+    });
 
     response.status(statusCode).json({
       success: false,

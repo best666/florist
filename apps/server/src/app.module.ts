@@ -8,6 +8,7 @@ import { appConfig } from './config/app.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestTraceInterceptor } from './common/interceptors/request-trace.interceptor';
 import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
+import { CommonInfraModule } from './common/modules/common-infra.module';
 import { getServerEnvFilePaths, validateServerEnv } from './config/server-env';
 import { AiProxyModule } from './modules/ai-proxy/ai-proxy.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -35,6 +36,7 @@ import { WeatherModule } from './modules/weather/weather.module';
       expandVariables: true,
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    CommonInfraModule,
     PrismaModule,
     HealthModule,
     AuthModule,

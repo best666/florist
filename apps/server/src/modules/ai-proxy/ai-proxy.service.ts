@@ -7,7 +7,11 @@ import type {
 } from '@florist/contracts';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
+import { RequestMonitorService } from '../../common/services/request-monitor.service';
 import type { ServerEnvConfig } from '../../config/server-env';
+import { ImageService } from '../image/image.service';
+import { UsersService } from '../users/users.service';
 import {
   RequestCareAdviceDto,
   RequestPlantDiagnosisDto,
@@ -363,9 +367,68 @@ function buildSinglePlantFallbackAdvice(payload: RequestSinglePlantCareAdviceDto
   };
 }
 
+interface OpenAiCompatibleResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
+function stripJsonCodeFence(content: string): string {
+  return content
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+}
+
+function buildCareAdvicePrompt(payload: RequestCareAdviceDto): string {
+  return [
+    '你是养花人应用的植物养护助手。',
+    '请结合天气与多株植物状态，返回更适合新手理解的中文建议。',
+    '输出必须是纯 JSON，字段必须严格匹配 IAiAdvice。',
+    '文案要温柔、简洁、可执行，warningTips 保持 3 条。',
+    `输入数据: ${JSON.stringify(payload)}`,
+  ].join('\n');
+}
+
+function buildSinglePlantPrompt(payload: RequestSinglePlantCareAdviceDto): string {
+  return [
+    '你是养花人应用的单株植物养护助手。',
+    '请只输出纯 JSON，字段严格匹配 IPlantAiAdvice。',
+    'summary、focusActions、forbiddenActions 要具体，适合直接展示给新手。',
+    `输入数据: ${JSON.stringify(payload)}`,
+  ].join('\n');
+}
+
+function buildDiagnosisPrompt(payload: RequestPlantDiagnosisDto): string {
+  return [
+    '你是植物病虫害识别助手。',
+    '请基于图片与上下文做保守识别，只输出纯 JSON，字段严格匹配 IAiPlantDiagnosis。',
+    '不要夸大结论，优先给出排查方向和温和处理步骤。',
+    `输入数据: ${JSON.stringify(payload)}`,
+  ].join('\n');
+}
+
+function buildTripPlanPrompt(payload: RequestTripCarePlanDto): string {
+  return [
+    '你是出差托管养护规划助手。',
+    '请返回纯 JSON，字段严格匹配 IAiTripCarePlan。',
+    '强调低风险、少折腾、适合个人开发产品直接展示。',
+    `输入数据: ${JSON.stringify(payload)}`,
+  ].join('\n');
+}
+
 @Injectable()
 export class AiProxyService {
-  public constructor(private readonly configService: ConfigService) {}
+  public constructor(
+    private readonly configService: ConfigService,
+    private readonly runtimeCacheService: RuntimeCacheService,
+    private readonly requestMonitorService: RequestMonitorService,
+    private readonly imageService: ImageService,
+    private readonly usersService: UsersService,
+  ) {}
 
   private resolveShouldUseFallback(): boolean {
     const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
@@ -373,11 +436,9 @@ export class AiProxyService {
       || appConfig.aiProxyApiKey.includes('replace-with-local-key');
   }
 
-  private async requestUpstream<TResponse>(path: string, payload: unknown): Promise<TResponse> {
+  private async requestUpstream<TResponse>(scope: string, prompt: string): Promise<TResponse> {
     const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
-    const requestUrl = appConfig.aiProxyBaseUrl.endsWith(path)
-      ? appConfig.aiProxyBaseUrl
-      : `${appConfig.aiProxyBaseUrl.replace(/\/$/, '')}${path}`;
+    const requestUrl = `${appConfig.aiProxyBaseUrl.replace(/\/$/, '')}/chat/completions`;
 
     const response = await fetch(requestUrl, {
       method: 'POST',
@@ -385,71 +446,159 @@ export class AiProxyService {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${appConfig.aiProxyApiKey}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        model: appConfig.aiProxyModel,
+        temperature: 0.4,
+        messages: [
+          {
+            role: 'system',
+            content: '你只返回纯 JSON，不要输出 markdown，不要解释。',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        metadata: {
+          scope,
+          app: 'florist',
+        },
+      }),
     });
 
     if (!response.ok) {
       throw new Error('AI 中转服务不可用');
     }
 
-    return response.json() as Promise<TResponse>;
+    const result = await response.json() as OpenAiCompatibleResponse;
+    const rawContent = result.choices?.[0]?.message?.content;
+
+    if (!rawContent) {
+      throw new Error('AI 返回内容为空');
+    }
+
+    return JSON.parse(stripJsonCodeFence(rawContent)) as TResponse;
   }
 
-  public async getCareAdvice(payload: RequestCareAdviceDto): Promise<IAiAdvice> {
-    if (this.resolveShouldUseFallback()) {
-      return buildFallbackAdvice(payload);
-    }
+  private async resolveAiResponse<TResponse>(input: {
+    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan';
+    userId?: string;
+    payload: unknown;
+    prompt: string;
+    fallbackFactory: () => TResponse;
+  }): Promise<TResponse> {
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+    const resolvedUserId = await this.usersService.resolveCurrentUserId(input.userId);
+    const requestHash = this.requestMonitorService.createPayloadHash(input.scope, input.payload);
+    const cacheKey = `ai:${input.scope}:${resolvedUserId}:${requestHash}`;
+    const startedAt = Date.now();
 
     try {
-      return await this.requestUpstream<IAiAdvice>('/care-advice', payload);
+      const { value, cacheHit } = await this.runtimeCacheService.remember<TResponse>(
+        cacheKey,
+        appConfig.aiCacheTtlMs,
+        async () => {
+          if (this.resolveShouldUseFallback()) {
+            return input.fallbackFactory();
+          }
+
+          await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1);
+
+          try {
+            return await this.requestUpstream<TResponse>(input.scope, input.prompt);
+          }
+          catch {
+            return input.fallbackFactory();
+          }
+        },
+      );
+
+      await this.requestMonitorService.logProxyRequest({
+        scope: 'ai-proxy',
+        endpoint: input.scope,
+        userId: resolvedUserId,
+        requestHash,
+        cacheHit,
+        success: true,
+        statusCode: 200,
+        durationMs: Date.now() - startedAt,
+        quotaCost: cacheHit || this.resolveShouldUseFallback() ? 0 : 1,
+        upstreamProvider: this.resolveShouldUseFallback() ? 'local-fallback' : appConfig.aiProxyModel,
+      });
+
+      return value;
     }
-    catch {
-      return buildFallbackAdvice(payload);
+    catch (error) {
+      await this.requestMonitorService.logProxyRequest({
+        scope: 'ai-proxy',
+        endpoint: input.scope,
+        userId: resolvedUserId,
+        requestHash,
+        cacheHit: false,
+        success: false,
+        statusCode: 500,
+        durationMs: Date.now() - startedAt,
+        quotaCost: 0,
+        upstreamProvider: appConfig.aiProxyModel,
+        errorMessage: error instanceof Error ? error.message : 'unknown error',
+      });
+
+      return input.fallbackFactory();
     }
+  }
+
+  public async getCareAdvice(payload: RequestCareAdviceDto, userId?: string): Promise<IAiAdvice> {
+    return this.resolveAiResponse({
+      scope: 'care-advice',
+      payload,
+      prompt: buildCareAdvicePrompt(payload),
+      fallbackFactory: () => buildFallbackAdvice(payload),
+      ...(userId ? { userId } : {}),
+    });
   }
 
   public async getSinglePlantCareAdvice(
     payload: RequestSinglePlantCareAdviceDto,
+    userId?: string,
   ): Promise<IPlantAiAdvice> {
-    if (this.resolveShouldUseFallback()) {
-      return buildSinglePlantFallbackAdvice(payload);
-    }
-
-    try {
-      return await this.requestUpstream<IPlantAiAdvice>('/plant-care-advice', payload);
-    }
-    catch {
-      return buildSinglePlantFallbackAdvice(payload);
-    }
+    return this.resolveAiResponse({
+      scope: 'plant-care-advice',
+      payload,
+      prompt: buildSinglePlantPrompt(payload),
+      fallbackFactory: () => buildSinglePlantFallbackAdvice(payload),
+      ...(userId ? { userId } : {}),
+    });
   }
 
   public async getPlantDiagnosis(
     payload: RequestPlantDiagnosisDto,
+    userId?: string,
   ): Promise<IAiPlantDiagnosis> {
-    if (this.resolveShouldUseFallback()) {
-      return buildPlantDiagnosisFallback(payload);
-    }
+    const compressedImage = await this.imageService.compressForDiagnosis(payload.imageDataUrl);
+    const normalizedPayload: RequestPlantDiagnosisDto = {
+      ...payload,
+      imageDataUrl: compressedImage.dataUrl,
+    };
 
-    try {
-      return await this.requestUpstream<IAiPlantDiagnosis>('/plant-diagnosis', payload);
-    }
-    catch {
-      return buildPlantDiagnosisFallback(payload);
-    }
+    return this.resolveAiResponse({
+      scope: 'plant-diagnosis',
+      payload: normalizedPayload,
+      prompt: buildDiagnosisPrompt(normalizedPayload),
+      fallbackFactory: () => buildPlantDiagnosisFallback(normalizedPayload),
+      ...(userId ? { userId } : {}),
+    });
   }
 
   public async getTripCarePlan(
     payload: RequestTripCarePlanDto,
+    userId?: string,
   ): Promise<IAiTripCarePlan> {
-    if (this.resolveShouldUseFallback()) {
-      return buildTripCarePlanFallback(payload);
-    }
-
-    try {
-      return await this.requestUpstream<IAiTripCarePlan>('/trip-care-plan', payload);
-    }
-    catch {
-      return buildTripCarePlanFallback(payload);
-    }
+    return this.resolveAiResponse({
+      scope: 'trip-care-plan',
+      payload,
+      prompt: buildTripPlanPrompt(payload),
+      fallbackFactory: () => buildTripCarePlanFallback(payload),
+      ...(userId ? { userId } : {}),
+    });
   }
 }

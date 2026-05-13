@@ -16,7 +16,11 @@
 - pnpm --filter @florist/server start:dev
 - pnpm --filter @florist/server build
 - pnpm --filter @florist/server build:prod
+- pnpm --filter @florist/server db:up
+- pnpm --filter @florist/server db:down
 - pnpm --filter @florist/server prisma:generate
+- pnpm --filter @florist/server prisma:migrate:deploy
+- pnpm --filter @florist/server prisma:migrate:status
 
 ## 本地 MySQL
 
@@ -30,7 +34,8 @@
 - 数据库名：florist
 - 用户名：florist
 - 密码：florist123
-- 端口：3306
+- 主机端口：3307
+- 容器端口：3306
 
 ## 环境变量策略
 
@@ -68,5 +73,6 @@
 ## 运行提醒
 
 - 修改 prisma/schema.prisma 后先执行 pnpm --filter @florist/server prisma:generate。
-- 若已连上真实 MySQL，再执行 Prisma migration 创建表结构。
+- 当前 migrations 基线已改为 MySQL；数据库可用后，优先执行 pnpm --filter @florist/server prisma:migrate:deploy 落表。
+- 若本机 Docker daemon 未启动，db:up 会失败；先启动 Docker Desktop 或等效容器服务，再执行迁移链路。
 - 当前 build:prod 会在 nest build 后对 dist 下 js 文件做最小化压缩。

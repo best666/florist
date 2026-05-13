@@ -7,9 +7,13 @@
     "start:dev": "nest start --watch",
     "build": "nest build",
     "build:prod": "nest build && node scripts/minify-dist.mjs",
+    "db:up": "docker compose -f docker-compose.mysql.yml up -d",
+    "db:down": "docker compose -f docker-compose.mysql.yml down",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prisma:generate": "prisma generate",
-    "prisma:migrate:dev": "prisma migrate dev"
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status"
   },
   "dependencies": {
     "@florist/contracts": "workspace:*",
