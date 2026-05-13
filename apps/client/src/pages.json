@@ -24,6 +24,10 @@
     {
       "path": "pages/record/index",
       "type": "page"
+    },
+    {
+      "path": "pages/album/index",
+      "type": "page"
     }
   ],
   "subPackages": []

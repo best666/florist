@@ -298,6 +298,13 @@ function handleCardAction(flower: LocalFlower, actionKey: string): void {
     return
   }
 
+  if (actionKey === 'album') {
+    uni.navigateTo({
+      url: `/pages/album/index?flowerId=${flower.id}`,
+    })
+    return
+  }
+
   if (actionKey === 'ai-advice') {
     selectedAdviceFlowerId.value = flower.id
     return
@@ -414,6 +421,15 @@ function handleRefreshSingleFlowerAiAdvice(): void {
   })
 }
 
+function handleOpenGrowthAlbum(): void {
+  const flowerId = selectedAdviceFlower.value?.id ?? ''
+  const suffix = flowerId ? `?flowerId=${flowerId}` : ''
+
+  uni.navigateTo({
+    url: `/pages/album/index${suffix}`,
+  })
+}
+
 function handleOpenPlantDoctor(): void {
   const flowerId = selectedAdviceFlower.value?.id ?? ''
   const suffix = flowerId ? `?flowerId=${flowerId}` : ''
@@ -451,6 +467,7 @@ function handleOpenPlantDoctor(): void {
 
         <view class="mt-5 flex flex-wrap gap-3">
           <SubmitBtn text="新增植株" variant="sunrise" :block="false" @click="handleOpenCreate" />
+          <SubmitBtn text="成长相册" variant="mint" :block="false" @click="handleOpenGrowthAlbum" />
           <SubmitBtn text="AI 看病与出差方案" variant="blush" :block="false" @click="handleOpenPlantDoctor" />
         </view>
       </view>
@@ -551,6 +568,7 @@ function handleOpenPlantDoctor(): void {
           :subtitle="`${getFlowerCategoryLabel(flower.category)} · ${getFlowerPlacementLabel(flower.placement)}`"
           :image-src="flower.images[0]?.url ?? ''" :status="flower.careStatus"
           :care-items="buildFlowerCardItems(flower)" :quick-actions="[
+            { key: 'album', label: '成长相册' },
             { key: 'ai-advice', label: selectedAdviceFlower?.id === flower.id ? '正在查看建议' : 'AI建议' },
             { key: 'record', label: '去打卡' },
             { key: 'preview', label: '预览图片', disabled: flower.images.length === 0 },
