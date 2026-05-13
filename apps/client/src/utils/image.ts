@@ -1,4 +1,5 @@
 import type { Nullable } from '@/interfaces'
+import { http } from './request'
 import { isValidImageSource } from './validate'
 
 export interface ImageCompressOptions {
@@ -124,6 +125,45 @@ async function canvasToBlob(
   })
 }
 
+async function compressImageByServerForH5(
+  originalBlob: Blob,
+  options: Required<ImageCompressOptions>,
+): Promise<ImageCompressResult | null> {
+  try {
+    const dataUrl = await blobToDataUrl(originalBlob)
+    const response = await http.post<{
+      dataUrl: string
+      width: number
+      height: number
+      originalBytes: number
+      compressedBytes: number
+    }, {
+      dataUrl: string
+      maxWidth: number
+      quality: number
+    }>('/image/compress', {
+      dataUrl,
+      maxWidth: 1280,
+      quality: Math.round(options.initialQuality * 100),
+    }, {
+      showLoading: false,
+      skipErrorToast: true,
+      cancelDuplicate: true,
+    })
+
+    return {
+      filePath: response.dataUrl,
+      originalSizeInBytes: response.originalBytes,
+      compressedSizeInBytes: response.compressedBytes,
+      qualityUsed: options.initialQuality,
+      degraded: response.compressedBytes < response.originalBytes,
+    }
+  }
+  catch {
+    return null
+  }
+}
+
 async function loadImageElement(filePath: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
@@ -149,6 +189,12 @@ async function compressImageForH5(
         qualityUsed: 1,
         degraded: false,
       }
+    }
+
+    const serverCompressedResult = await compressImageByServerForH5(originalBlob, options)
+
+    if (serverCompressedResult) {
+      return serverCompressedResult
     }
 
     const image = await loadImageElement(filePath)

@@ -408,4 +408,16 @@ export const http = {
       data: data as RequestBody,
     })
   },
+  put<TResponse, TBody = RequestBody>(
+    url: string,
+    data?: TBody,
+    options?: Omit<RequestOptions<TBody>, 'url' | 'method' | 'data'>,
+  ): Promise<TResponse> {
+    return request<TResponse>({
+      ...options,
+      url,
+      method: RequestMethod.Put,
+      data: data as RequestBody,
+    })
+  },
 }

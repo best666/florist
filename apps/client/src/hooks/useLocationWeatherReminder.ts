@@ -1,5 +1,11 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { searchCitiesByKeyword, reverseGeocodeCity, fetchWeatherByCity } from '@/api'
+import {
+  fetchReminderConfig,
+  fetchWeatherByCity,
+  reverseGeocodeCity,
+  searchCitiesByKeyword,
+  updateReminderConfigOnServer,
+} from '@/api'
 import { useEncryptedStorage } from '@/hooks/useEncryptedStorage'
 import type {
   CityOption,
@@ -274,6 +280,14 @@ export function useLocationWeatherReminder() {
 
     state.reminderConfig = nextConfig
     reminderStorage.setValue(nextConfig)
+    void updateReminderConfigOnServer(nextConfig)
+      .then((serverConfig) => {
+        state.reminderConfig = serverConfig
+        reminderStorage.setValue(serverConfig)
+      })
+      .catch(() => {
+        // 保留本地提醒配置作为兜底。
+      })
   }
 
   function triggerReminderToast(): void {
@@ -317,6 +331,15 @@ export function useLocationWeatherReminder() {
 
   onMounted(() => {
     startReminderPolling()
+
+    void fetchReminderConfig()
+      .then((serverConfig) => {
+        state.reminderConfig = serverConfig
+        reminderStorage.setValue(serverConfig)
+      })
+      .catch(() => {
+        // 后端不可用时继续使用本地提醒配置。
+      })
 
     if (state.city) {
       void refreshWeather(state.city)

@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Flower {
+  id               String        @id
+  name             String
+  nickname         String?
+  category         String
+  placement        String
+  careDifficulty   String
+  careStatus       String
+  note             String?
+  lastWateredAt    DateTime?
+  lastFertilizedAt DateTime?
+  createdAt        DateTime
+  updatedAt        DateTime
+  isDeleted        Boolean       @default(false)
+  deletedAt        DateTime?
+  pendingPurgeAt   DateTime?
+  images           FlowerImage[]
+  records          CareRecord[]
+}
+
+model FlowerImage {
+  id            String  @id
+  flowerId      String
+  url           String
+  compressedUrl String?
+  createdAt     DateTime
+  flower        Flower  @relation(fields: [flowerId], references: [id], onDelete: Cascade)
+
+  @@index([flowerId])
+}
+
+model CareRecord {
+  id              String            @id
+  flowerId        String
+  actionType      String
+  note            String?
+  cooldownMinutes Int
+  createdAt       DateTime
+  images          CareRecordImage[]
+  flower          Flower            @relation(fields: [flowerId], references: [id], onDelete: Cascade)
+
+  @@index([flowerId, createdAt])
+}
+
+model CareRecordImage {
+  id            String     @id
+  recordId      String
+  url           String
+  compressedUrl String?
+  createdAt     DateTime
+  record        CareRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+}
+
+model RecordUndoLog {
+  id                String   @id
+  recordId          String
+  flowerId          String
+  actionType        String
+  revertedAt        DateTime
+  originalCreatedAt DateTime
+  note              String?
+
+  @@index([flowerId, revertedAt])
+}
+
+model ReminderConfig {
+  id                String            @id
+  enabled           Boolean           @default(false)
+  reminderHour      Int               @default(9)
+  reminderMinute    Int               @default(0)
+  quietStartHour    Int               @default(22)
+  quietStartMinute  Int               @default(0)
+  quietEndHour      Int               @default(8)
+  quietEndMinute    Int               @default(0)
+  reminderText      String
+  lastTriggeredDate String?
+  updatedAt         DateTime          @updatedAt
+  pushLogs          ReminderPushLog[]
+}
+
+model ReminderPushLog {
+  id               String         @id
+  reminderConfigId String
+  triggeredAt      DateTime
+  message          String
+  status           String
+  reminderConfig   ReminderConfig @relation(fields: [reminderConfigId], references: [id], onDelete: Cascade)
+
+  @@index([triggeredAt])
+}

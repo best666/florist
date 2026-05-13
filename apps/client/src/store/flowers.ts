@@ -1,5 +1,6 @@
 import type { IImageAsset } from '@florist/contracts'
 import { defineStore } from 'pinia'
+import { createFlower, fetchFlowerCenter, recycleFlower, updateFlower } from '@/api'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
 import { removeCachedImage } from '@/utils'
 
@@ -68,6 +69,11 @@ async function releaseFlowerImages(images: ReadonlyArray<IImageAsset>): Promise<
   }))
 }
 
+function hydrateFlowerCenter(state: FlowerState, center: FlowerState): void {
+  state.flowers = sortFlowers(center.flowers)
+  state.recycleBin = sortFlowers(center.recycleBin)
+}
+
 export const useFlowerStore = defineStore(
   'flowers',
   {
@@ -82,7 +88,18 @@ export const useFlowerStore = defineStore(
     },
     actions: {
       async initializeGarden(): Promise<void> {
-        await this.cleanupRecycleBin()
+        try {
+          const center = await fetchFlowerCenter()
+          hydrateFlowerCenter(this, {
+            flowers: center.flowers,
+            recycleBin: center.recycleBin,
+            initialized: true,
+          })
+        }
+        catch {
+          await this.cleanupRecycleBin()
+        }
+
         this.initialized = true
       },
 
@@ -91,47 +108,74 @@ export const useFlowerStore = defineStore(
       },
 
       async upsertFlower(values: FlowerFormValues, flowerId?: string): Promise<LocalFlower> {
-        await this.cleanupRecycleBin()
+        try {
+          const nextFlower = flowerId
+            ? await updateFlower(flowerId, values)
+            : await createFlower(values)
 
-        const existingFlower = flowerId
-          ? this.flowers.find(flower => flower.id === flowerId)
-          : undefined
+          const existingFlower = this.flowers.find(flower => flower.id === nextFlower.id)
 
-        const nextFlower = buildFlowerEntity(values, existingFlower)
+          if (existingFlower) {
+            this.flowers = sortFlowers(
+              this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)),
+            )
+            return nextFlower
+          }
 
-        if (existingFlower) {
-          this.flowers = sortFlowers(
-            this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)),
-          )
+          this.flowers = sortFlowers([...this.flowers, nextFlower])
           return nextFlower
         }
+        catch {
+          await this.cleanupRecycleBin()
 
-        this.flowers = sortFlowers([...this.flowers, nextFlower])
-        return nextFlower
+          const existingFlower = flowerId
+            ? this.flowers.find(flower => flower.id === flowerId)
+            : undefined
+
+          const nextFlower = buildFlowerEntity(values, existingFlower)
+
+          if (existingFlower) {
+            this.flowers = sortFlowers(
+              this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)),
+            )
+            return nextFlower
+          }
+
+          this.flowers = sortFlowers([...this.flowers, nextFlower])
+          return nextFlower
+        }
       },
 
       async moveFlowerToRecycleBin(flowerId: string): Promise<boolean> {
-        await this.cleanupRecycleBin()
-
-        const targetFlower = this.flowers.find(flower => flower.id === flowerId)
-
-        if (!targetFlower) {
-          return false
+        try {
+          const trashedFlower = await recycleFlower(flowerId)
+          this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
+          this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
+          return true
         }
+        catch {
+          await this.cleanupRecycleBin()
 
-        const deletedAt = new Date().toISOString()
-        const trashedFlower: LocalFlower = {
-          ...targetFlower,
-          isDeleted: true,
-          deletedAt,
-          pendingPurgeAt: new Date(Date.now() + FLOWER_RECYCLE_RETENTION_MS).toISOString(),
-          updatedAt: deletedAt,
+          const targetFlower = this.flowers.find(flower => flower.id === flowerId)
+
+          if (!targetFlower) {
+            return false
+          }
+
+          const deletedAt = new Date().toISOString()
+          const trashedFlower: LocalFlower = {
+            ...targetFlower,
+            isDeleted: true,
+            deletedAt,
+            pendingPurgeAt: new Date(Date.now() + FLOWER_RECYCLE_RETENTION_MS).toISOString(),
+            updatedAt: deletedAt,
+          }
+
+          this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
+          this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
+
+          return true
         }
-
-        this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
-        this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
-
-        return true
       },
 
       async cleanupRecycleBin(): Promise<void> {

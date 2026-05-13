@@ -15,6 +15,8 @@ export interface IRecord {
   readonly note?: string
   /** 记录附带图片。 */
   readonly images: ReadonlyArray<IImageAsset>
+  /** 冷却时间，单位分钟。 */
+  readonly cooldownMinutes: number
   /** 记录创建时间。 */
   readonly createdAt: IsoDateTimeString
 }

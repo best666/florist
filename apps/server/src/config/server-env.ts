@@ -6,6 +6,7 @@ export interface ServerEnvSource {
   readonly PORT?: string;
   readonly GLOBAL_PREFIX?: string;
   readonly CORS_ORIGIN?: string;
+  readonly DATABASE_URL?: string;
   readonly MYSQL_URL?: string;
   readonly AI_PROXY_BASE_URL?: string;
   readonly AI_PROXY_API_KEY?: string;
@@ -15,7 +16,7 @@ export interface ServerEnvConfig {
   readonly port: number;
   readonly globalPrefix: string;
   readonly corsOrigin: string;
-  readonly mysqlUrl: string;
+  readonly databaseUrl: string;
   readonly aiProxyBaseUrl: string;
   readonly aiProxyApiKey: string;
 }
@@ -24,7 +25,7 @@ export const SERVER_ENV_DEFAULTS = {
   port: 3000,
   globalPrefix: 'api',
   corsOrigin: 'http://localhost:9000',
-  mysqlUrl: 'mysql://root:password@127.0.0.1:3306/florist',
+  databaseUrl: 'file:./prisma/florist.db',
   aiProxyBaseUrl: 'https://example.com',
   aiProxyApiKey: 'replace-with-local-key',
 } as const;
@@ -64,6 +65,11 @@ export function getServerEnvFilePaths(nodeEnv?: string): string[] {
 }
 
 export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
+  const databaseUrl = normalizeString(
+    envSource.DATABASE_URL,
+    normalizeString(envSource.MYSQL_URL, SERVER_ENV_DEFAULTS.databaseUrl),
+  );
+
   return {
     port: normalizeNumber(envSource.PORT, SERVER_ENV_DEFAULTS.port),
     globalPrefix: normalizeString(
@@ -74,7 +80,7 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.CORS_ORIGIN,
       SERVER_ENV_DEFAULTS.corsOrigin,
     ),
-    mysqlUrl: normalizeString(envSource.MYSQL_URL, SERVER_ENV_DEFAULTS.mysqlUrl),
+    databaseUrl,
     aiProxyBaseUrl: normalizeString(
       envSource.AI_PROXY_BASE_URL,
       SERVER_ENV_DEFAULTS.aiProxyBaseUrl,
@@ -96,7 +102,8 @@ export function validateServerEnv(
     PORT: String(parsedEnv.port),
     GLOBAL_PREFIX: parsedEnv.globalPrefix,
     CORS_ORIGIN: parsedEnv.corsOrigin,
-    MYSQL_URL: parsedEnv.mysqlUrl,
+    DATABASE_URL: parsedEnv.databaseUrl,
+    MYSQL_URL: parsedEnv.databaseUrl,
     AI_PROXY_BASE_URL: parsedEnv.aiProxyBaseUrl,
     AI_PROXY_API_KEY: parsedEnv.aiProxyApiKey,
   };

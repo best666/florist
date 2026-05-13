@@ -1,6 +1,8 @@
 import { RecordActionType, type IImageAsset } from '@florist/contracts'
 import { defineStore } from 'pinia'
+import { createRecord, fetchRecordCenter, undoRecord as undoRecordApi } from '@/api'
 import type { LocalRecord, RecordFormValues, RecordUndoLog } from '@/interfaces'
+import { useFlowerStore } from './flowers'
 import { hasRepeatedActionWithinHours, removeCachedImage } from '@/utils'
 
 interface RecordState {
@@ -54,6 +56,13 @@ async function releaseRecordImages(images: ReadonlyArray<IImageAsset>): Promise<
   }))
 }
 
+function hydrateRecordCenter(state: RecordState, center: RecordState): void {
+  state.records = sortRecords(center.records)
+  state.undoLogs = [...center.undoLogs].sort((leftLog, rightLog) => (
+    rightLog.revertedAt.localeCompare(leftLog.revertedAt)
+  ))
+}
+
 export const useRecordStore = defineStore(
   'records',
   {
@@ -81,6 +90,18 @@ export const useRecordStore = defineStore(
     },
     actions: {
       async initializeRecordCenter(): Promise<void> {
+        try {
+          const center = await fetchRecordCenter()
+          hydrateRecordCenter(this, {
+            records: center.records,
+            undoLogs: center.undoLogs,
+            initialized: true,
+          })
+        }
+        catch {
+          // 离线时保持本地加密缓存即可。
+        }
+
         this.initialized = true
       },
 
@@ -139,38 +160,58 @@ export const useRecordStore = defineStore(
       },
 
       async addRecord(values: RecordFormValues): Promise<LocalRecord> {
-        const nextRecord = buildRecordEntity(values)
-        this.records = sortRecords([nextRecord, ...this.records])
-        return nextRecord
+        try {
+          const nextRecord = await createRecord(values) as LocalRecord
+          this.records = sortRecords([nextRecord, ...this.records])
+          await useFlowerStore().initializeGarden()
+          return nextRecord
+        }
+        catch {
+          const nextRecord = buildRecordEntity(values)
+          this.records = sortRecords([nextRecord, ...this.records])
+          return nextRecord
+        }
       },
 
       async undoRecord(recordId: string): Promise<boolean> {
-        const targetRecord = this.records.find(record => record.id === recordId)
-
-        if (!targetRecord) {
-          return false
+        try {
+          const response = await undoRecordApi(recordId)
+          hydrateRecordCenter(this, {
+            records: response.center.records,
+            undoLogs: response.center.undoLogs,
+            initialized: true,
+          })
+          await useFlowerStore().initializeGarden()
+          return response.succeeded
         }
+        catch {
+          const targetRecord = this.records.find(record => record.id === recordId)
 
-        if (Date.now() - new Date(targetRecord.createdAt).getTime() > RECORD_UNDO_WINDOW_MS) {
-          return false
+          if (!targetRecord) {
+            return false
+          }
+
+          if (Date.now() - new Date(targetRecord.createdAt).getTime() > RECORD_UNDO_WINDOW_MS) {
+            return false
+          }
+
+          this.records = this.records.filter(record => record.id !== recordId)
+          this.undoLogs = [
+            {
+              id: createEntityId('undo'),
+              recordId: targetRecord.id,
+              flowerId: targetRecord.flowerId,
+              actionType: targetRecord.actionType,
+              revertedAt: new Date().toISOString(),
+              originalCreatedAt: targetRecord.createdAt,
+              ...(targetRecord.note ? { note: targetRecord.note } : {}),
+            },
+            ...this.undoLogs,
+          ]
+
+          await releaseRecordImages(targetRecord.images)
+          return true
         }
-
-        this.records = this.records.filter(record => record.id !== recordId)
-        this.undoLogs = [
-          {
-            id: createEntityId('undo'),
-            recordId: targetRecord.id,
-            flowerId: targetRecord.flowerId,
-            actionType: targetRecord.actionType,
-            revertedAt: new Date().toISOString(),
-            originalCreatedAt: targetRecord.createdAt,
-            ...(targetRecord.note ? { note: targetRecord.note } : {}),
-          },
-          ...this.undoLogs,
-        ]
-
-        await releaseRecordImages(targetRecord.images)
-        return true
       },
     },
     persist: true,
