@@ -9,10 +9,13 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsIn,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { ImageAssetItemDto } from '../../../common/dto/image-asset.dto';
@@ -50,6 +53,16 @@ export class UpsertFlowerDto {
   @IsString()
   @MaxLength(300)
   public note?: string;
+
+  @IsOptional()
+  @IsDateString()
+  public purchasedAt?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(99999999)
+  public priceInCents?: number;
 
   @IsArray()
   @ValidateNested({ each: true })

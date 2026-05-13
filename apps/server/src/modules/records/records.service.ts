@@ -5,6 +5,7 @@ import { createEntityId } from '../../common/utils/entity-id';
 import { FlowersService } from '../flowers/flowers.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecordDto } from './dto/create-record.dto';
+import { UsersService } from '../users/users.service';
 
 const RECORD_UNDO_WINDOW_MS = 5 * 60 * 1000;
 
@@ -68,15 +69,19 @@ export class RecordsService {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly flowersService: FlowersService,
+    private readonly usersService: UsersService,
   ) {}
 
   public async getRecordCenter(): Promise<RecordCenterResponse> {
+    const userId = await this.usersService.ensureDefaultUserId();
     const [records, undoLogs] = await Promise.all([
       this.prisma.careRecord.findMany({
+        where: { userId },
         include: { images: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.recordUndoLog.findMany({
+        where: { userId },
         orderBy: { revertedAt: 'desc' },
       }),
     ]);
@@ -88,6 +93,7 @@ export class RecordsService {
   }
 
   public async addRecord(payload: CreateRecordDto): Promise<IRecord> {
+    const userId = await this.usersService.ensureDefaultUserId();
     await this.flowersService.getFlowerById(payload.flowerId);
 
     const recordId = createEntityId('record');
@@ -97,6 +103,7 @@ export class RecordsService {
       await transaction.careRecord.create({
         data: {
           id: recordId,
+          userId,
           flowerId: payload.flowerId,
           actionType: payload.actionType,
           note: normalizeOptionalString(payload.note),
@@ -153,8 +160,9 @@ export class RecordsService {
   }
 
   public async undoRecord(recordId: string): Promise<{ succeeded: boolean, center: RecordCenterResponse }> {
-    const targetRecord = await this.prisma.careRecord.findUnique({
-      where: { id: recordId },
+    const userId = await this.usersService.ensureDefaultUserId();
+    const targetRecord = await this.prisma.careRecord.findFirst({
+      where: { id: recordId, userId },
       include: { images: true },
     });
 
@@ -176,6 +184,7 @@ export class RecordsService {
       await transaction.recordUndoLog.create({
         data: {
           id: createEntityId('undo'),
+          userId,
           recordId: targetRecord.id,
           flowerId: targetRecord.flowerId,
           actionType: targetRecord.actionType,
@@ -194,6 +203,7 @@ export class RecordsService {
       ) {
         const latestWatering = await transaction.careRecord.findFirst({
           where: {
+            userId,
             flowerId: targetRecord.flowerId,
             actionType: RecordActionType.Watering,
           },
@@ -201,6 +211,7 @@ export class RecordsService {
         });
         const latestFertilizing = await transaction.careRecord.findFirst({
           where: {
+            userId,
             flowerId: targetRecord.flowerId,
             actionType: RecordActionType.Fertilizing,
           },

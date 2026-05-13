@@ -106,6 +106,15 @@ export enum MemberPaymentStatus {
 }
 
 /**
+ * 用户反馈处理状态枚举。
+ */
+export enum FeedbackStatus {
+  Pending = 'pending',
+  Reviewed = 'reviewed',
+  Archived = 'archived',
+}
+
+/**
  * 用户状态枚举。
  */
 export enum UserStatus {

@@ -7,6 +7,6 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? 'file:./prisma/florist.db',
+    url: process.env.DATABASE_URL ?? 'mysql://florist:florist123@127.0.0.1:3306/florist?connection_limit=5',
   },
 });

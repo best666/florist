@@ -3,78 +3,150 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
+}
+
+model User {
+  id                String          @id @db.VarChar(64)
+  nickname          String          @db.VarChar(80)
+  avatarUrl         String?         @db.VarChar(512)
+  cityCipher        String?         @db.Text
+  phoneMaskedCipher String?         @db.Text
+  status            String          @db.VarChar(32)
+  createdAt         DateTime        @default(now()) @db.DateTime(3)
+  updatedAt         DateTime        @updatedAt @db.DateTime(3)
+  flowers           Flower[]
+  records           CareRecord[]
+  undoLogs          RecordUndoLog[]
+  members           Member[]
+  feedbacks         Feedback[]
+
+  @@index([status, updatedAt])
 }
 
 model Flower {
-  id               String        @id
-  name             String
-  nickname         String?
-  category         String
-  placement        String
-  careDifficulty   String
-  careStatus       String
-  note             String?
-  lastWateredAt    DateTime?
-  lastFertilizedAt DateTime?
-  createdAt        DateTime
-  updatedAt        DateTime
+  id               String        @id @db.VarChar(64)
+  userId           String        @db.VarChar(64)
+  name             String        @db.VarChar(80)
+  nickname         String?       @db.VarChar(80)
+  category         String        @db.VarChar(32)
+  placement        String        @db.VarChar(32)
+  careDifficulty   String        @db.VarChar(32)
+  careStatus       String        @db.VarChar(32)
+  purchasedAt      DateTime?     @db.DateTime(3)
+  priceInCents     Int?
+  note             String?       @db.VarChar(300)
+  lastWateredAt    DateTime?     @db.DateTime(3)
+  lastFertilizedAt DateTime?     @db.DateTime(3)
+  createdAt        DateTime      @default(now()) @db.DateTime(3)
+  updatedAt        DateTime      @updatedAt @db.DateTime(3)
   isDeleted        Boolean       @default(false)
-  deletedAt        DateTime?
-  pendingPurgeAt   DateTime?
+  deletedAt        DateTime?     @db.DateTime(3)
+  pendingPurgeAt   DateTime?     @db.DateTime(3)
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   images           FlowerImage[]
   records          CareRecord[]
+
+  @@index([userId, isDeleted, updatedAt])
+  @@index([userId, category])
 }
 
 model FlowerImage {
-  id            String  @id
-  flowerId      String
-  url           String
-  compressedUrl String?
-  createdAt     DateTime
-  flower        Flower  @relation(fields: [flowerId], references: [id], onDelete: Cascade)
+  id            String   @id @db.VarChar(64)
+  flowerId      String   @db.VarChar(64)
+  url           String   @db.VarChar(512)
+  compressedUrl String?  @db.VarChar(512)
+  createdAt     DateTime @default(now()) @db.DateTime(3)
+  flower        Flower   @relation(fields: [flowerId], references: [id], onDelete: Cascade)
 
   @@index([flowerId])
 }
 
 model CareRecord {
-  id              String            @id
-  flowerId        String
-  actionType      String
-  note            String?
+  id              String            @id @db.VarChar(64)
+  userId          String            @db.VarChar(64)
+  flowerId        String            @db.VarChar(64)
+  actionType      String            @db.VarChar(32)
+  note            String?           @db.VarChar(300)
   cooldownMinutes Int
-  createdAt       DateTime
+  createdAt       DateTime          @default(now()) @db.DateTime(3)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   images          CareRecordImage[]
   flower          Flower            @relation(fields: [flowerId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
   @@index([flowerId, createdAt])
 }
 
 model CareRecordImage {
-  id            String     @id
-  recordId      String
-  url           String
-  compressedUrl String?
-  createdAt     DateTime
+  id            String     @id @db.VarChar(64)
+  recordId      String     @db.VarChar(64)
+  url           String     @db.VarChar(512)
+  compressedUrl String?    @db.VarChar(512)
+  createdAt     DateTime   @default(now()) @db.DateTime(3)
   record        CareRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
   @@index([recordId])
 }
 
 model RecordUndoLog {
-  id                String   @id
-  recordId          String
-  flowerId          String
-  actionType        String
-  revertedAt        DateTime
-  originalCreatedAt DateTime
-  note              String?
+  id                String   @id @db.VarChar(64)
+  userId            String   @db.VarChar(64)
+  recordId          String   @db.VarChar(64)
+  flowerId          String   @db.VarChar(64)
+  actionType        String   @db.VarChar(32)
+  revertedAt        DateTime @default(now()) @db.DateTime(3)
+  originalCreatedAt DateTime @db.DateTime(3)
+  note              String?  @db.VarChar(300)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, revertedAt])
   @@index([flowerId, revertedAt])
 }
 
+model Member {
+  id           String    @id @db.VarChar(64)
+  userId       String    @db.VarChar(64)
+  packageType  String    @db.VarChar(32)
+  status       String    @db.VarChar(32)
+  benefitTypes Json
+  startedAt    DateTime? @db.DateTime(3)
+  expiredAt    DateTime? @db.DateTime(3)
+  createdAt    DateTime  @default(now()) @db.DateTime(3)
+  updatedAt    DateTime  @updatedAt @db.DateTime(3)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([status, expiredAt])
+}
+
+model Feedback {
+  id            String          @id @db.VarChar(64)
+  userId        String          @db.VarChar(64)
+  contentCipher String          @db.Text
+  status        String          @db.VarChar(32)
+  createdAt     DateTime        @default(now()) @db.DateTime(3)
+  updatedAt     DateTime        @updatedAt @db.DateTime(3)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images        FeedbackImage[]
+
+  @@index([userId, createdAt])
+  @@index([status, updatedAt])
+}
+
+model FeedbackImage {
+  id            String    @id @db.VarChar(64)
+  feedbackId    String    @db.VarChar(64)
+  url           String    @db.VarChar(512)
+  compressedUrl String?   @db.VarChar(512)
+  createdAt     DateTime  @default(now()) @db.DateTime(3)
+  feedback      Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@index([feedbackId])
+}
+
 model ReminderConfig {
-  id                String            @id
+  id                String            @id @db.VarChar(64)
   enabled           Boolean           @default(false)
   reminderHour      Int               @default(9)
   reminderMinute    Int               @default(0)
@@ -82,18 +154,18 @@ model ReminderConfig {
   quietStartMinute  Int               @default(0)
   quietEndHour      Int               @default(8)
   quietEndMinute    Int               @default(0)
-  reminderText      String
-  lastTriggeredDate String?
-  updatedAt         DateTime          @updatedAt
+  reminderText      String            @db.VarChar(255)
+  lastTriggeredDate String?           @db.VarChar(32)
+  updatedAt         DateTime          @updatedAt @db.DateTime(3)
   pushLogs          ReminderPushLog[]
 }
 
 model ReminderPushLog {
-  id               String         @id
-  reminderConfigId String
-  triggeredAt      DateTime
-  message          String
-  status           String
+  id               String         @id @db.VarChar(64)
+  reminderConfigId String         @db.VarChar(64)
+  triggeredAt      DateTime       @default(now()) @db.DateTime(3)
+  message          String         @db.VarChar(255)
+  status           String         @db.VarChar(32)
   reminderConfig   ReminderConfig @relation(fields: [reminderConfigId], references: [id], onDelete: Cascade)
 
   @@index([triggeredAt])

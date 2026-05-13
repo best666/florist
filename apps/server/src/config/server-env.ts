@@ -8,6 +8,13 @@ export interface ServerEnvSource {
   readonly CORS_ORIGIN?: string;
   readonly DATABASE_URL?: string;
   readonly MYSQL_URL?: string;
+  readonly DATABASE_ENCRYPTION_KEY?: string;
+  readonly DATABASE_SSL_ENABLED?: string;
+  readonly BACKUP_CRON?: string;
+  readonly BACKUP_DIR?: string;
+  readonly BACKUP_RETENTION_DAYS?: string;
+  readonly THROTTLE_TTL_MS?: string;
+  readonly THROTTLE_LIMIT?: string;
   readonly AI_PROXY_BASE_URL?: string;
   readonly AI_PROXY_API_KEY?: string;
 }
@@ -17,6 +24,13 @@ export interface ServerEnvConfig {
   readonly globalPrefix: string;
   readonly corsOrigin: string;
   readonly databaseUrl: string;
+  readonly databaseEncryptionKey: string;
+  readonly databaseSslEnabled: boolean;
+  readonly backupCron: string;
+  readonly backupDir: string;
+  readonly backupRetentionDays: number;
+  readonly throttleTtlMs: number;
+  readonly throttleLimit: number;
   readonly aiProxyBaseUrl: string;
   readonly aiProxyApiKey: string;
 }
@@ -25,7 +39,14 @@ export const SERVER_ENV_DEFAULTS = {
   port: 3000,
   globalPrefix: 'api',
   corsOrigin: 'http://localhost:9000',
-  databaseUrl: 'file:./prisma/florist.db',
+  databaseUrl: 'mysql://florist:florist123@127.0.0.1:3306/florist?connection_limit=5',
+  databaseEncryptionKey: 'replace-with-32-char-secret-key',
+  databaseSslEnabled: false,
+  backupCron: '0 30 3 * * *',
+  backupDir: 'var/backups',
+  backupRetentionDays: 7,
+  throttleTtlMs: 60_000,
+  throttleLimit: 120,
   aiProxyBaseUrl: 'https://example.com',
   aiProxyApiKey: 'replace-with-local-key',
 } as const;
@@ -50,6 +71,14 @@ function normalizeString(value: string | undefined, fallback: string): string {
 function normalizeNumber(value: string | undefined, fallback: number): number {
   const parsedValue = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsedValue) ? parsedValue : fallback;
+}
+
+function normalizeBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (!value) {
+    return fallback;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
 }
 
 export function getServerEnvFilePaths(nodeEnv?: string): string[] {
@@ -81,6 +110,34 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       SERVER_ENV_DEFAULTS.corsOrigin,
     ),
     databaseUrl,
+    databaseEncryptionKey: normalizeString(
+      envSource.DATABASE_ENCRYPTION_KEY,
+      SERVER_ENV_DEFAULTS.databaseEncryptionKey,
+    ),
+    databaseSslEnabled: normalizeBoolean(
+      envSource.DATABASE_SSL_ENABLED,
+      SERVER_ENV_DEFAULTS.databaseSslEnabled,
+    ),
+    backupCron: normalizeString(
+      envSource.BACKUP_CRON,
+      SERVER_ENV_DEFAULTS.backupCron,
+    ),
+    backupDir: normalizeString(
+      envSource.BACKUP_DIR,
+      SERVER_ENV_DEFAULTS.backupDir,
+    ),
+    backupRetentionDays: normalizeNumber(
+      envSource.BACKUP_RETENTION_DAYS,
+      SERVER_ENV_DEFAULTS.backupRetentionDays,
+    ),
+    throttleTtlMs: normalizeNumber(
+      envSource.THROTTLE_TTL_MS,
+      SERVER_ENV_DEFAULTS.throttleTtlMs,
+    ),
+    throttleLimit: normalizeNumber(
+      envSource.THROTTLE_LIMIT,
+      SERVER_ENV_DEFAULTS.throttleLimit,
+    ),
     aiProxyBaseUrl: normalizeString(
       envSource.AI_PROXY_BASE_URL,
       SERVER_ENV_DEFAULTS.aiProxyBaseUrl,
@@ -104,6 +161,13 @@ export function validateServerEnv(
     CORS_ORIGIN: parsedEnv.corsOrigin,
     DATABASE_URL: parsedEnv.databaseUrl,
     MYSQL_URL: parsedEnv.databaseUrl,
+    DATABASE_ENCRYPTION_KEY: parsedEnv.databaseEncryptionKey,
+    DATABASE_SSL_ENABLED: String(parsedEnv.databaseSslEnabled),
+    BACKUP_CRON: parsedEnv.backupCron,
+    BACKUP_DIR: parsedEnv.backupDir,
+    BACKUP_RETENTION_DAYS: String(parsedEnv.backupRetentionDays),
+    THROTTLE_TTL_MS: String(parsedEnv.throttleTtlMs),
+    THROTTLE_LIMIT: String(parsedEnv.throttleLimit),
     AI_PROXY_BASE_URL: parsedEnv.aiProxyBaseUrl,
     AI_PROXY_API_KEY: parsedEnv.aiProxyApiKey,
   };

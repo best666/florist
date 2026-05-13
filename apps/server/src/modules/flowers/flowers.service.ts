@@ -4,6 +4,7 @@ import type { Flower, FlowerImage, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { createEntityId } from '../../common/utils/entity-id';
 import { UpsertFlowerDto } from './dto/upsert-flower.dto';
+import { UsersService } from '../users/users.service';
 
 const FLOWER_RECYCLE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -41,6 +42,8 @@ function mapFlower(flower: FlowerWithImages): IFlower {
     placement: flower.placement as IFlower['placement'],
     careDifficulty: flower.careDifficulty as IFlower['careDifficulty'],
     careStatus: flower.careStatus as IFlower['careStatus'],
+    ...(toIsoString(flower.purchasedAt) ? { purchasedAt: flower.purchasedAt!.toISOString() } : {}),
+    ...(typeof flower.priceInCents === 'number' ? { priceInCents: flower.priceInCents } : {}),
     ...(flower.note ? { note: flower.note } : {}),
     images: flower.images.map(mapImage),
     ...(toIsoString(flower.lastWateredAt) ? { lastWateredAt: flower.lastWateredAt!.toISOString() } : {}),
@@ -55,18 +58,23 @@ function mapFlower(flower: FlowerWithImages): IFlower {
 
 @Injectable()
 export class FlowersService {
-  public constructor(private readonly prisma: PrismaService) {}
+  public constructor(
+    private readonly prisma: PrismaService,
+    private readonly usersService: UsersService,
+  ) {}
 
   public async getFlowerCenter(): Promise<FlowerCenterResponse> {
+    const userId = await this.usersService.ensureDefaultUserId();
+
     await this.cleanupRecycleBin();
 
     const flowers = await this.prisma.flower.findMany({
-      where: { isDeleted: false },
+      where: { userId, isDeleted: false },
       include: { images: true },
       orderBy: { updatedAt: 'desc' },
     });
     const recycleBin = await this.prisma.flower.findMany({
-      where: { isDeleted: true },
+      where: { userId, isDeleted: true },
       include: { images: true },
       orderBy: { updatedAt: 'desc' },
     });
@@ -78,8 +86,9 @@ export class FlowersService {
   }
 
   public async getFlowerById(flowerId: string): Promise<IFlower> {
-    const flower = await this.prisma.flower.findUnique({
-      where: { id: flowerId },
+    const userId = await this.usersService.ensureDefaultUserId();
+    const flower = await this.prisma.flower.findFirst({
+      where: { id: flowerId, userId },
       include: { images: true },
     });
 
@@ -91,20 +100,24 @@ export class FlowersService {
   }
 
   public async upsertFlower(payload: UpsertFlowerDto, flowerId?: string): Promise<IFlower> {
+    const userId = await this.usersService.ensureDefaultUserId();
     const existingFlower = flowerId
-      ? await this.prisma.flower.findUnique({ where: { id: flowerId } })
+      ? await this.prisma.flower.findFirst({ where: { id: flowerId, userId } })
       : null;
     const nextId = existingFlower?.id ?? createEntityId('flower');
     const now = new Date();
 
     const flowerData: Prisma.FlowerUncheckedCreateInput = {
       id: nextId,
+      userId,
       name: payload.name.trim(),
       nickname: normalizeOptionalString(payload.nickname),
       category: payload.category,
       placement: payload.placement,
       careDifficulty: payload.careDifficulty,
       careStatus: payload.careStatus,
+      purchasedAt: payload.purchasedAt ? new Date(payload.purchasedAt) : null,
+      priceInCents: payload.priceInCents ?? null,
       note: normalizeOptionalString(payload.note),
       lastWateredAt: payload.lastWateredAt ? new Date(payload.lastWateredAt) : null,
       lastFertilizedAt: payload.lastFertilizedAt ? new Date(payload.lastFertilizedAt) : null,
@@ -144,7 +157,8 @@ export class FlowersService {
   }
 
   public async moveFlowerToRecycleBin(flowerId: string): Promise<IFlower> {
-    const flower = await this.prisma.flower.findUnique({ where: { id: flowerId } });
+    const userId = await this.usersService.ensureDefaultUserId();
+    const flower = await this.prisma.flower.findFirst({ where: { id: flowerId, userId } });
 
     if (!flower) {
       throw new NotFoundException('植株不存在');
@@ -166,8 +180,11 @@ export class FlowersService {
   }
 
   public async cleanupRecycleBin(): Promise<void> {
+    const userId = await this.usersService.ensureDefaultUserId();
+
     await this.prisma.flower.deleteMany({
       where: {
+        userId,
         isDeleted: true,
         pendingPurgeAt: {
           lte: new Date(),
