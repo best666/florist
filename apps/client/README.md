@@ -16,3 +16,11 @@
 - pnpm dev:mp-weixin
 - pnpm build:h5
 - pnpm build:mp-weixin
+
+## 环境变量策略
+
+- 仓库只提交 `env/*.example` 示例文件，不提交真实 `.env` 配置。
+- 当前本地运行优先使用 `env/.env`、`env/.env.development`、`env/.env.production`。
+- 若接入真实 AppID、线上地址或密钥，只保留在本地环境文件，不进入 git。
+- 新成员初始化时，可参考示例文件补齐本地环境变量。
+

@@ -9,3 +9,11 @@ pnpm-lock.yaml
 apps/client/dist
 apps/client/unpackage
 apps/server/dist
+apps/client/env/.env
+apps/client/env/.env.development
+apps/client/env/.env.production
+apps/client/env/.env.local
+apps/client/env/.env.*.local
+apps/server/.env
+apps/server/.env.local
+apps/server/.env.*.local
