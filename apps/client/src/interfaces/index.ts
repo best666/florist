@@ -1,4 +1,5 @@
 export * from './base'
+export * from './components'
 export * from './enums'
 export * from './http'
 export * from './platform'
