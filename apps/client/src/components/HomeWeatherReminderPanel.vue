@@ -6,7 +6,7 @@ import type {
   UseLocationWeatherReminderState,
   WeatherCareTip,
 } from '@/interfaces'
-import { formatDateTime, getTimeAgo } from '@/utils'
+import { buildFlowerWeatherContextTips, formatDateTime } from '@/utils'
 import TagLabel from './TagLabel.vue'
 
 interface WeatherMetricItem {
@@ -89,60 +89,7 @@ const quietHoursText = computed(() => {
   return `${String(config.startHour).padStart(2, '0')}:${String(config.startMinute).padStart(2, '0')} - ${String(config.endHour).padStart(2, '0')}:${String(config.endMinute).padStart(2, '0')}`
 })
 
-const contextualTips = computed<ReadonlyArray<WeatherCareTip>>(() => {
-  const weather = props.state.weather
-
-  if (!weather) {
-    return []
-  }
-
-  const outdoorFlowers = props.flowers.filter(flower => flower.placement === 'outdoor_open_air')
-  const balconyFlowers = props.flowers.filter(flower => flower.placement === 'indoor_balcony')
-  const wateringNeededFlowers = props.flowers.filter(flower => flower.careStatus === 'watering-needed')
-  const recentlyWateredFlowers = props.flowers.filter((flower) => {
-    if (!flower.lastWateredAt) {
-      return false
-    }
-
-    return Date.now() - new Date(flower.lastWateredAt).getTime() <= 24 * 60 * 60 * 1000
-  })
-
-  const tips: WeatherCareTip[] = []
-
-  if (weather.temperature >= 32 && (outdoorFlowers.length > 0 || balconyFlowers.length > 0)) {
-    tips.push({
-      id: 'flower-heat-link',
-      title: '高温和阳台植物更需要留意',
-      description: `你有 ${outdoorFlowers.length + balconyFlowers.length} 盆阳光位植物，今天高温时段可以先挪到散射光位置，避免叶面晒伤。`,
-    })
-  }
-
-  if (weather.precipitationProbability >= 60 && recentlyWateredFlowers.length > 0) {
-    tips.push({
-      id: 'flower-rain-link',
-      title: '刚浇过水的植物今天别急着再补水',
-      description: `有 ${recentlyWateredFlowers.length} 盆植物在最近一天内刚浇过水，今天又可能下雨，先观察盆土会更稳妥。`,
-    })
-  }
-
-  if (weather.humidity <= 35 && wateringNeededFlowers.length > 0) {
-    tips.push({
-      id: 'flower-dry-link',
-      title: '空气偏干，缺水植物可以优先照顾',
-      description: `目前有 ${wateringNeededFlowers.length} 盆植物处于缺水状态，今天可以优先巡查叶片和盆土，别让它们继续硬撑。`,
-    })
-  }
-
-  if (weather.windSpeed >= 25 && outdoorFlowers.length > 0) {
-    tips.push({
-      id: 'flower-wind-link',
-      title: '户外植物今天记得放稳一点',
-      description: `你有 ${outdoorFlowers.length} 盆户外植物，风力偏大时可以靠墙或靠角落放置，减少倒伏和折枝风险。`,
-    })
-  }
-
-  return tips.slice(0, 3)
-})
+const contextualTips = computed(() => buildFlowerWeatherContextTips(props.flowers, props.state.weather))
 
 const mergedTips = computed<ReadonlyArray<WeatherCareTip>>(() => [
   ...props.state.weatherTips,

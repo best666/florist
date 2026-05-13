@@ -7,14 +7,13 @@ import { useFlowerStore, useRecordStore } from '@/store'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
-  getFlowerCategoryLabel,
   getRecordActionLabel,
   type LocalFlower,
   type LocalRecord,
   type RecordFormValues,
   type TimelineItem,
 } from '@/interfaces'
-import { formatDateTime, getTimeAgo } from '@/utils'
+import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo } from '@/utils'
 
 interface RecordTimelineGroup {
   readonly dateLabel: string
@@ -49,10 +48,12 @@ const selectedFlower = computed<LocalFlower | null>(() => (
   selectedFlowerId.value ? flowerStore.getFlowerById(selectedFlowerId.value) : null
 ))
 
+const flowerDisplayNameMap = computed(() => createFlowerDisplayNameMap(activeFlowers.value))
+
 const recordTabs = computed(() => ([
   {
     key: 'single' as const,
-    label: selectedFlower.value ? `${selectedFlower.value.nickname || selectedFlower.value.name} 的记录` : '单植株记录',
+    label: selectedFlower.value ? `${flowerDisplayNameMap.value[selectedFlower.value.id] ?? selectedFlower.value.name} 的记录` : '单植株记录',
   },
   {
     key: 'all' as const,
@@ -82,9 +83,7 @@ const groupedTimeline = computed<ReadonlyArray<RecordTimelineGroup>>(() => {
       tone: 'mint',
       tags: [
         `${record.cooldownMinutes} 分钟冷却`,
-        flowerStore.getFlowerById(record.flowerId)?.nickname
-        || flowerStore.getFlowerById(record.flowerId)?.name
-        || '未命名植株',
+        flowerDisplayNameMap.value[record.flowerId] ?? '未命名植株',
       ],
     }
 
@@ -116,9 +115,7 @@ const latestUndoText = computed(() => {
     return ''
   }
 
-  const flowerName = flowerStore.getFlowerById(latestUndoableRecord.value.flowerId)?.nickname
-    || flowerStore.getFlowerById(latestUndoableRecord.value.flowerId)?.name
-    || '这盆植物'
+  const flowerName = flowerDisplayNameMap.value[latestUndoableRecord.value.flowerId] ?? '这盆植物'
 
   return `${flowerName} 的${getRecordActionLabel(latestUndoableRecord.value.actionType)}刚刚记录成功，5 分钟内都可以温柔撤回。`
 })
@@ -289,7 +286,7 @@ async function handleUndoLatestRecord(): Promise<void> {
               hover-class="opacity-92"
               @tap="handleSwitchFlower(flower.id)"
             >
-              {{ flower.nickname || flower.name }}
+              {{ flowerDisplayNameMap[flower.id] ?? flower.name }}
             </button>
           </view>
         </scroll-view>

@@ -258,34 +258,37 @@ function handleToggleReminderEnabled(): void {
   })
 }
 
+function normalizeBoundedNumber(value: number, maxValue: number): number {
+  return Math.min(Math.max(value, 0), maxValue)
+}
+
+function updateQuietHour(key: 'startHour' | 'endHour', value: number): void {
+  updateReminderConfig({
+    quietHours: {
+      ...weatherReminderState.reminderConfig.quietHours,
+      [key]: normalizeBoundedNumber(value, 23),
+    },
+  })
+}
+
 function handleReminderHourInput(nextHour: number): void {
   updateReminderConfig({
-    reminderHour: Math.min(Math.max(nextHour, 0), 23),
+    reminderHour: normalizeBoundedNumber(nextHour, 23),
   })
 }
 
 function handleReminderMinuteInput(nextMinute: number): void {
   updateReminderConfig({
-    reminderMinute: Math.min(Math.max(nextMinute, 0), 59),
+    reminderMinute: normalizeBoundedNumber(nextMinute, 59),
   })
 }
 
 function handleQuietStartHourInput(nextHour: number): void {
-  updateReminderConfig({
-    quietHours: {
-      ...weatherReminderState.reminderConfig.quietHours,
-      startHour: Math.min(Math.max(nextHour, 0), 23),
-    },
-  })
+  updateQuietHour('startHour', nextHour)
 }
 
 function handleQuietEndHourInput(nextHour: number): void {
-  updateReminderConfig({
-    quietHours: {
-      ...weatherReminderState.reminderConfig.quietHours,
-      endHour: Math.min(Math.max(nextHour, 0), 23),
-    },
-  })
+  updateQuietHour('endHour', nextHour)
 }
 
 function handleReminderTextInput(reminderText: string): void {
