@@ -4,6 +4,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
+import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
+import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import {
   FLOWER_CATEGORY_OPTIONS,
@@ -25,6 +27,15 @@ import { formatDateTime, getTimeAgo } from '@/utils'
 const flowerStore = useFlowerStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
 const { isOffline } = useNetworkStatus()
+const {
+  state: weatherReminderState,
+  locateCity,
+  requestLocationPermissionAgain,
+  searchCities,
+  setManualCity,
+  refreshWeather,
+  updateReminderConfig,
+} = useLocationWeatherReminder()
 
 const viewportWidth = ref(uni.getSystemInfoSync().windowWidth)
 const isFormVisible = ref(false)
@@ -41,6 +52,13 @@ const filterState = reactive<FlowerFilterState>({
 
 onShow(async () => {
   await flowerStore.initializeGarden()
+
+  if (weatherReminderState.city) {
+    await refreshWeather(weatherReminderState.city)
+    return
+  }
+
+  await locateCity()
 })
 
 const formInitialValue = computed<FlowerFormValues>(() => {
@@ -233,6 +251,48 @@ function resetFilters(): void {
   filterState.placement = 'all'
   filterState.careStatus = 'all'
 }
+
+function handleToggleReminderEnabled(): void {
+  updateReminderConfig({
+    enabled: !weatherReminderState.reminderConfig.enabled,
+  })
+}
+
+function handleReminderHourInput(nextHour: number): void {
+  updateReminderConfig({
+    reminderHour: Math.min(Math.max(nextHour, 0), 23),
+  })
+}
+
+function handleReminderMinuteInput(nextMinute: number): void {
+  updateReminderConfig({
+    reminderMinute: Math.min(Math.max(nextMinute, 0), 59),
+  })
+}
+
+function handleQuietStartHourInput(nextHour: number): void {
+  updateReminderConfig({
+    quietHours: {
+      ...weatherReminderState.reminderConfig.quietHours,
+      startHour: Math.min(Math.max(nextHour, 0), 23),
+    },
+  })
+}
+
+function handleQuietEndHourInput(nextHour: number): void {
+  updateReminderConfig({
+    quietHours: {
+      ...weatherReminderState.reminderConfig.quietHours,
+      endHour: Math.min(Math.max(nextHour, 0), 23),
+    },
+  })
+}
+
+function handleReminderTextInput(reminderText: string): void {
+  updateReminderConfig({
+    reminderText,
+  })
+}
 </script>
 
 <template>
@@ -273,6 +333,21 @@ function resetFilters(): void {
       >
         当前网络不可用，已自动切到本地离线使用。你现在的新增、编辑、图片缓存和删除操作都会保存在设备加密存储里。
       </view>
+
+      <HomeWeatherReminderPanel
+        :state="weatherReminderState"
+        :flowers="activeFlowers"
+        @locate="locateCity"
+        @open-permission="requestLocationPermissionAgain"
+        @search-city="searchCities"
+        @select-city="setManualCity"
+        @toggle-reminder="handleToggleReminderEnabled"
+        @update-reminder-hour="handleReminderHourInput"
+        @update-reminder-minute="handleReminderMinuteInput"
+        @update-quiet-start-hour="handleQuietStartHourInput"
+        @update-quiet-end-hour="handleQuietEndHourInput"
+        @update-reminder-text="handleReminderTextInput"
+      />
 
       <view class="grid grid-cols-3 gap-3">
         <view

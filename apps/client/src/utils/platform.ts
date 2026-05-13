@@ -1,5 +1,6 @@
 import { ClientPlatform } from '@/interfaces'
 import type {
+  DeviceLocation,
   H5ViewportInfo,
   Nullable,
   WeixinMiniProgramInfo,
@@ -64,4 +65,20 @@ export function openPlatformPermissionSetting(): Promise<boolean> {
 
   return Promise.resolve(false)
   // #endif
+}
+
+export function getCurrentDeviceLocation(): Promise<Nullable<DeviceLocation>> {
+  return new Promise((resolve) => {
+    uni.getLocation({
+      type: 'gcj02',
+      success: (result) => {
+        resolve({
+          latitude: result.latitude,
+          longitude: result.longitude,
+          ...(typeof result.accuracy === 'number' ? { accuracy: result.accuracy } : {}),
+        })
+      },
+      fail: () => resolve(null),
+    })
+  })
 }
