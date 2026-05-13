@@ -15,3 +15,4 @@ setActivePinia(store)
 export default store
 
 export * from './app'
+export * from './flowers'

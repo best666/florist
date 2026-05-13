@@ -2,7 +2,8 @@ import type { Maybe, Nil, Nullable } from '@/interfaces'
 
 const IMAGE_EXTENSION_REGEXP = /\.(png|jpe?g|gif|webp|bmp|heic|svg)$/i
 const IMAGE_BASE64_REGEXP = /^data:image\/(png|jpe?g|gif|webp|bmp|svg\+xml);base64,/i
-const IMAGE_URL_REGEXP = /^(https?:\/\/|blob:|data:image\/|\/|\.\/|\.\.\/)/i
+const IMAGE_URL_REGEXP = /^(https?:\/\/|blob:|data:image\/|wxfile:\/\/|file:\/\/|\/|\.\/|\.\.\/)/i
+const ILLEGAL_CHARACTER_REGEXP = /[<>\\{}\[\]^`|]/
 
 export function isNil(value: unknown): value is Nil {
   return value === null || value === undefined
@@ -58,6 +59,10 @@ export function isValidImageSource(value: Maybe<string>): value is string {
   }
 
   return IMAGE_URL_REGEXP.test(value) || isValidImageExtension(value)
+}
+
+export function containsIllegalCharacters(value: Maybe<string>): boolean {
+  return typeof value === 'string' && ILLEGAL_CHARACTER_REGEXP.test(value)
 }
 
 export function ensureNullable<TValue>(

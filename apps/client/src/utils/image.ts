@@ -89,6 +89,24 @@ async function blobFromImageSource(filePath: string): Promise<Blob> {
   return response.blob()
 }
 
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader()
+
+    fileReader.onload = () => {
+      if (typeof fileReader.result === 'string') {
+        resolve(fileReader.result)
+        return
+      }
+
+      reject(new Error('blob to data url failed'))
+    }
+
+    fileReader.onerror = () => reject(new Error('blob to data url failed'))
+    fileReader.readAsDataURL(blob)
+  })
+}
+
 async function canvasToBlob(
   canvas: HTMLCanvasElement,
   quality: number,
@@ -273,6 +291,67 @@ export function revokeCompressedImageUrl(filePath: string): void {
   // #ifdef H5
   if (filePath.startsWith('blob:')) {
     URL.revokeObjectURL(filePath)
+  }
+  // #endif
+}
+
+/**
+ * 将图片缓存为可离线复用的本地资源。
+ * H5 侧转换为 data url，小程序侧保存为本地持久文件。
+ */
+export async function cacheImageForOffline(filePath: string): Promise<string> {
+  if (!isValidImageSource(filePath)) {
+    return filePath
+  }
+
+  // #ifdef H5
+  if (filePath.startsWith('data:image/')) {
+    return filePath
+  }
+
+  try {
+    const imageBlob = await blobFromImageSource(filePath)
+    return await blobToDataUrl(imageBlob)
+  }
+  catch {
+    return filePath
+  }
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  try {
+    const saveResult = await uni.saveFile({
+      tempFilePath: filePath,
+    })
+
+    return saveResult.savedFilePath
+  }
+  catch {
+    return filePath
+  }
+  // #endif
+
+  return filePath
+}
+
+export async function removeCachedImage(filePath: string): Promise<void> {
+  // #ifdef H5
+  revokeCompressedImageUrl(filePath)
+  return
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  if (!filePath.startsWith('wxfile://')) {
+    return
+  }
+
+  try {
+    await uni.removeSavedFile({
+      filePath,
+    })
+  }
+  catch {
+    // 持久化文件可能已被系统清理，此处忽略即可。
   }
   // #endif
 }
