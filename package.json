@@ -1,0 +1,13 @@
+{
+  "name": "florist",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.10.0",
+  "scripts": {
+    "dev:client:h5": "pnpm --filter @florist/client dev:h5",
+    "dev:client:mp-weixin": "pnpm --filter @florist/client dev:mp-weixin",
+    "dev:server": "pnpm --filter @florist/server start:dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

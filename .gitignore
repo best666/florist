@@ -1,0 +1,11 @@
+node_modules
+.DS_Store
+dist
+.turbo
+.idea
+.vscode/*.code-workspace
+coverage
+pnpm-lock.yaml
+apps/client/dist
+apps/client/unpackage
+apps/server/dist
