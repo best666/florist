@@ -14,6 +14,8 @@ apps/client/env/.env.development
 apps/client/env/.env.production
 apps/client/env/.env.local
 apps/client/env/.env.*.local
-apps/server/.env
-apps/server/.env.local
-apps/server/.env.*.local
+apps/server/env/.env
+apps/server/env/.env.development
+apps/server/env/.env.production
+apps/server/env/.env.local
+apps/server/env/.env.*.local

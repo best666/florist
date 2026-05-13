@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { appConfig } from './config/app.config';
+import { getServerEnvFilePaths, validateServerEnv } from './config/server-env';
 import { AiProxyModule } from './modules/ai-proxy/ai-proxy.module';
 import { HealthModule } from './modules/health/health.module';
 import { ImageModule } from './modules/image/image.module';
@@ -6,6 +9,20 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
-  imports: [HealthModule, AiProxyModule, ImageModule, SyncModule, SchedulerModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      envFilePath: getServerEnvFilePaths(process.env.NODE_ENV),
+      load: [appConfig],
+      validate: validateServerEnv,
+      expandVariables: true,
+    }),
+    HealthModule,
+    AiProxyModule,
+    ImageModule,
+    SyncModule,
+    SchedulerModule,
+  ],
 })
 export class AppModule {}

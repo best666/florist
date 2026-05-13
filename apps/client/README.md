@@ -20,6 +20,7 @@
 ## 环境变量策略
 
 - 仓库只提交 `env/*.example` 示例文件，不提交真实 `.env` 配置。
-- 当前本地运行优先使用 `env/.env`、`env/.env.development`、`env/.env.production`。
+- 当前本地运行统一从 `env` 目录读取，按 `env/.env` -> `env/.env.{mode}` 的顺序合并配置。
+- 新成员初始化时，先复制 `env/.env.example` 为 `env/.env`，再按需复制 `env/.env.development.example`、`env/.env.production.example` 做环境覆盖。
 - 若接入真实 AppID、线上地址或密钥，只保留在本地环境文件，不进入 git。
-- 新成员初始化时，可参考示例文件补齐本地环境变量。
+- `vite.config.ts` 和运行时代码共用同一套 env 解析逻辑，默认值与示例文件保持一致。

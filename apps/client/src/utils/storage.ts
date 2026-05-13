@@ -1,6 +1,6 @@
-import CryptoJS from 'crypto-js'
 import type { Nullable, StoragePayload } from '@/interfaces'
 import { getStorageAesKey, getStorageNamespace } from './env'
+import { decryptTextByAes, encryptTextByAes } from './crypto'
 
 export interface PersistStorageOptions {
   expiresInMs?: number
@@ -15,28 +15,20 @@ function resolveStorageKey(key: string, namespace?: string): string {
   return `${resolveNamespace(namespace)}:${key}`
 }
 
-function createSecretKey() {
-  return CryptoJS.enc.Utf8.parse(getStorageAesKey().padEnd(32, '0').slice(0, 32))
-}
-
-function createSecretIv() {
-  return CryptoJS.enc.Utf8.parse(getStorageAesKey().padEnd(16, '0').slice(0, 16))
-}
-
 function encrypt(raw: string): string {
-  return CryptoJS.AES.encrypt(raw, createSecretKey(), {
-    iv: createSecretIv(),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  }).toString()
+  return (
+    encryptTextByAes(raw, {
+      secretKey: getStorageAesKey(),
+    }) ?? ''
+  )
 }
 
 function decrypt(cipherText: string): string {
-  return CryptoJS.AES.decrypt(cipherText, createSecretKey(), {
-    iv: createSecretIv(),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  }).toString(CryptoJS.enc.Utf8)
+  return (
+    decryptTextByAes(cipherText, {
+      secretKey: getStorageAesKey(),
+    }) ?? ''
+  )
 }
 
 function createPayload<TValue>(

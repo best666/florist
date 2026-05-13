@@ -5,26 +5,26 @@ import UniManifest from '@uni-helper/vite-plugin-uni-manifest'
 import UniPages from '@uni-helper/vite-plugin-uni-pages'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
+import { resolveClientEnv } from './env.config'
 import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, path.resolve(process.cwd(), 'env'))
-  const isProduction = mode === 'production'
-  const appBase = env.VITE_APP_PUBLIC_BASE ?? '/'
-  const appPort = Number.parseInt(env.VITE_APP_PORT ?? '9000', 10)
-  const proxyPrefix = env.VITE_APP_PROXY_PREFIX ?? '/api'
-  const serverBaseUrl = env.VITE_SERVER_BASEURL ?? 'http://localhost:3000'
+  const env = resolveClientEnv({
+    MODE: mode,
+    ...loadEnv(mode, path.resolve(process.cwd(), 'env')),
+  })
+  const isProduction = env.mode === 'production'
   const serverConfig = {
     host: '0.0.0.0',
-    port: appPort,
-    ...(env.VITE_APP_PROXY_ENABLE === 'true'
+    port: env.appPort,
+    ...(env.proxyEnabled
       ? {
           proxy: {
-            [proxyPrefix]: {
-              target: serverBaseUrl,
+            [env.proxyPrefix]: {
+              target: env.serverBaseUrl,
               changeOrigin: true,
               rewrite: (requestPath: string) =>
-                requestPath.replace(new RegExp(`^${proxyPrefix}`), ''),
+                requestPath.replace(new RegExp(`^${env.proxyPrefix}`), ''),
             },
           },
         }
@@ -39,12 +39,11 @@ export default defineConfig(({ mode }) => {
       ? {
           terserOptions: {
             compress: {
-              drop_console: env.VITE_DELETE_CONSOLE === 'true',
+              drop_console: env.deleteConsole,
               drop_debugger: true,
-              pure_funcs:
-                env.VITE_DELETE_CONSOLE === 'true'
-                  ? ['console.log', 'console.info', 'console.debug']
-                  : [],
+              pure_funcs: env.deleteConsole
+                ? ['console.log', 'console.info', 'console.debug']
+                : [],
             },
             mangle: true,
             format: {
@@ -57,7 +56,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     envDir: './env',
-    base: appBase,
+    base: env.appPublicBase,
     plugins: [
       UniManifest(),
       UniPages({

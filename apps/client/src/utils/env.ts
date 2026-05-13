@@ -1,7 +1,10 @@
 import { AppEnvMode } from '@/interfaces'
+import { resolveClientEnv } from '../../env.config'
+
+const clientEnv = resolveClientEnv(import.meta.env)
 
 export function getAppMode(): AppEnvMode {
-  const mode = import.meta.env.MODE
+  const mode = clientEnv.mode
 
   if (mode === AppEnvMode.Production) {
     return AppEnvMode.Production
@@ -15,17 +18,21 @@ export function getAppMode(): AppEnvMode {
 }
 
 export function getApiBaseUrl(): string {
-  return import.meta.env.VITE_SERVER_BASEURL.replace(/\/$/, '')
+  return clientEnv.serverBaseUrl
 }
 
 export function shouldUseProxy(): boolean {
-  return import.meta.env.VITE_APP_PROXY_ENABLE === 'true'
+  return clientEnv.proxyEnabled
 }
 
 export function getStorageNamespace(): string {
-  return import.meta.env.VITE_STORAGE_NAMESPACE
+  return clientEnv.storageNamespace
 }
 
 export function getStorageAesKey(): string {
-  return import.meta.env.VITE_STORAGE_AES_KEY
+  return clientEnv.storageAesKey
+}
+
+export function getClientEnvConfig() {
+  return clientEnv
 }
