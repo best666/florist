@@ -128,6 +128,9 @@ model Feedback {
   id            String          @id @db.VarChar(64)
   userId        String          @db.VarChar(64)
   contentCipher String          @db.Text
+  replyCipher   String?         @db.Text
+  repliedAt     DateTime?       @db.DateTime(3)
+  repliedBy     String?         @db.VarChar(64)
   status        String          @db.VarChar(32)
   createdAt     DateTime        @default(now()) @db.DateTime(3)
   updatedAt     DateTime        @updatedAt @db.DateTime(3)
@@ -180,6 +183,14 @@ model ProxyRequestLog {
 
   @@index([scope, createdAt])
   @@index([userId, createdAt])
+}
+
+model AppConfig {
+  key       String   @id @db.VarChar(64)
+  value     Json
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+
+  @@index([updatedAt])
 }
 
 model ReminderConfig {

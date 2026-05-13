@@ -12,6 +12,7 @@ import { CommonInfraModule } from './common/modules/common-infra.module';
 import { getServerEnvFilePaths, validateServerEnv } from './config/server-env';
 import { AiProxyModule } from './modules/ai-proxy/ai-proxy.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { BackupsModule } from './modules/backups/backups.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { FlowersModule } from './modules/flowers/flowers.module';
@@ -39,6 +40,7 @@ import { WeatherModule } from './modules/weather/weather.module';
     CommonInfraModule,
     PrismaModule,
     HealthModule,
+    AdminModule,
     AuthModule,
     UsersModule,
     FlowersModule,

@@ -1,6 +1,8 @@
 import type { IFeedback } from '@florist/contracts';
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
+import { AdminAuthGuard } from '../admin/admin-auth.guard';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { QueryFeedbackDto, UpdateFeedbackStatusDto } from './dto/query-feedback.dto';
 import { FeedbackService } from './feedback.service';
@@ -15,6 +17,7 @@ export class FeedbackController {
   }
 
   @Get('admin')
+  @UseGuards(AdminAuthGuard)
   public listAdminFeedbacks(@Query() query: QueryFeedbackDto): Promise<ReadonlyArray<IFeedback>> {
     return this.feedbackService.listAdminFeedbacks(query);
   }
@@ -28,6 +31,7 @@ export class FeedbackController {
   }
 
   @Patch(':id/status')
+  @UseGuards(AdminAuthGuard)
   public updateFeedbackStatus(
     @Param('id') feedbackId: string,
     @Body() payload: UpdateFeedbackStatusDto,

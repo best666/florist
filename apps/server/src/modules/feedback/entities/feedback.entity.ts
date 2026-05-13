@@ -17,11 +17,22 @@ export function toFeedbackEntity(
   feedback: FeedbackWithImages,
   cryptoService: DatabaseCryptoService,
 ): IFeedback {
+  const reply = cryptoService.decryptText(feedback.replyCipher);
+
   return {
     id: feedback.id,
     content: cryptoService.decryptText(feedback.contentCipher) ?? '',
     images: feedback.images.map(mapImage),
     createdAt: feedback.createdAt.toISOString(),
     status: feedback.status as IFeedback['status'],
+    ...(reply && feedback.repliedAt && feedback.repliedBy
+      ? {
+          reply: {
+            content: reply,
+            repliedAt: feedback.repliedAt.toISOString(),
+            repliedBy: feedback.repliedBy,
+          },
+        }
+      : {}),
   };
 }

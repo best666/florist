@@ -23,6 +23,10 @@ export interface ServerEnvSource {
   readonly WEATHER_CACHE_TTL_MS?: string;
   readonly IMAGE_CACHE_TTL_MS?: string;
   readonly REQUEST_LOG_RETENTION_DAYS?: string;
+  readonly ADMIN_USERNAME?: string;
+  readonly ADMIN_PASSWORD?: string;
+  readonly ADMIN_SESSION_SECRET?: string;
+  readonly ADMIN_SESSION_TTL_MS?: string;
 }
 
 export interface ServerEnvConfig {
@@ -45,6 +49,10 @@ export interface ServerEnvConfig {
   readonly weatherCacheTtlMs: number;
   readonly imageCacheTtlMs: number;
   readonly requestLogRetentionDays: number;
+  readonly adminUsername: string;
+  readonly adminPassword: string;
+  readonly adminSessionSecret: string;
+  readonly adminSessionTtlMs: number;
 }
 
 export const SERVER_ENV_DEFAULTS = {
@@ -67,6 +75,10 @@ export const SERVER_ENV_DEFAULTS = {
   weatherCacheTtlMs: 15 * 60 * 1000,
   imageCacheTtlMs: 60 * 60 * 1000,
   requestLogRetentionDays: 14,
+  adminUsername: 'admin',
+  adminPassword: 'change-this-admin-password',
+  adminSessionSecret: 'replace-with-admin-session-secret',
+  adminSessionTtlMs: 12 * 60 * 60 * 1000,
 } as const;
 
 function normalizeServerMode(nodeEnv?: string): ServerRuntimeMode {
@@ -188,6 +200,22 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.REQUEST_LOG_RETENTION_DAYS,
       SERVER_ENV_DEFAULTS.requestLogRetentionDays,
     ),
+    adminUsername: normalizeString(
+      envSource.ADMIN_USERNAME,
+      SERVER_ENV_DEFAULTS.adminUsername,
+    ),
+    adminPassword: normalizeString(
+      envSource.ADMIN_PASSWORD,
+      SERVER_ENV_DEFAULTS.adminPassword,
+    ),
+    adminSessionSecret: normalizeString(
+      envSource.ADMIN_SESSION_SECRET,
+      SERVER_ENV_DEFAULTS.adminSessionSecret,
+    ),
+    adminSessionTtlMs: normalizeNumber(
+      envSource.ADMIN_SESSION_TTL_MS,
+      SERVER_ENV_DEFAULTS.adminSessionTtlMs,
+    ),
   };
 }
 
@@ -218,6 +246,10 @@ export function validateServerEnv(
     WEATHER_CACHE_TTL_MS: String(parsedEnv.weatherCacheTtlMs),
     IMAGE_CACHE_TTL_MS: String(parsedEnv.imageCacheTtlMs),
     REQUEST_LOG_RETENTION_DAYS: String(parsedEnv.requestLogRetentionDays),
+    ADMIN_USERNAME: parsedEnv.adminUsername,
+    ADMIN_PASSWORD: parsedEnv.adminPassword,
+    ADMIN_SESSION_SECRET: parsedEnv.adminSessionSecret,
+    ADMIN_SESSION_TTL_MS: String(parsedEnv.adminSessionTtlMs),
   };
 }
 

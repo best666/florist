@@ -62,6 +62,7 @@ export class BackupsService {
       records: await this.prisma.careRecord.findMany({ include: { images: true }, orderBy: { createdAt: 'desc' } }),
       members: await this.prisma.member.findMany({ orderBy: { updatedAt: 'desc' } }),
       feedbacks: await this.prisma.feedback.findMany({ include: { images: true }, orderBy: { updatedAt: 'desc' } }),
+      appConfigs: await this.prisma.appConfig.findMany({ orderBy: { updatedAt: 'desc' } }),
     };
     const fileName = `florist-backup-${payload.createdAt.replace(/[:.]/g, '-')}.bak`;
     const filePath = path.join(backupDir, fileName);

@@ -5,6 +5,7 @@
 ## 当前能力
 
 - 分层模块：controller / service / dto，用户、植株云端、记录、会员、反馈、备份均已落库。
+- 内置极简电脑端管理后台，覆盖用户/会员、植株统计、反馈回复、广告位配置、AI 与接口监控。
 - Prisma 数据源已切换为 MySQL，字段与共享 contracts 对齐。
 - 默认本地用户机制，未接鉴权前也能稳定写入 userId 关联数据。
 - 全局能力：CORS、请求校验、限流、请求追踪、响应压缩。
@@ -43,6 +44,7 @@
 - 本地运行统一从 env 目录读取，按 env/.env -> env/.env.{mode} 的顺序合并配置。
 - 新成员初始化时，先复制 env/.env.example 为 env/.env，再按需复制 env/.env.development.example、env/.env.production.example 做环境覆盖。
 - 数据库连接串、加密密钥、AI 中转密钥等敏感配置不得入库。
+- 管理后台默认走 ADMIN_USERNAME、ADMIN_PASSWORD、ADMIN_SESSION_SECRET，生产环境必须替换默认值。
 
 ## 数据库说明
 
@@ -75,4 +77,5 @@
 - 修改 prisma/schema.prisma 后先执行 pnpm --filter @florist/server prisma:generate。
 - 当前 migrations 基线已改为 MySQL；数据库可用后，优先执行 pnpm --filter @florist/server prisma:migrate:deploy 落表。
 - 若本机 Docker daemon 未启动，db:up 会失败；先启动 Docker Desktop 或等效容器服务，再执行迁移链路。
+- 管理后台入口为 /admin，接口走 /api/admin/*，依赖 HttpOnly Cookie 鉴权。
 - 当前 build:prod 会在 nest build 后对 dist 下 js 文件做最小化压缩。

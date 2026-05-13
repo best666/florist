@@ -121,6 +121,9 @@ CREATE TABLE `Feedback` (
     `id` VARCHAR(64) NOT NULL,
     `userId` VARCHAR(64) NOT NULL,
     `contentCipher` TEXT NOT NULL,
+    `replyCipher` TEXT NULL,
+    `repliedAt` DATETIME(3) NULL,
+    `repliedBy` VARCHAR(64) NULL,
     `status` VARCHAR(32) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -177,6 +180,16 @@ CREATE TABLE `ProxyRequestLog` (
     INDEX `ProxyRequestLog_scope_createdAt_idx`(`scope`, `createdAt`),
     INDEX `ProxyRequestLog_userId_createdAt_idx`(`userId`, `createdAt`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `AppConfig` (
+    `key` VARCHAR(64) NOT NULL,
+    `value` JSON NOT NULL,
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    INDEX `AppConfig_updatedAt_idx`(`updatedAt`),
+    PRIMARY KEY (`key`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
