@@ -502,6 +502,12 @@ function handleOpenMemberCenter(): void {
     url: '/pages/member/index',
   })
 }
+
+function handleOpenShop(): void {
+  uni.navigateTo({
+    url: '/pages/shop/index',
+  })
+}
 </script>
 
 <template>
@@ -552,6 +558,31 @@ function handleOpenMemberCenter(): void {
           <button class="mt-3 h-[84rpx] rounded-[22rpx] border-none bg-[#EFD69E] text-sm font-800 text-slate-700"
             hover-class="opacity-92" @tap="handleOpenMemberCenter">
             打开会员中心
+          </button>
+        </view>
+      </view>
+
+      <view class="card-soft rounded-[32rpx] bg-white">
+        <view class="flex items-center justify-between gap-3">
+          <view>
+            <text class="block text-base font-800 text-slate-800">
+              极简养花商城
+            </text>
+            <text class="mt-1 block text-sm text-slate-500">
+              只看花盆、肥料、药剂、工具和营养土，不做站内交易。
+            </text>
+          </view>
+          <TagLabel :text="memberStore.hasAdFree ? '会员已隐藏广告' : '弱广告静态展示'"
+            :tone="memberStore.hasAdFree ? 'mint' : 'cream'" />
+        </view>
+
+        <view class="mt-4 rounded-[24rpx] bg-[#F7F4EC] px-4 py-4">
+          <text class="block text-sm leading-6 text-slate-600">
+            商城只做种草引流，不做满减、弹窗、开屏和诱导式消费。商品卡片会直接跳到外链，小程序端会复制链接到剪贴板。
+          </text>
+          <button class="mt-3 h-[84rpx] rounded-[22rpx] border-none bg-[#E6F1E8] text-sm font-800 text-slate-700"
+            hover-class="opacity-92" @tap="handleOpenShop">
+            打开极简商城
           </button>
         </view>
       </view>
@@ -615,7 +646,7 @@ function handleOpenMemberCenter(): void {
 
         <view class="mt-4 rounded-[24rpx] bg-[#F6F7FB] px-4 py-4 text-sm leading-6 text-slate-600">
           {{ memberStore.hasCloudBackup ? '当前账号已解锁云端备份资格。受限于现阶段尚未接入真实云存储，这里先保留本地加密备份流程。' :
-          '当前为免费版，只提供本地加密备份。开通会员后可获得云端备份资格。' }}
+            '当前为免费版，只提供本地加密备份。开通会员后可获得云端备份资格。' }}
         </view>
 
         <view class="mt-4 grid grid-cols-2 gap-3">

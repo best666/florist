@@ -444,6 +444,12 @@ function handleOpenMine(): void {
     url: '/pages/mine/index',
   })
 }
+
+function handleOpenShop(): void {
+  uni.navigateTo({
+    url: '/pages/shop/index',
+  })
+}
 </script>
 
 <template>
@@ -476,6 +482,7 @@ function handleOpenMine(): void {
           <SubmitBtn text="成长相册" variant="mint" :block="false" @click="handleOpenGrowthAlbum" />
           <SubmitBtn text="AI 看病与出差方案" variant="blush" :block="false" @click="handleOpenPlantDoctor" />
           <SubmitBtn text="个人中心" variant="mint" :block="false" @click="handleOpenMine" />
+          <SubmitBtn text="极简商城" variant="sunrise" :block="false" @click="handleOpenShop" />
         </view>
       </view>
 

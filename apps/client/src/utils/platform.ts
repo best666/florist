@@ -82,3 +82,40 @@ export function getCurrentDeviceLocation(): Promise<Nullable<DeviceLocation>> {
     })
   })
 }
+
+export async function openExternalLink(url: string): Promise<boolean> {
+  // #ifdef H5
+  try {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return true
+  }
+  catch {
+    return false
+  }
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  try {
+    await new Promise<void>((resolve, reject) => {
+      uni.setClipboardData({
+        data: url,
+        success: () => resolve(),
+        fail: () => reject(new Error('copy failed')),
+      })
+    })
+
+    uni.showModal({
+      title: '外链已复制',
+      content: '小程序不能直接打开外部商城，链接已复制。你可以粘贴到浏览器或微信对话框后再打开。',
+      showCancel: false,
+      confirmText: '知道了',
+    })
+    return true
+  }
+  catch {
+    return false
+  }
+  // #endif
+
+  return false
+}
