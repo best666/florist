@@ -63,10 +63,9 @@ export class FlowersService {
     private readonly usersService: UsersService,
   ) {}
 
-  public async getFlowerCenter(): Promise<FlowerCenterResponse> {
-    const userId = await this.usersService.ensureDefaultUserId();
-
-    await this.cleanupRecycleBin();
+  public async getFlowerCenter(userIdInput?: string): Promise<FlowerCenterResponse> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    await this.cleanupRecycleBin(userId);
 
     const flowers = await this.prisma.flower.findMany({
       where: { userId, isDeleted: false },
@@ -85,8 +84,8 @@ export class FlowersService {
     };
   }
 
-  public async getFlowerById(flowerId: string): Promise<IFlower> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async getFlowerById(flowerId: string, userIdInput?: string): Promise<IFlower> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const flower = await this.prisma.flower.findFirst({
       where: { id: flowerId, userId },
       include: { images: true },
@@ -99,8 +98,8 @@ export class FlowersService {
     return mapFlower(flower);
   }
 
-  public async upsertFlower(payload: UpsertFlowerDto, flowerId?: string): Promise<IFlower> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async upsertFlower(payload: UpsertFlowerDto, flowerId?: string, userIdInput?: string): Promise<IFlower> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const existingFlower = flowerId
       ? await this.prisma.flower.findFirst({ where: { id: flowerId, userId } })
       : null;
@@ -153,11 +152,11 @@ export class FlowersService {
       }
     });
 
-    return this.getFlowerById(nextId);
+    return this.getFlowerById(nextId, userId);
   }
 
-  public async moveFlowerToRecycleBin(flowerId: string): Promise<IFlower> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async moveFlowerToRecycleBin(flowerId: string, userIdInput?: string): Promise<IFlower> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const flower = await this.prisma.flower.findFirst({ where: { id: flowerId, userId } });
 
     if (!flower) {
@@ -176,11 +175,135 @@ export class FlowersService {
       },
     });
 
-    return this.getFlowerById(flowerId);
+    return this.getFlowerById(flowerId, userId);
   }
 
-  public async cleanupRecycleBin(): Promise<void> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async listRecycleBin(userIdInput?: string): Promise<ReadonlyArray<IFlower>> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const recycleBin = await this.prisma.flower.findMany({
+      where: { userId, isDeleted: true },
+      include: { images: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return recycleBin.map(mapFlower);
+  }
+
+  public async restoreFlower(flowerId: string, userIdInput?: string): Promise<IFlower> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const flower = await this.prisma.flower.findFirst({
+      where: { id: flowerId, userId, isDeleted: true },
+    });
+
+    if (!flower) {
+      throw new NotFoundException('回收站中未找到该植株');
+    }
+
+    await this.prisma.flower.update({
+      where: { id: flowerId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        pendingPurgeAt: null,
+      },
+    });
+
+    return this.getFlowerById(flowerId, userId);
+  }
+
+  public async purgeFlower(flowerId: string, userIdInput?: string): Promise<{ removedId: string }> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const flower = await this.prisma.flower.findFirst({
+      where: { id: flowerId, userId },
+    });
+
+    if (!flower) {
+      throw new NotFoundException('植株不存在');
+    }
+
+    await this.prisma.flower.delete({ where: { id: flowerId } });
+
+    return { removedId: flowerId };
+  }
+
+  public async syncFlowersBatch(
+    payloads: ReadonlyArray<{
+      id: string;
+      createdAt: string;
+      updatedAt?: string;
+      isDeleted?: boolean;
+      deletedAt?: string;
+      pendingPurgeAt?: string;
+    } & UpsertFlowerDto>,
+    userIdInput?: string,
+  ): Promise<FlowerCenterResponse> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+
+    await this.prisma.$transaction(async (transaction) => {
+      for (const payload of payloads) {
+        await transaction.flower.upsert({
+          where: { id: payload.id },
+          update: {
+            userId,
+            name: payload.name.trim(),
+            nickname: normalizeOptionalString(payload.nickname),
+            category: payload.category,
+            placement: payload.placement,
+            careDifficulty: payload.careDifficulty,
+            careStatus: payload.careStatus,
+            purchasedAt: payload.purchasedAt ? new Date(payload.purchasedAt) : null,
+            priceInCents: payload.priceInCents ?? null,
+            note: normalizeOptionalString(payload.note),
+            lastWateredAt: payload.lastWateredAt ? new Date(payload.lastWateredAt) : null,
+            lastFertilizedAt: payload.lastFertilizedAt ? new Date(payload.lastFertilizedAt) : null,
+            updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : new Date(),
+            isDeleted: payload.isDeleted ?? false,
+            deletedAt: payload.deletedAt ? new Date(payload.deletedAt) : null,
+            pendingPurgeAt: payload.pendingPurgeAt ? new Date(payload.pendingPurgeAt) : null,
+          },
+          create: {
+            id: payload.id,
+            userId,
+            name: payload.name.trim(),
+            nickname: normalizeOptionalString(payload.nickname),
+            category: payload.category,
+            placement: payload.placement,
+            careDifficulty: payload.careDifficulty,
+            careStatus: payload.careStatus,
+            purchasedAt: payload.purchasedAt ? new Date(payload.purchasedAt) : null,
+            priceInCents: payload.priceInCents ?? null,
+            note: normalizeOptionalString(payload.note),
+            lastWateredAt: payload.lastWateredAt ? new Date(payload.lastWateredAt) : null,
+            lastFertilizedAt: payload.lastFertilizedAt ? new Date(payload.lastFertilizedAt) : null,
+            createdAt: new Date(payload.createdAt),
+            updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : new Date(payload.createdAt),
+            isDeleted: payload.isDeleted ?? false,
+            deletedAt: payload.deletedAt ? new Date(payload.deletedAt) : null,
+            pendingPurgeAt: payload.pendingPurgeAt ? new Date(payload.pendingPurgeAt) : null,
+          },
+        });
+
+        await transaction.flowerImage.deleteMany({ where: { flowerId: payload.id } });
+
+        if (payload.images.length > 0) {
+          await transaction.flowerImage.createMany({
+            data: payload.images.map(image => ({
+              id: image.id || createEntityId('flower-image'),
+              flowerId: payload.id,
+              url: image.url,
+              compressedUrl: image.compressedUrl ?? null,
+              createdAt: new Date(image.createdAt),
+            })),
+          });
+        }
+      }
+    });
+
+    return this.getFlowerCenter(userId);
+  }
+
+  public async cleanupRecycleBin(userIdInput?: string): Promise<void> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
 
     await this.prisma.flower.deleteMany({
       where: {

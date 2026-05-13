@@ -5,6 +5,7 @@ import { createEntityId } from '../../common/utils/entity-id';
 import { FlowersService } from '../flowers/flowers.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecordDto } from './dto/create-record.dto';
+import { SyncRecordDto } from './dto/sync-record.dto';
 import { UsersService } from '../users/users.service';
 
 const RECORD_UNDO_WINDOW_MS = 5 * 60 * 1000;
@@ -72,8 +73,8 @@ export class RecordsService {
     private readonly usersService: UsersService,
   ) {}
 
-  public async getRecordCenter(): Promise<RecordCenterResponse> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async getRecordCenter(userIdInput?: string): Promise<RecordCenterResponse> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const [records, undoLogs] = await Promise.all([
       this.prisma.careRecord.findMany({
         where: { userId },
@@ -92,9 +93,9 @@ export class RecordsService {
     };
   }
 
-  public async addRecord(payload: CreateRecordDto): Promise<IRecord> {
-    const userId = await this.usersService.ensureDefaultUserId();
-    await this.flowersService.getFlowerById(payload.flowerId);
+  public async addRecord(payload: CreateRecordDto, userIdInput?: string): Promise<IRecord> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    await this.flowersService.getFlowerById(payload.flowerId, userId);
 
     const recordId = createEntityId('record');
     const createdAt = new Date();
@@ -159,8 +160,8 @@ export class RecordsService {
     return mapRecord(record);
   }
 
-  public async undoRecord(recordId: string): Promise<{ succeeded: boolean, center: RecordCenterResponse }> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async undoRecord(recordId: string, userIdInput?: string): Promise<{ succeeded: boolean, center: RecordCenterResponse }> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const targetRecord = await this.prisma.careRecord.findFirst({
       where: { id: recordId, userId },
       include: { images: true },
@@ -169,14 +170,14 @@ export class RecordsService {
     if (!targetRecord) {
       return {
         succeeded: false,
-        center: await this.getRecordCenter(),
+        center: await this.getRecordCenter(userId),
       };
     }
 
     if (Date.now() - targetRecord.createdAt.getTime() > RECORD_UNDO_WINDOW_MS) {
       return {
         succeeded: false,
-        center: await this.getRecordCenter(),
+        center: await this.getRecordCenter(userId),
       };
     }
 
@@ -231,7 +232,57 @@ export class RecordsService {
 
     return {
       succeeded: true,
-      center: await this.getRecordCenter(),
+      center: await this.getRecordCenter(userId),
     };
+  }
+
+  public async syncRecordsBatch(
+    payloads: ReadonlyArray<SyncRecordDto>,
+    userIdInput?: string,
+  ): Promise<RecordCenterResponse> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+
+    await this.prisma.$transaction(async (transaction) => {
+      for (const payload of payloads) {
+        await this.flowersService.getFlowerById(payload.flowerId, userId);
+
+        await transaction.careRecord.upsert({
+          where: { id: payload.id },
+          update: {
+            userId,
+            flowerId: payload.flowerId,
+            actionType: payload.actionType,
+            note: normalizeOptionalString(payload.note),
+            cooldownMinutes: payload.cooldownMinutes,
+            createdAt: new Date(payload.createdAt),
+          },
+          create: {
+            id: payload.id,
+            userId,
+            flowerId: payload.flowerId,
+            actionType: payload.actionType,
+            note: normalizeOptionalString(payload.note),
+            cooldownMinutes: payload.cooldownMinutes,
+            createdAt: new Date(payload.createdAt),
+          },
+        });
+
+        await transaction.careRecordImage.deleteMany({ where: { recordId: payload.id } });
+
+        if (payload.images.length > 0) {
+          await transaction.careRecordImage.createMany({
+            data: payload.images.map(image => ({
+              id: image.id || createEntityId('record-image'),
+              recordId: payload.id,
+              url: image.url,
+              compressedUrl: image.compressedUrl ?? null,
+              createdAt: new Date(image.createdAt),
+            })),
+          });
+        }
+      }
+    });
+
+    return this.getRecordCenter(userId);
   }
 }

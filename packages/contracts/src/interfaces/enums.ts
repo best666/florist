@@ -115,6 +115,14 @@ export enum FeedbackStatus {
 }
 
 /**
+ * 登录来源枚举。
+ */
+export enum UserLoginType {
+  AnonymousLocal = 'anonymous_local',
+  WechatMiniProgram = 'wechat_mini_program',
+}
+
+/**
  * 用户状态枚举。
  */
 export enum UserStatus {

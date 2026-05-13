@@ -1,6 +1,8 @@
 import type { IFeedback } from '@florist/contracts';
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { QueryFeedbackDto, UpdateFeedbackStatusDto } from './dto/query-feedback.dto';
 import { FeedbackService } from './feedback.service';
 
 @Controller('feedback')
@@ -8,12 +10,28 @@ export class FeedbackController {
   public constructor(private readonly feedbackService: FeedbackService) {}
 
   @Get()
-  public listFeedbacks(): Promise<ReadonlyArray<IFeedback>> {
-    return this.feedbackService.listCurrentUserFeedbacks();
+  public listFeedbacks(@CurrentUserId() userId?: string): Promise<ReadonlyArray<IFeedback>> {
+    return this.feedbackService.listCurrentUserFeedbacks(userId);
+  }
+
+  @Get('admin')
+  public listAdminFeedbacks(@Query() query: QueryFeedbackDto): Promise<ReadonlyArray<IFeedback>> {
+    return this.feedbackService.listAdminFeedbacks(query);
   }
 
   @Post()
-  public createFeedback(@Body() payload: CreateFeedbackDto): Promise<IFeedback> {
-    return this.feedbackService.createFeedback(payload);
+  public createFeedback(
+    @CurrentUserId() userId: string | undefined,
+    @Body() payload: CreateFeedbackDto,
+  ): Promise<IFeedback> {
+    return this.feedbackService.createFeedback(payload, userId);
+  }
+
+  @Patch(':id/status')
+  public updateFeedbackStatus(
+    @Param('id') feedbackId: string,
+    @Body() payload: UpdateFeedbackStatusDto,
+  ): Promise<IFeedback> {
+    return this.feedbackService.updateFeedbackStatus(feedbackId, payload);
   }
 }

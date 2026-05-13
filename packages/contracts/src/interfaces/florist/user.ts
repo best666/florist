@@ -1,5 +1,5 @@
 import type { IsoDateTimeString } from './common'
-import type { UserStatus } from '../enums'
+import type { UserLoginType, UserStatus } from '../enums'
 
 /**
  * 用户基础信息实体，适配前端用户态与后端基础资料接口。
@@ -15,8 +15,12 @@ export interface IUser {
   readonly city?: string
   /** 手机号脱敏展示值。 */
   readonly phoneMasked?: string
+  /** 登录来源。 */
+  readonly loginType?: UserLoginType
   /** 用户状态。 */
   readonly status: UserStatus
+  /** 最近登录时间。 */
+  readonly lastLoginAt?: IsoDateTimeString
   /** 创建时间。 */
   readonly createdAt: IsoDateTimeString
   /** 更新时间。 */

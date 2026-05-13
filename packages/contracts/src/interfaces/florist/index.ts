@@ -1,5 +1,6 @@
 export * from './ai-advice'
 export * from './ai-diagnosis'
+export * from './auth'
 export * from './common'
 export * from './flower'
 export * from './feedback'

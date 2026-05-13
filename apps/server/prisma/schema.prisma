@@ -10,9 +10,12 @@ model User {
   id                String          @id @db.VarChar(64)
   nickname          String          @db.VarChar(80)
   avatarUrl         String?         @db.VarChar(512)
+  loginType         String          @db.VarChar(32)
+  wechatOpenIdHash  String?         @unique @db.VarChar(64)
   cityCipher        String?         @db.Text
   phoneMaskedCipher String?         @db.Text
   status            String          @db.VarChar(32)
+  lastLoginAt       DateTime?       @db.DateTime(3)
   createdAt         DateTime        @default(now()) @db.DateTime(3)
   updatedAt         DateTime        @updatedAt @db.DateTime(3)
   flowers           Flower[]
@@ -21,6 +24,7 @@ model User {
   members           Member[]
   feedbacks         Feedback[]
 
+  @@index([loginType, updatedAt])
   @@index([status, updatedAt])
 }
 

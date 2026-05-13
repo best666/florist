@@ -6,6 +6,7 @@ import { createEntityId } from '../../common/utils/entity-id';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { QueryFeedbackDto, UpdateFeedbackStatusDto } from './dto/query-feedback.dto';
 import { toFeedbackEntity } from './entities/feedback.entity';
 
 @Injectable()
@@ -16,8 +17,8 @@ export class FeedbackService {
     private readonly cryptoService: DatabaseCryptoService,
   ) {}
 
-  public async listCurrentUserFeedbacks(): Promise<ReadonlyArray<IFeedback>> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async listCurrentUserFeedbacks(userIdInput?: string): Promise<ReadonlyArray<IFeedback>> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const feedbacks = await this.prisma.feedback.findMany({
       where: { userId },
       include: { images: true },
@@ -27,8 +28,18 @@ export class FeedbackService {
     return feedbacks.map(feedback => toFeedbackEntity(feedback, this.cryptoService));
   }
 
-  public async createFeedback(payload: CreateFeedbackDto): Promise<IFeedback> {
-    const userId = await this.usersService.ensureDefaultUserId();
+  public async listAdminFeedbacks(query: QueryFeedbackDto): Promise<ReadonlyArray<IFeedback>> {
+    const feedbacks = await this.prisma.feedback.findMany({
+      ...(query.status ? { where: { status: query.status } } : {}),
+      include: { images: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return feedbacks.map(feedback => toFeedbackEntity(feedback, this.cryptoService));
+  }
+
+  public async createFeedback(payload: CreateFeedbackDto, userIdInput?: string): Promise<IFeedback> {
+    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
     const feedbackId = createEntityId('feedback');
     const now = new Date();
 
@@ -55,6 +66,22 @@ export class FeedbackService {
           })),
         });
       }
+    });
+
+    const feedback = await this.prisma.feedback.findUniqueOrThrow({
+      where: { id: feedbackId },
+      include: { images: true },
+    });
+
+    return toFeedbackEntity(feedback, this.cryptoService);
+  }
+
+  public async updateFeedbackStatus(feedbackId: string, payload: UpdateFeedbackStatusDto): Promise<IFeedback> {
+    await this.prisma.feedback.update({
+      where: { id: feedbackId },
+      data: {
+        status: payload.status,
+      },
     });
 
     const feedback = await this.prisma.feedback.findUniqueOrThrow({

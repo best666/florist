@@ -5,6 +5,7 @@ import { DatabaseCryptoService } from '../../../common/services/database-crypto.
 export function toUserEntity(user: User, cryptoService: DatabaseCryptoService): IUser {
   const city = cryptoService.decryptText(user.cityCipher);
   const phoneMasked = cryptoService.decryptText(user.phoneMaskedCipher);
+  const loginType = user.loginType as NonNullable<IUser['loginType']>;
 
   return {
     id: user.id,
@@ -12,7 +13,9 @@ export function toUserEntity(user: User, cryptoService: DatabaseCryptoService): 
     ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
     ...(city ? { city } : {}),
     ...(phoneMasked ? { phoneMasked } : {}),
+    ...(user.loginType ? { loginType } : {}),
     status: user.status as IUser['status'],
+    ...(user.lastLoginAt ? { lastLoginAt: user.lastLoginAt.toISOString() } : {}),
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };
