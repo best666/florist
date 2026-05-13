@@ -181,6 +181,13 @@ function handleCardAction(flower: LocalFlower, actionKey: string): void {
     return
   }
 
+  if (actionKey === 'record') {
+    uni.navigateTo({
+      url: `/pages/record/index?flowerId=${flower.id}`,
+    })
+    return
+  }
+
   if (actionKey === 'delete') {
     handleDeleteFlower(flower)
   }
@@ -385,6 +392,7 @@ function resetFilters(): void {
           :status="flower.careStatus"
           :care-items="buildFlowerCardItems(flower)"
           :quick-actions="[
+            { key: 'record', label: '去打卡' },
             { key: 'preview', label: '预览图片', disabled: flower.images.length === 0 },
             { key: 'delete', label: '移入回收站' },
           ]"

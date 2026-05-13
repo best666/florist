@@ -4,6 +4,7 @@ import ConfirmPopup from './ConfirmPopup.vue'
 import EmptyEmpty from './EmptyEmpty.vue'
 import FlowerCard from './FlowerCard.vue'
 import FlowerFormPopup from './FlowerFormPopup.vue'
+import RecordCheckinPopup from './RecordCheckinPopup.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 import TimeLine from './TimeLine.vue'
@@ -14,6 +15,7 @@ const globalComponents = {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
+  RecordCheckinPopup,
   SubmitBtn,
   TagLabel,
   TimeLine,
@@ -31,6 +33,7 @@ export {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
+  RecordCheckinPopup,
   SubmitBtn,
   TagLabel,
   TimeLine,
