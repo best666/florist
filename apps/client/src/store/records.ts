@@ -213,6 +213,22 @@ export const useRecordStore = defineStore(
           return true
         }
       },
+
+      replaceLocalCenter(center: { records: ReadonlyArray<LocalRecord>, undoLogs: ReadonlyArray<RecordUndoLog> }): void {
+        hydrateRecordCenter(this, {
+          records: [...center.records],
+          undoLogs: [...center.undoLogs],
+          initialized: true,
+        })
+        this.initialized = true
+      },
+
+      async clearLocalRecords(): Promise<void> {
+        await Promise.all(this.records.map(async record => releaseRecordImages(record.images)))
+        this.records = []
+        this.undoLogs = []
+        this.initialized = true
+      },
     },
     persist: true,
   },

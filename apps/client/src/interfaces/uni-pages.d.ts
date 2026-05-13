@@ -5,9 +5,13 @@
 
 type _LocationUrl =
   "/pages/index/index" |
+  "/pages/about/index" |
   "/pages/album/index" |
   "/pages/doctor/index" |
-  "/pages/record/index";
+  "/pages/mine/index" |
+  "/pages/privacy/index" |
+  "/pages/record/index" |
+  "/pages/user-agreement/index";
 
 interface NavigateToOptions {
   url: _LocationUrl;

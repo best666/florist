@@ -438,6 +438,12 @@ function handleOpenPlantDoctor(): void {
     url: `/pages/doctor/index${suffix}`,
   })
 }
+
+function handleOpenMine(): void {
+  uni.navigateTo({
+    url: '/pages/mine/index',
+  })
+}
 </script>
 
 <template>
@@ -469,6 +475,7 @@ function handleOpenPlantDoctor(): void {
           <SubmitBtn text="新增植株" variant="sunrise" :block="false" @click="handleOpenCreate" />
           <SubmitBtn text="成长相册" variant="mint" :block="false" @click="handleOpenGrowthAlbum" />
           <SubmitBtn text="AI 看病与出差方案" variant="blush" :block="false" @click="handleOpenPlantDoctor" />
+          <SubmitBtn text="个人中心" variant="mint" :block="false" @click="handleOpenMine" />
         </view>
       </view>
 

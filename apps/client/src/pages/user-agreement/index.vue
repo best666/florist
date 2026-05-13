@@ -1,0 +1,44 @@
+<template>
+  <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-[#FFF9F6] via-[#F8F6F3] to-[#FFFDF8]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
+      <view
+        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#F7E1D6] via-[#FFF5E9] to-[#E6F0F7] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(233,206,191,0.22)]">
+        <view class="badge-soft bg-white/80 text-slate-600">用户协议</view>
+        <view class="mt-3 text-[42rpx] font-900 leading-tight text-slate-800">
+          在继续使用前，请确认你理解本应用以本地工具和辅助建议为主
+        </view>
+        <view class="mt-2 text-sm leading-6 text-slate-600">
+          本协议用于明确产品能力边界、使用责任和数据管理方式，帮助你更稳定地使用养花人。
+        </view>
+      </view>
+
+      <view class="card-soft rounded-[32rpx] bg-white">
+        <text class="block text-base font-800 text-slate-800">1. 使用边界</text>
+        <text class="mt-3 block text-sm leading-7 text-slate-600">
+          养花人提供植物管理、打卡记录、提醒、AI 建议、病虫害识别、相册和备份恢复等功能。这些内容用于日常养护辅助，不构成专业农业、医疗或财务建议。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx] bg-white">
+        <text class="block text-base font-800 text-slate-800">2. 用户责任</text>
+        <text class="mt-3 block text-sm leading-7 text-slate-600">
+          你需要对自行录入的植物信息、反馈内容、备份串保管和恢复操作负责。如果你选择清空或覆盖本地数据，请先自行确认备份完整性。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx] bg-white">
+        <text class="block text-base font-800 text-slate-800">3. 服务可用性</text>
+        <text class="mt-3 block text-sm leading-7 text-slate-600">
+          某些功能依赖天气服务、AI 中转或系统权限。当相关服务不可用时，应用会尽量提供本地兜底，但不承诺所有联网能力始终稳定可达。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx] bg-white">
+        <text class="block text-base font-800 text-slate-800">4. 协议更新</text>
+        <text class="mt-3 block text-sm leading-7 text-slate-600">
+          当产品能力、权限使用方式或数据处理策略发生明显变化时，我们会同步更新说明页面。继续使用即视为你接受更新后的协议内容。
+        </text>
+      </view>
+    </view>
+  </view>
+</template>

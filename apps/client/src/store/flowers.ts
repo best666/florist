@@ -178,6 +178,45 @@ export const useFlowerStore = defineStore(
         }
       },
 
+      async restoreFlowerFromRecycleBin(flowerId: string): Promise<boolean> {
+        const targetFlower = this.recycleBin.find(flower => flower.id === flowerId)
+
+        if (!targetFlower) {
+          return false
+        }
+
+        const { deletedAt: _deletedAt, pendingPurgeAt: _pendingPurgeAt, ...flowerSnapshot } = targetFlower
+        const restoredFlower: LocalFlower = {
+          ...flowerSnapshot,
+          isDeleted: false,
+          updatedAt: new Date().toISOString(),
+        }
+
+        this.recycleBin = this.recycleBin.filter(flower => flower.id !== flowerId)
+        this.flowers = sortFlowers([...this.flowers, restoredFlower])
+        return true
+      },
+
+      replaceLocalCenter(center: { flowers: ReadonlyArray<LocalFlower>, recycleBin: ReadonlyArray<LocalFlower> }): void {
+        hydrateFlowerCenter(this, {
+          flowers: [...center.flowers],
+          recycleBin: [...center.recycleBin],
+          initialized: true,
+        })
+        this.initialized = true
+      },
+
+      async clearLocalGarden(): Promise<void> {
+        await Promise.all([
+          ...this.flowers.map(async flower => releaseFlowerImages(flower.images)),
+          ...this.recycleBin.map(async flower => releaseFlowerImages(flower.images)),
+        ])
+
+        this.flowers = []
+        this.recycleBin = []
+        this.initialized = true
+      },
+
       async cleanupRecycleBin(): Promise<void> {
         const now = Date.now()
         const expiredFlowers = this.recycleBin.filter((flower) => {
