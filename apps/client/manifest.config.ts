@@ -31,6 +31,9 @@ export default defineManifestConfig({
     router: {
       base: appBase,
     },
+    devServer: {
+      port: Number(env.VITE_APP_PORT ?? 9000),
+    },
   },
   'mp-weixin': {
     appid: weixinAppId,
@@ -38,6 +41,7 @@ export default defineManifestConfig({
       urlCheck: false,
       es6: true,
       minified: true,
+      enhance: true,
     },
     optimization: {
       subPackages: true,

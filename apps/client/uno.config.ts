@@ -23,20 +23,47 @@ export default defineConfig({
     {
       getCSS: () => `
         :root {
-          --color-mint: #95E1D3;
-          --color-blush: #F8C8DC;
-          --color-cream: #FFF5E4;
-          --color-ivory: #FAFAFA;
-          --radius-card: 12px;
-          --shadow-soft: 0 12px 30px rgba(149, 225, 211, 0.18);
+          --color-mint: #92dccb;
+          --color-blush: #f2c8d7;
+          --color-cream: #fff1dc;
+          --color-ivory: #fff8f1;
+          --color-surface: #ffffff;
+          --radius-card: 28rpx;
+          --radius-pill: 999px;
+          --space-page-x: 24rpx;
+          --space-page-y: 24rpx;
+          --space-card: 24rpx;
+          --shadow-soft: 0 14rpx 32rpx rgba(148, 163, 184, 0.12);
+        }
+
+        html,
+        body,
+        #app {
+          min-height: 100%;
+          background: var(--color-ivory);
+          -webkit-text-size-adjust: 100%;
+          text-size-adjust: 100%;
+          overscroll-behavior: none;
+        }
+
+        body {
+          margin: 0;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          touch-action: manipulation;
+        }
+
+        body::-webkit-scrollbar {
+          width: 0;
+          height: 0;
         }
       `,
     },
   ],
   shortcuts: {
-    'page-shell': 'min-h-screen bg-app-ivory px-6 py-6 text-slate-700',
-    'card-soft': 'rounded-[var(--radius-card)] bg-white p-4 shadow-[var(--shadow-soft)]',
-    'badge-soft': 'inline-flex items-center rounded-full px-3 py-1 text-xs font-600',
+    'page-shell': 'min-h-screen bg-app-ivory px-[var(--space-page-x)] py-[var(--space-page-y)] text-slate-700',
+    'card-soft': 'rounded-[var(--radius-card)] bg-[var(--color-surface)] p-[var(--space-card)] shadow-[var(--shadow-soft)]',
+    'badge-soft': 'inline-flex items-center rounded-[var(--radius-pill)] px-3 py-1 text-xs font-600',
   },
   theme: {
     colors: {

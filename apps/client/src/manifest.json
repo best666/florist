@@ -1,5 +1,5 @@
 {
-  "name": "养花人开发版",
+  "name": "养花人",
   "appid": "__UNI__FLORIST",
   "description": "养花人花卉养护小程序",
   "versionName": "0.1.0",
@@ -36,7 +36,8 @@
     "setting": {
       "urlCheck": false,
       "es6": true,
-      "minified": true
+      "minified": true,
+      "enhance": true
     },
     "usingComponents": true,
     "optimization": {
@@ -60,6 +61,9 @@
   "h5": {
     "router": {
       "base": "/"
+    },
+    "devServer": {
+      "port": 9000
     }
   }
 }

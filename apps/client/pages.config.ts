@@ -3,9 +3,9 @@ import { defineUniPages } from '@uni-helper/vite-plugin-uni-pages'
 export default defineUniPages({
   globalStyle: {
     navigationBarTitleText: '养花人',
-    navigationBarBackgroundColor: '#FAFAFA',
+    navigationBarBackgroundColor: '#FFF8F1',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FFF8F1',
   },
   easycom: {
     autoscan: true,

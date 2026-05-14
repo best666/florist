@@ -34,6 +34,9 @@ export default defineConfig(({ mode }) => {
     sourcemap: false,
     target: 'es2018',
     cssCodeSplit: true,
+    cssMinify: isProduction,
+    reportCompressedSize: false,
+    assetsInlineLimit: 1024,
     minify: isProduction ? ('terser' as const) : false,
     ...(isProduction
       ? {
@@ -42,7 +45,7 @@ export default defineConfig(({ mode }) => {
               drop_console: env.deleteConsole,
               drop_debugger: true,
               pure_funcs: env.deleteConsole
-                ? ['console.log', 'console.info', 'console.debug']
+                ? ['console.log', 'console.info', 'console.debug', 'console.warn']
                 : [],
             },
             mangle: true,

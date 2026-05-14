@@ -22,6 +22,8 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   const appEnv = configService.getOrThrow<ServerEnvConfig>('app');
 
+  app.useLogger(appEnv.appLogLevels);
+
   app.enableShutdownHooks();
   app.setGlobalPrefix(appEnv.globalPrefix);
   app.enableCors({

@@ -1,6 +1,5 @@
 import type { App } from 'vue'
 import AppImage from './AppImage.vue'
-import AppSectionCard from './AppSectionCard.vue'
 import ConfirmPopup from './ConfirmPopup.vue'
 import EmptyEmpty from './EmptyEmpty.vue'
 import FlowerCard from './FlowerCard.vue'
@@ -16,7 +15,6 @@ import TimeLine from './TimeLine.vue'
 
 const globalComponents = {
   AppImage,
-  AppSectionCard,
   ConfirmPopup,
   EmptyEmpty,
   FlowerCard,
@@ -39,7 +37,6 @@ export function registerGlobalComponents(app: App): void {
 
 export {
   AppImage,
-  AppSectionCard,
   ConfirmPopup,
   EmptyEmpty,
   FlowerCard,

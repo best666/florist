@@ -6,13 +6,21 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { ServerEnvConfig } from '../../config/server-env';
 import { RequestMonitorService } from '../services/request-monitor.service';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
+  private readonly appEnv: ServerEnvConfig;
 
-  public constructor(private readonly requestMonitorService: RequestMonitorService) {}
+  public constructor(
+    configService: ConfigService,
+    private readonly requestMonitorService: RequestMonitorService,
+  ) {
+    this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
+  }
 
   public async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     const httpContext = host.switchToHttp();
@@ -26,14 +34,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
     const exceptionResponse = isHttpException ? exception.getResponse() : undefined;
-    const message = this.resolveMessage(exceptionResponse, exception);
+    const resolvedMessage = this.resolveMessage(exceptionResponse, exception);
+    const message = this.shouldHideInternalMessage(statusCode)
+      ? '服务暂时有点忙，请稍后再试。'
+      : resolvedMessage;
     const code = isHttpException ? `HTTP_${statusCode}` : 'INTERNAL_SERVER_ERROR';
     const requestId = response.getHeader?.('x-request-id');
 
     if (!isHttpException || statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
-        `${request.method ?? 'UNKNOWN'} ${request.url ?? '/'} ${message}`,
-        exception instanceof Error ? exception.stack : undefined,
+        `${request.method ?? 'UNKNOWN'} ${request.url ?? '/'} ${statusCode} ${resolvedMessage}`,
+        this.appEnv.exposeInternalErrorDetails && exception instanceof Error
+          ? exception.stack
+          : undefined,
       );
     }
 
@@ -52,6 +65,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       ...(requestId ? { requestId: String(requestId) } : {}),
     });
+  }
+
+  private shouldHideInternalMessage(statusCode: number): boolean {
+    return !this.appEnv.exposeInternalErrorDetails
+      && statusCode >= HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
   private resolveMessage(exceptionResponse: unknown, exception: unknown): string {

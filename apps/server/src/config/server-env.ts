@@ -1,4 +1,5 @@
 import path from 'node:path';
+import type { LogLevel } from '@nestjs/common';
 
 export type ServerRuntimeMode = 'development' | 'production' | 'test';
 
@@ -27,6 +28,8 @@ export interface ServerEnvSource {
   readonly ADMIN_PASSWORD?: string;
   readonly ADMIN_SESSION_SECRET?: string;
   readonly ADMIN_SESSION_TTL_MS?: string;
+  readonly APP_LOG_LEVELS?: string;
+  readonly EXPOSE_INTERNAL_ERROR_DETAILS?: string;
 }
 
 export interface ServerEnvConfig {
@@ -53,6 +56,8 @@ export interface ServerEnvConfig {
   readonly adminPassword: string;
   readonly adminSessionSecret: string;
   readonly adminSessionTtlMs: number;
+  readonly appLogLevels: LogLevel[];
+  readonly exposeInternalErrorDetails: boolean;
 }
 
 export const SERVER_ENV_DEFAULTS = {
@@ -79,6 +84,8 @@ export const SERVER_ENV_DEFAULTS = {
   adminPassword: 'change-this-admin-password',
   adminSessionSecret: 'replace-with-admin-session-secret',
   adminSessionTtlMs: 12 * 60 * 60 * 1000,
+  appLogLevels: ['log', 'warn', 'error', 'debug', 'verbose'] as LogLevel[],
+  exposeInternalErrorDetails: true,
 } as const;
 
 function normalizeServerMode(nodeEnv?: string): ServerRuntimeMode {
@@ -109,6 +116,16 @@ function normalizeBoolean(value: string | undefined, fallback: boolean): boolean
   }
 
   return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
+function normalizeLogLevels(value: string | undefined, fallback: LogLevel[]): LogLevel[] {
+  const allowedLevels: LogLevel[] = ['log', 'error', 'warn', 'debug', 'verbose', 'fatal'];
+  const normalizedLevels = value
+    ?.split(',')
+    .map(level => level.trim().toLowerCase())
+    .filter((level): level is LogLevel => allowedLevels.includes(level as LogLevel));
+
+  return normalizedLevels && normalizedLevels.length > 0 ? normalizedLevels : fallback;
 }
 
 export function getServerEnvFilePaths(nodeEnv?: string): string[] {
@@ -216,6 +233,16 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.ADMIN_SESSION_TTL_MS,
       SERVER_ENV_DEFAULTS.adminSessionTtlMs,
     ),
+    appLogLevels: normalizeLogLevels(
+      envSource.APP_LOG_LEVELS,
+      normalizeServerMode(process.env.NODE_ENV) === 'production'
+        ? ['warn', 'error']
+        : SERVER_ENV_DEFAULTS.appLogLevels,
+    ),
+    exposeInternalErrorDetails: normalizeBoolean(
+      envSource.EXPOSE_INTERNAL_ERROR_DETAILS,
+      normalizeServerMode(process.env.NODE_ENV) !== 'production',
+    ),
   };
 }
 
@@ -250,6 +277,8 @@ export function validateServerEnv(
     ADMIN_PASSWORD: parsedEnv.adminPassword,
     ADMIN_SESSION_SECRET: parsedEnv.adminSessionSecret,
     ADMIN_SESSION_TTL_MS: String(parsedEnv.adminSessionTtlMs),
+    APP_LOG_LEVELS: parsedEnv.appLogLevels.join(','),
+    EXPOSE_INTERNAL_ERROR_DETAILS: String(parsedEnv.exposeInternalErrorDetails),
   };
 }
 
