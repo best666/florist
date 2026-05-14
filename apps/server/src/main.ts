@@ -4,6 +4,7 @@ import path from 'node:path';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import compression from 'compression';
 import { AppModule } from './app.module';
 import type { ServerEnvConfig } from './config/server-env';
@@ -26,6 +27,7 @@ interface AdminPageResponse {
 
 const MAX_AUTO_PORT_ATTEMPTS = 10;
 const DEV_SERVER_RUNTIME_FILE = path.resolve(process.cwd(), '.runtime/dev-server.json');
+const UPLOAD_ROOT_DIR = path.resolve(process.cwd(), 'var/uploads');
 
 function writeActivePortRuntimeFile(port: number): void {
   fs.mkdirSync(path.dirname(DEV_SERVER_RUNTIME_FILE), { recursive: true });
@@ -130,7 +132,7 @@ async function listenWithAutoPortFallback(
 }
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   const appEnv = configService.getOrThrow<ServerEnvConfig>('app');
 
@@ -146,6 +148,11 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
   app.use(compression({ threshold: 1024 }));
+  fs.mkdirSync(UPLOAD_ROOT_DIR, { recursive: true });
+  app.useStaticAssets(UPLOAD_ROOT_DIR, {
+    prefix: '/uploads',
+    maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,
+  });
   app.use('/admin', (
     request: AdminPageRequest,
     response: AdminPageResponse,

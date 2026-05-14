@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useAuthStore } from './auth'
 import type { ClientPlatform, Nullable } from '@/interfaces'
 import { useFlowerStore } from './flowers'
 import { useMemberStore } from './member'
@@ -67,16 +68,20 @@ export const useAppStore = defineStore(
         syncLocalGardenRequest = (async () => {
           this.markSyncStarted(message)
 
+          const authStore = useAuthStore()
           const flowerStore = useFlowerStore()
           const recordStore = useRecordStore()
           const memberStore = useMemberStore()
 
           try {
+            if (!authStore.isAuthenticated) {
+              this.markSyncFinished(new Date().toISOString())
+              return
+            }
+
+            await memberStore.initializeMembership()
             await flowerStore.cleanupRecycleBin()
-            await Promise.all([
-              flowerStore.initializeGarden(),
-              recordStore.initializeRecordCenter(),
-            ])
+            await Promise.all([flowerStore.initializeGarden(), recordStore.initializeRecordCenter()])
             memberStore.syncMembershipStatus()
             this.markSyncFinished(new Date().toISOString())
           }

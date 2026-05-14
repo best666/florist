@@ -1,4 +1,4 @@
-import type { IMemberPaymentOrder } from '@florist/contracts'
+import type { IMember, IMemberPaymentOrder } from '@florist/contracts'
 import {
   MemberBenefitType,
   MemberPackageType,
@@ -9,14 +9,14 @@ import {
 import { defineStore } from 'pinia'
 import type { LocalMemberCache, ThemeSkinId } from '@/interfaces'
 import { ThemeSkinId as ThemeSkinIdEnum } from '@/interfaces'
+import { fetchCurrentMember, rechargeCurrentMember } from '@/api'
 import {
   MEMBER_PACKAGE_PLANS,
-  activateMemberCache,
   buildThemeStyleVariables,
   createInactiveMemberCache,
-  createLocalMemberPaymentOrder,
   guardMemberBenefit,
   hasMemberBenefit,
+  readAuthUserIdFromStorage,
   resolveThemeSkin,
   syncExpiredMemberCache,
 } from '@/utils'
@@ -27,6 +27,23 @@ export interface MemberStoreState {
   currentOrder: IMemberPaymentOrder | null
   latestMessage: string
   processingPayment: boolean
+  initializedUserId: string | null
+  initializingMembership: boolean
+}
+
+let initializeMembershipRequest: Promise<LocalMemberCache> | null = null
+
+function toLocalMemberCache(member: IMember, themeSkinId: ThemeSkinId, latestOrder: IMemberPaymentOrder | null): LocalMemberCache {
+  return {
+    status: member.status,
+    activePackageType: member.status === MemberStatus.Active ? member.packageType : null,
+    benefitTypes: member.benefitTypes,
+    startedAt: member.startedAt ?? null,
+    expiredAt: member.expiredAt ?? null,
+    themeSkinId,
+    latestOrder,
+    updatedAt: new Date().toISOString(),
+  }
 }
 
 export const useMemberStore = defineStore(
@@ -38,12 +55,17 @@ export const useMemberStore = defineStore(
       currentOrder: null,
       latestMessage: '',
       processingPayment: false,
+      initializedUserId: null,
+      initializingMembership: false,
     }),
     getters: {
       packagePlans: () => MEMBER_PACKAGE_PLANS,
       currentTheme: state => resolveThemeSkin(state.memberCache.themeSkinId),
       themeStyleVariables: state => buildThemeStyleVariables(state.memberCache.themeSkinId),
       isMemberActive: state => syncExpiredMemberCache(state.memberCache).status === MemberStatus.Active,
+      hasCloudGardenAccess(): boolean {
+        return hasMemberBenefit(this.memberCache, MemberBenefitType.CloudBackup)
+      },
       hasAdFree(): boolean {
         return hasMemberBenefit(this.memberCache, MemberBenefitType.AdFree)
       },
@@ -65,6 +87,28 @@ export const useMemberStore = defineStore(
       },
     },
     actions: {
+      applyServerMember(member: IMember): LocalMemberCache {
+        const nextCache = toLocalMemberCache(member, this.memberCache.themeSkinId, this.currentOrder)
+        const theme = resolveThemeSkin(nextCache.themeSkinId)
+
+        this.memberCache = theme.memberOnly && nextCache.status !== MemberStatus.Active
+          ? {
+              ...nextCache,
+              themeSkinId: ThemeSkinIdEnum.Default,
+              updatedAt: new Date().toISOString(),
+            }
+          : nextCache
+
+        return this.memberCache
+      },
+
+      resetMembershipForLoggedOut(): LocalMemberCache {
+        this.currentOrder = null
+        this.initializedUserId = null
+        this.memberCache = createInactiveMemberCache(this.memberCache.themeSkinId)
+        return this.memberCache
+      },
+
       syncMembershipStatus(): LocalMemberCache {
         const nextCache = syncExpiredMemberCache(this.memberCache)
 
@@ -92,54 +136,71 @@ export const useMemberStore = defineStore(
         return this.memberCache
       },
 
+      async initializeMembership(force = false): Promise<LocalMemberCache> {
+        const currentUserId = readAuthUserIdFromStorage()
+
+        this.syncMembershipStatus()
+
+        if (!currentUserId) {
+          return this.resetMembershipForLoggedOut()
+        }
+
+        if (!force && this.initializedUserId === currentUserId) {
+          return this.memberCache
+        }
+
+        if (!force && initializeMembershipRequest) {
+          return initializeMembershipRequest
+        }
+
+        initializeMembershipRequest = (async () => {
+          this.initializingMembership = true
+
+          try {
+            const member = await fetchCurrentMember()
+            this.initializedUserId = currentUserId
+            return this.applyServerMember(member)
+          }
+          catch {
+            this.initializedUserId = currentUserId
+            return this.resetMembershipForLoggedOut()
+          }
+          finally {
+            this.initializingMembership = false
+          }
+        })()
+
+        try {
+          return await initializeMembershipRequest
+        }
+        finally {
+          initializeMembershipRequest = null
+        }
+      },
+
       selectPackage(packageType: MemberPackageType): void {
         this.selectedPackageType = packageType
       },
 
-      createPaymentOrder(channel: MemberPaymentChannel): IMemberPaymentOrder {
-        const order = createLocalMemberPaymentOrder(this.selectedPackageType, channel)
-        this.currentOrder = order
-        this.latestMessage = channel === MemberPaymentChannel.H5QrCode
-          ? '请使用微信扫码完成一次性支付，当前不会自动续费。'
-          : '将发起微信支付，一次购买后不会自动续费。'
-        return order
-      },
+      async purchaseSelectedPackage(channel: MemberPaymentChannel): Promise<LocalMemberCache> {
+        this.processingPayment = true
 
-      replaceCurrentOrder(order: IMemberPaymentOrder | null): void {
-        this.currentOrder = order
-      },
+        try {
+          const result = await rechargeCurrentMember({
+            packageType: this.selectedPackageType,
+            channel,
+          })
 
-      completeCurrentOrder(): LocalMemberCache | null {
-        if (!this.currentOrder) {
-          return null
+          this.currentOrder = result.order
+          this.applyServerMember(result.member)
+          this.latestMessage = result.order.packageType === MemberPackageType.Lifetime
+            ? '终身会员已开通，权益已立即生效。'
+            : '会员已开通，权益已立即生效，到期后会自动降级回免费版。'
+
+          return this.memberCache
         }
-
-        const paidOrder: IMemberPaymentOrder = {
-          ...this.currentOrder,
-          status: MemberPaymentStatus.Paid,
-        }
-
-        this.memberCache = activateMemberCache(
-          this.currentOrder.packageType,
-          this.memberCache.themeSkinId,
-          paidOrder,
-        )
-        this.currentOrder = paidOrder
-        this.latestMessage = this.currentOrder.packageType === MemberPackageType.Lifetime
-          ? '终身会员已开通，权益已立即生效。'
-          : '会员已开通，权益已立即生效，到期后会自动降级回免费版。'
-
-        return this.memberCache
-      },
-
-      cancelCurrentOrder(): void {
-        if (!this.currentOrder) {
-          return
-        }
-
-        this.currentOrder = {
-          ...this.currentOrder,
-          status: MemberPaymentStatus.Closed,
+        finally {
+          this.processingPayment = false
         }
       },
 

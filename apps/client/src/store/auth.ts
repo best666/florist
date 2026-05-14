@@ -6,6 +6,7 @@ import {
   readAuthSessionFromStorage,
   writeAuthSessionToStorage,
 } from '@/utils'
+import { useMemberStore } from './member'
 import { useFlowerStore } from './flowers'
 import { useRecordStore } from './records'
 
@@ -35,6 +36,17 @@ export const useAuthStore = defineStore('auth', {
       this.session = session
       this.sessionInitialized = true
       writeAuthSessionToStorage(session)
+    },
+
+    patchCurrentUser(user: IUser): void {
+      if (!this.session) {
+        return
+      }
+
+      this.applySession({
+        ...this.session,
+        user,
+      })
     },
 
     clearSession(): void {
@@ -82,7 +94,9 @@ export const useAuthStore = defineStore('auth', {
     async refreshGardenContext(): Promise<void> {
       const flowerStore = useFlowerStore()
       const recordStore = useRecordStore()
+      const memberStore = useMemberStore()
 
+      await memberStore.initializeMembership(true)
       await flowerStore.initializeGarden({ force: true })
       await recordStore.initializeRecordCenter({ force: true })
     },

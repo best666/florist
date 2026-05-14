@@ -1,9 +1,11 @@
 import type { IFlower, IImageAsset } from '@florist/contracts';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { MemberBenefitType } from '@florist/contracts';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Flower, FlowerImage, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { createEntityId } from '../../common/utils/entity-id';
 import { UpsertFlowerDto } from './dto/upsert-flower.dto';
+import { MembersService } from '../members/members.service';
 import { UsersService } from '../users/users.service';
 
 const FLOWER_RECYCLE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -61,10 +63,21 @@ export class FlowersService {
   public constructor(
     private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
+    private readonly membersService: MembersService,
   ) {}
 
+  private async assertCloudAccess(userIdInput?: string): Promise<string> {
+    const access = await this.membersService.checkMemberBenefit(MemberBenefitType.CloudBackup, userIdInput);
+
+    if (!access.allowed) {
+      throw new ForbiddenException('当前账号未开通会员，植物云端档案仅对会员开放');
+    }
+
+    return access.member.userId;
+  }
+
   public async getFlowerCenter(userIdInput?: string): Promise<FlowerCenterResponse> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     await this.cleanupRecycleBinByUserId(userId);
 
     const flowers = await this.prisma.flower.findMany({
@@ -86,7 +99,7 @@ export class FlowersService {
   }
 
   public async getFlowerById(flowerId: string, userIdInput?: string): Promise<IFlower> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const flower = await this.prisma.flower.findFirst({
       where: { id: flowerId, userId },
       include: { images: true },
@@ -100,7 +113,7 @@ export class FlowersService {
   }
 
   public async upsertFlower(payload: UpsertFlowerDto, flowerId?: string, userIdInput?: string): Promise<IFlower> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const existingFlower = flowerId
       ? await this.prisma.flower.findFirst({ where: { id: flowerId, userId } })
       : null;
@@ -157,7 +170,7 @@ export class FlowersService {
   }
 
   public async moveFlowerToRecycleBin(flowerId: string, userIdInput?: string): Promise<IFlower> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const flower = await this.prisma.flower.findFirst({ where: { id: flowerId, userId } });
 
     if (!flower) {
@@ -180,7 +193,7 @@ export class FlowersService {
   }
 
   public async listRecycleBin(userIdInput?: string): Promise<ReadonlyArray<IFlower>> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const recycleBin = await this.prisma.flower.findMany({
       where: { userId, isDeleted: true },
       include: { images: true },
@@ -191,7 +204,7 @@ export class FlowersService {
   }
 
   public async restoreFlower(flowerId: string, userIdInput?: string): Promise<IFlower> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const flower = await this.prisma.flower.findFirst({
       where: { id: flowerId, userId, isDeleted: true },
     });
@@ -213,7 +226,7 @@ export class FlowersService {
   }
 
   public async purgeFlower(flowerId: string, userIdInput?: string): Promise<{ removedId: string }> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const flower = await this.prisma.flower.findFirst({
       where: { id: flowerId, userId },
     });
@@ -238,7 +251,7 @@ export class FlowersService {
     } & UpsertFlowerDto>,
     userIdInput?: string,
   ): Promise<FlowerCenterResponse> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
 
     await this.prisma.$transaction(async (transaction) => {
       for (const payload of payloads) {
@@ -304,7 +317,7 @@ export class FlowersService {
   }
 
   public async cleanupRecycleBin(userIdInput?: string): Promise<void> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     await this.cleanupRecycleBinByUserId(userId);
   }
 

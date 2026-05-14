@@ -10,7 +10,6 @@ import FlowerFormPopup from './FlowerFormPopup.vue'
 import GlobalAdBanner from './GlobalAdBanner.vue'
 import HomeWeatherReminderPanel from './HomeWeatherReminderPanel.vue'
 import HomeQuickDrawer from './HomeQuickDrawer.vue'
-import PaymentQrPanel from './PaymentQrPanel.vue'
 import RecordCheckinPopup from './RecordCheckinPopup.vue'
 import SingleFlowerAiAdvicePanel from './SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from './SubmitBtn.vue'
@@ -29,7 +28,6 @@ const globalComponents = {
   GlobalAdBanner,
   HomeWeatherReminderPanel,
   HomeQuickDrawer,
-  PaymentQrPanel,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,
@@ -55,7 +53,6 @@ export {
   GlobalAdBanner,
   HomeWeatherReminderPanel,
   HomeQuickDrawer,
-  PaymentQrPanel,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,

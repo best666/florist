@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onLaunch, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
+import { ClientPlatform } from '@/interfaces'
 import { useAppStore, useAuthStore } from '@/store'
 import { useFlowerStore } from '@/store'
 import { useMemberStore } from '@/store'
-import { showGentleSuccess } from '@/utils'
+import { showGentleSuccess, showGentleToast } from '@/utils'
 import { getRuntimePlatform } from '@/utils/platform'
 
 const appStore = useAppStore()
@@ -14,10 +16,14 @@ const authStore = useAuthStore()
 const flowerStore = useFlowerStore()
 const memberStore = useMemberStore()
 const { isOffline, syncMessage, syncStatus } = storeToRefs(appStore)
+const { isAuthenticated, sessionInitialized, switchingSession } = storeToRefs(authStore)
 const { refreshNetworkStatus } = useNetworkStatus()
+const loginPopupVisible = ref(false)
 
 const themeStyleVariables = computed(() => memberStore.themeStyleVariables)
 const runtimeBannerVisible = computed(() => isOffline.value || syncStatus.value !== 'idle')
+const authGateVisible = computed(() => sessionInitialized.value && !isAuthenticated.value)
+const runtimePlatform = computed(() => appStore.runtimePlatform ?? ClientPlatform.H5)
 const runtimeBannerClass = computed(() => {
   if (isOffline.value) {
     return 'border-[#f1d7ad] bg-[#fff5e7]/92 text-[#8a633e]'
@@ -45,17 +51,53 @@ async function syncAppRuntime(message: string, showSuccess = false): Promise<voi
 
 async function initializeAppSession(): Promise<void> {
   await authStore.initializeSession()
+  await memberStore.initializeMembership()
+}
+
+function openLoginPopup(): void {
+  loginPopupVisible.value = true
+}
+
+async function handleH5Login(payload: { phoneNumber: string, verificationCode: string }): Promise<void> {
+  if (!/^1\d{10}$/.test(payload.phoneNumber)) {
+    showGentleToast('请输入正确的 11 位手机号。')
+    return
+  }
+
+  if (!payload.verificationCode) {
+    showGentleToast('请输入验证码。')
+    return
+  }
+
+  try {
+    const session = await authStore.loginByH5PhoneCode(payload)
+    loginPopupVisible.value = false
+    showGentleSuccess(session.isNewUser ? '登录成功，已经为你创建新的个人花园。' : '登录成功，已经切换到你的个人花园。')
+  }
+  catch (error) {
+    showGentleToast(error instanceof Error ? error.message : '手机号登录暂时没有接稳。')
+  }
+}
+
+async function handleWechatLogin(): Promise<void> {
+  try {
+    const session = await authStore.loginByWechatMiniProgram()
+    loginPopupVisible.value = false
+    showGentleSuccess(session.isNewUser ? '微信登录成功，已经为你创建新的个人花园。' : '微信登录成功，已经切换到你的个人花园。')
+  }
+  catch (error) {
+    showGentleToast(error instanceof Error ? error.message : '微信登录暂时没有接稳。')
+  }
 }
 
 onLaunch(() => {
   void (async () => {
     appStore.setRuntimePlatform(getRuntimePlatform())
-    memberStore.syncMembershipStatus()
     refreshNetworkStatus()
     await initializeAppSession()
     void flowerStore.cleanupRecycleBin()
 
-    if (!appStore.isOffline) {
+    if (!appStore.isOffline && authStore.isAuthenticated) {
       await syncAppRuntime('正在整理最近的花园状态。')
     }
   })()
@@ -64,11 +106,10 @@ onLaunch(() => {
 onShow(() => {
   void (async () => {
     appStore.setRuntimePlatform(getRuntimePlatform())
-    memberStore.syncMembershipStatus()
     refreshNetworkStatus()
     await initializeAppSession()
 
-    if (appStore.isOffline) {
+    if (appStore.isOffline || !authStore.isAuthenticated) {
       void flowerStore.cleanupRecycleBin()
       return
     }
@@ -106,6 +147,26 @@ watch(
       </view>
     </view>
     <slot />
+    <view v-if="authGateVisible"
+      class="fixed inset-0 z-90 flex items-center justify-center bg-[#f7efe4]/92 px-6 backdrop-blur-[18rpx]">
+      <view class="w-full max-w-[720rpx] rounded-[40rpx] bg-white px-6 py-6 shadow-[0_22rpx_80rpx_rgba(15,23,42,0.16)]">
+        <view class="badge-soft bg-[#f8f1e4] text-slate-600">
+          登录后使用
+        </view>
+        <view class="mt-4 text-[44rpx] font-900 leading-tight text-slate-800">
+          先登录，再开始使用你的花园与会员云端能力
+        </view>
+        <view class="mt-3 text-sm leading-7 text-slate-500">
+          现在所有核心功能都绑定到登录用户。登录后才能使用植物管理、打卡记录、会员云端数据和相册能力；未开通会员时，植物数据只保留在当前设备本地。
+        </view>
+        <button class="btn-panel mt-5 bg-[#EAF6EF] text-[#2E8D76]" hover-class="opacity-92" :loading="switchingSession"
+          @tap="openLoginPopup">
+          {{ runtimePlatform === ClientPlatform.MpWeixin ? '使用微信登录' : '手机号登录' }}
+        </button>
+      </view>
+    </view>
     <GlobalAdBanner />
+    <AuthLoginPopup v-model="loginPopupVisible" :platform="runtimePlatform" :loading="switchingSession"
+      @submit-h5="handleH5Login" @login-wechat="handleWechatLogin" />
   </view>
 </template>

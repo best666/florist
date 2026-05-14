@@ -2,6 +2,7 @@
 import { FlowerCategory } from '@florist/contracts'
 import type { IImageAsset } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
+import { uploadPreparedImage } from '@/api'
 import {
   FLOWER_CATEGORY_OPTIONS,
   FLOWER_DIFFICULTY_OPTIONS,
@@ -10,12 +11,12 @@ import {
   createDefaultFlowerFormValues,
   type FlowerFormValues,
 } from '@/interfaces'
-import { useFlowerTaxonomyStore } from '@/store'
+import { useAuthStore, useFlowerTaxonomyStore, useMemberStore } from '@/store'
 import {
-  cacheImageForOffline,
   compressImageSafely,
   containsIllegalCharacters,
   isBlankString,
+  readImageAsDataUrl,
   removeCachedImage,
   revokeCompressedImageUrl,
   showGentleToast,
@@ -49,6 +50,8 @@ const formState = reactive<FlowerFormValues>(createDefaultFlowerFormValues())
 const formError = ref('')
 const isUploadingImages = ref(false)
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
+const authStore = useAuthStore()
+const memberStore = useMemberStore()
 const customCategoryDraftLabel = ref('')
 const customCategoryDraftBaseValue = ref<FlowerCategory>(FlowerCategory.Herbaceous)
 const editingCustomCategoryId = ref('')
@@ -220,6 +223,16 @@ function createImageAsset(imageUrl: string, compressedUrl?: string): IImageAsset
 }
 
 async function handleChooseImages(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    showFormError('请先登录后再添加植物图片。')
+    return
+  }
+
+  if (!memberStore.hasCloudGardenAccess) {
+    showFormError('植物相册和云端图片上传仅对会员开放。')
+    return
+  }
+
   const remainingCount = 6 - formState.images.length
 
   if (remainingCount <= 0) {
@@ -239,17 +252,25 @@ async function handleChooseImages(): Promise<void> {
     const nextImages = [...formState.images]
 
     for (const tempFilePath of imageResult.tempFilePaths) {
-      const compressedResult = await compressImageSafely(tempFilePath)
-      const cachedImagePath = await cacheImageForOffline(compressedResult.filePath)
+      const compressedResult = await compressImageSafely(tempFilePath, {
+        maxSizeInBytes: 1.8 * 1024 * 1024,
+      })
+      const dataUrl = await readImageAsDataUrl(compressedResult.filePath)
+      const uploadedImage = await uploadPreparedImage({
+        dataUrl,
+        scope: 'flower',
+        cropMode: 'card',
+        maxWidth: 1440,
+        quality: 82,
+      })
 
-      if (compressedResult.filePath !== cachedImagePath) {
+      if (compressedResult.filePath !== tempFilePath) {
         revokeCompressedImageUrl(compressedResult.filePath)
       }
 
       nextImages.push(
         createImageAsset(
-          cachedImagePath,
-          compressedResult.filePath !== cachedImagePath ? compressedResult.filePath : undefined,
+          uploadedImage.url,
         ),
       )
     }

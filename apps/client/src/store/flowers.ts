@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import { createFlower, fetchFlowerCenter, recycleFlower, updateFlower } from '@/api'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
 import { useFlowerTaxonomyStore } from './flower-taxonomy'
-import { removeCachedImage } from '@/utils'
+import { useMemberStore } from './member'
+import { readAuthUserIdFromStorage, removeCachedImage } from '@/utils'
 
 interface FlowerState {
   flowers: LocalFlower[]
@@ -79,6 +80,12 @@ function hydrateFlowerCenter(state: FlowerState, center: FlowerState): void {
   state.recycleBin = sortFlowers(center.recycleBin)
 }
 
+function canUseCloudGarden(): boolean {
+  const memberStore = useMemberStore()
+
+  return Boolean(readAuthUserIdFromStorage()) && memberStore.hasCloudGardenAccess
+}
+
 export const useFlowerStore = defineStore(
   'flowers',
   {
@@ -94,6 +101,11 @@ export const useFlowerStore = defineStore(
     actions: {
       async initializeGarden(options?: { force?: boolean }): Promise<void> {
         const forceRefresh = options?.force ?? false
+
+        if (!canUseCloudGarden()) {
+          this.initialized = true
+          return
+        }
 
         if (!forceRefresh && flowerCenterRequest) {
           return flowerCenterRequest
@@ -134,6 +146,25 @@ export const useFlowerStore = defineStore(
 
       async upsertFlower(values: FlowerFormValues, flowerId?: string): Promise<LocalFlower> {
         const taxonomyStore = useFlowerTaxonomyStore()
+
+        if (!canUseCloudGarden()) {
+          const existingFlower = flowerId
+            ? this.flowers.find(flower => flower.id === flowerId)
+            : undefined
+          const nextFlower = buildFlowerEntity(values, existingFlower)
+
+          taxonomyStore.syncFlowerSelection(nextFlower.id, values)
+
+          if (existingFlower) {
+            this.flowers = sortFlowers(this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)))
+            flowerCenterLastLoadedAt = Date.now()
+            return nextFlower
+          }
+
+          this.flowers = sortFlowers([...this.flowers, nextFlower])
+          flowerCenterLastLoadedAt = Date.now()
+          return nextFlower
+        }
 
         try {
           const nextFlower = flowerId
@@ -182,6 +213,28 @@ export const useFlowerStore = defineStore(
       },
 
       async moveFlowerToRecycleBin(flowerId: string): Promise<boolean> {
+        if (!canUseCloudGarden()) {
+          const targetFlower = this.flowers.find(flower => flower.id === flowerId)
+
+          if (!targetFlower) {
+            return false
+          }
+
+          const deletedAt = new Date().toISOString()
+          const trashedFlower: LocalFlower = {
+            ...targetFlower,
+            isDeleted: true,
+            deletedAt,
+            pendingPurgeAt: new Date(Date.now() + FLOWER_RECYCLE_RETENTION_MS).toISOString(),
+            updatedAt: deletedAt,
+          }
+
+          this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
+          this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
+          flowerCenterLastLoadedAt = Date.now()
+          return true
+        }
+
         try {
           const trashedFlower = await recycleFlower(flowerId)
           this.flowers = this.flowers.filter(flower => flower.id !== flowerId)

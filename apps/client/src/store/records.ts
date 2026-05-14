@@ -3,7 +3,8 @@ import { defineStore } from 'pinia'
 import { createRecord, fetchRecordCenter, undoRecord as undoRecordApi } from '@/api'
 import type { LocalRecord, RecordFormValues, RecordUndoLog } from '@/interfaces'
 import { useFlowerStore } from './flowers'
-import { hasRepeatedActionWithinHours, removeCachedImage } from '@/utils'
+import { useMemberStore } from './member'
+import { hasRepeatedActionWithinHours, readAuthUserIdFromStorage, removeCachedImage } from '@/utils'
 
 interface RecordState {
   records: LocalRecord[]
@@ -67,6 +68,12 @@ function hydrateRecordCenter(state: RecordState, center: RecordState): void {
   ))
 }
 
+function canUseCloudGarden(): boolean {
+  const memberStore = useMemberStore()
+
+  return Boolean(readAuthUserIdFromStorage()) && memberStore.hasCloudGardenAccess
+}
+
 export const useRecordStore = defineStore(
   'records',
   {
@@ -95,6 +102,11 @@ export const useRecordStore = defineStore(
     actions: {
       async initializeRecordCenter(options?: { force?: boolean }): Promise<void> {
         const forceRefresh = options?.force ?? false
+
+        if (!canUseCloudGarden()) {
+          this.initialized = true
+          return
+        }
 
         if (!forceRefresh && recordCenterRequest) {
           return recordCenterRequest
@@ -184,6 +196,13 @@ export const useRecordStore = defineStore(
       },
 
       async addRecord(values: RecordFormValues): Promise<LocalRecord> {
+        if (!canUseCloudGarden()) {
+          const nextRecord = buildRecordEntity(values)
+          this.records = sortRecords([nextRecord, ...this.records])
+          recordCenterLastLoadedAt = Date.now()
+          return nextRecord
+        }
+
         try {
           const nextRecord = await createRecord(values) as LocalRecord
           this.records = sortRecords([nextRecord, ...this.records])
@@ -200,6 +219,36 @@ export const useRecordStore = defineStore(
       },
 
       async undoRecord(recordId: string): Promise<boolean> {
+        if (!canUseCloudGarden()) {
+          const targetRecord = this.records.find(record => record.id === recordId)
+
+          if (!targetRecord) {
+            return false
+          }
+
+          if (Date.now() - new Date(targetRecord.createdAt).getTime() > RECORD_UNDO_WINDOW_MS) {
+            return false
+          }
+
+          this.records = this.records.filter(record => record.id !== recordId)
+          this.undoLogs = [
+            {
+              id: createEntityId('undo'),
+              recordId: targetRecord.id,
+              flowerId: targetRecord.flowerId,
+              actionType: targetRecord.actionType,
+              revertedAt: new Date().toISOString(),
+              originalCreatedAt: targetRecord.createdAt,
+              ...(targetRecord.note ? { note: targetRecord.note } : {}),
+            },
+            ...this.undoLogs,
+          ]
+
+          await releaseRecordImages(targetRecord.images)
+          recordCenterLastLoadedAt = Date.now()
+          return true
+        }
+
         try {
           const response = await undoRecordApi(recordId)
           hydrateRecordCenter(this, {

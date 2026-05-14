@@ -10,6 +10,7 @@ model User {
   id                String          @id @db.VarChar(64)
   nickname          String          @db.VarChar(80)
   avatarUrl         String?         @db.VarChar(512)
+  profileSignature  String?         @db.VarChar(160)
   loginType         String          @db.VarChar(32)
   wechatOpenIdHash  String?         @unique @db.VarChar(64)
   cityCipher        String?         @db.Text

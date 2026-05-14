@@ -13,6 +13,11 @@ export class UpdateCurrentUserDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(80)
+  public profileSignature?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(40)
   public city?: string;
 

@@ -5,6 +5,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
+import UserProfilePopup from '@/components/UserProfilePopup.vue'
+import { updateCurrentUser } from '@/api'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { ClientPlatform, DEFAULT_LOCAL_REMINDER_CONFIG, type MineFeedbackItem, type MineStatisticsCard } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useMemberStore, useRecordStore } from '@/store'
@@ -57,6 +59,8 @@ const isClearingData = ref(false)
 const isChoosingFeedbackImages = ref(false)
 const isSubmittingFeedback = ref(false)
 const loginPopupVisible = ref(false)
+const profilePopupVisible = ref(false)
+const isSavingProfile = ref(false)
 
 const feedbackDraft = reactive({
   content: '',
@@ -91,9 +95,11 @@ const authTagText = computed(() => {
   return currentUser.value?.loginType === UserLoginType.WechatMiniProgram ? '微信登录' : 'H5 已登录'
 })
 const authButtonText = computed(() => (isH5Platform.value ? '手机号登录' : '微信登录'))
+const authAvatarUrl = computed(() => currentUser.value?.avatarUrl ?? '')
+const authSignature = computed(() => currentUser.value?.profileSignature?.trim() ?? '')
 
 onShow(async () => {
-  memberStore.syncMembershipStatus()
+  await memberStore.initializeMembership(true)
   await flowerStore.initializeGarden()
   await recordStore.initializeRecordCenter()
   refreshLocalSnapshots()
@@ -510,6 +516,10 @@ function openLoginPopup(): void {
   loginPopupVisible.value = true
 }
 
+function openProfilePopup(): void {
+  profilePopupVisible.value = true
+}
+
 async function handleH5Login(payload: { phoneNumber: string, verificationCode: string }): Promise<void> {
   if (!/^1\d{10}$/.test(payload.phoneNumber)) {
     showGentleToast('请输入正确的 11 位手机号。')
@@ -559,6 +569,23 @@ async function handleLogoutToLocalMode(): Promise<void> {
   refreshLocalSnapshots()
   showGentleSuccess('已经切回本地花园模式。')
 }
+
+async function handleSubmitProfile(payload: { nickname: string, avatarUrl: string, profileSignature: string }): Promise<void> {
+  isSavingProfile.value = true
+
+  try {
+    const updatedUser = await updateCurrentUser(payload)
+    authStore.patchCurrentUser(updatedUser)
+    profilePopupVisible.value = false
+    showGentleSuccess('个人资料已经更新。')
+  }
+  catch (error) {
+    showGentleToast(error instanceof Error ? error.message : '资料保存失败，请稍后再试。')
+  }
+  finally {
+    isSavingProfile.value = false
+  }
+}
 </script>
 
 <template>
@@ -586,13 +613,22 @@ async function handleLogoutToLocalMode(): Promise<void> {
 
       <view class="card-soft app-fade-up rounded-[32rpx] bg-white">
         <view class="flex items-center justify-between gap-3">
-          <view class="min-w-0 flex-1">
-            <text class="block text-base font-800 text-app-ink">
-              {{ authTitle }}
-            </text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted">
-              {{ authSubtitle }}
-            </text>
+          <view class="min-w-0 flex flex-1 items-center gap-3">
+            <view
+              class="h-[92rpx] w-[92rpx] overflow-hidden rounded-full bg-[#F7F1E7] shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
+              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="头像" />
+            </view>
+            <view class="min-w-0 flex-1">
+              <text class="block text-base font-800 text-app-ink">
+                {{ authTitle }}
+              </text>
+              <text class="mt-1 block text-sm leading-6 text-app-muted">
+                {{ authSubtitle }}
+              </text>
+              <text v-if="authSignature" class="mt-1 block text-2xs leading-5 text-[#8a6e57]">
+                {{ authSignature }}
+              </text>
+            </view>
           </view>
           <TagLabel :text="authTagText" :tone="isAuthenticated ? 'mint' : 'slate'" :icon="isAuthenticated ? '✓' : '○'"
             size="md" />
@@ -602,6 +638,10 @@ async function handleLogoutToLocalMode(): Promise<void> {
           <button class="btn-panel surface-soft bg-[#EAF6EF] text-[#2E8D76]" hover-class="opacity-92"
             :loading="switchingSession" @tap="openLoginPopup">
             {{ authButtonText }}
+          </button>
+          <button v-if="isAuthenticated" class="btn-panel surface-soft bg-[#EEF2FF] text-[#4D63B4]"
+            hover-class="opacity-92" :loading="isSavingProfile" @tap="openProfilePopup">
+            编辑用户名 / 头像 / 签名
           </button>
           <button v-if="isAuthenticated" class="btn-panel surface-soft bg-[#F9ECEB] text-[#AA5B58]"
             hover-class="opacity-92" :loading="switchingSession" @tap="handleLogoutToLocalMode">
@@ -865,5 +905,7 @@ async function handleLogoutToLocalMode(): Promise<void> {
     <AppBottomNav active-key="mine" />
     <AuthLoginPopup v-model="loginPopupVisible" :platform="runtimePlatform" :loading="switchingSession"
       @submit-h5="handleH5Login" @login-wechat="handleWechatLogin" />
+    <UserProfilePopup v-model="profilePopupVisible" :current-user="currentUser" :loading="isSavingProfile"
+      @submit="handleSubmitProfile" />
   </view>
 </template>

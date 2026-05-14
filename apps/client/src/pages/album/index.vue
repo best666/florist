@@ -47,6 +47,7 @@ const posterImagePath = ref('')
 const isGeneratingPoster = ref(false)
 const isSavingPoster = ref(false)
 const pageMessage = ref('')
+const canAccessAlbum = computed(() => memberStore.hasCloudGardenAccess)
 const isMemberUnlocked = computed(() => (
   memberStore.hasBenefit(MemberBenefitType.NoWatermark)
   || memberStore.hasBenefit(MemberBenefitType.GrowthPoster)
@@ -340,6 +341,11 @@ function handleSelectTemplate(templateId: GrowthPosterTemplateId): void {
 }
 
 function handlePreviewAlbumImage(imageUrl: string): void {
+  if (!canAccessAlbum.value) {
+    pageMessage.value = '成长相册仅对会员开放，开通后才能查看和管理植物图片。'
+    return
+  }
+
   uni.previewImage({
     urls: albumItems.value.map(item => item.image.url),
     current: imageUrl,
@@ -464,9 +470,13 @@ onLoad((query) => {
 })
 
 onShow(async () => {
-  memberStore.syncMembershipStatus()
+  await memberStore.initializeMembership(true)
   await flowerStore.initializeGarden()
   await recordStore.initializeRecordCenter()
+
+  if (!canAccessAlbum.value) {
+    pageMessage.value = '成长相册仅对会员开放。开通会员后，植物档案图片和打卡配图才会同步到这里。'
+  }
 
   if (!selectedFlowerId.value && activeFlowers.value[0]) {
     selectedFlowerId.value = activeFlowers.value[0].id
@@ -550,7 +560,7 @@ onBeforeUnmount(() => {
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
             <text class="block text-2xs text-slate-400 dark:text-slate-500">关键节点</text>
             <text class="mt-1 block text-xl font-800 text-slate-800 dark:text-slate-100">{{ timelineItems.length
-              }}</text>
+            }}</text>
           </view>
           <view
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
@@ -616,7 +626,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                      }}</text>
+                    }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="mint" icon="✓" />
                 </view>
@@ -632,7 +642,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                      }}</text>
+                    }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="cream" icon="★" />
                 </view>

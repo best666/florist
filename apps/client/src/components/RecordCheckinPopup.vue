@@ -2,6 +2,7 @@
 import type { IImageAsset } from '@florist/contracts'
 import { RecordActionType } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
+import { uploadPreparedImage } from '@/api'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
@@ -12,15 +13,16 @@ import {
   type RecordFormValues,
 } from '@/interfaces'
 import {
-  cacheImageForOffline,
   compressImageSafely,
   containsIllegalCharacters,
   isBlankString,
+  readImageAsDataUrl,
   removeCachedImage,
   revokeCompressedImageUrl,
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import { useAuthStore, useMemberStore } from '@/store'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -46,6 +48,8 @@ const emit = defineEmits<{
 const formState = reactive<RecordFormValues>(createDefaultRecordFormValues())
 const formError = ref('')
 const isUploadingImages = ref(false)
+const authStore = useAuthStore()
+const memberStore = useMemberStore()
 
 const modalClass = computed(() => (
   props.modelValue ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
@@ -129,6 +133,16 @@ function validateForm(): boolean {
 }
 
 async function handleChooseImages(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    showFormError('请先登录后再添加打卡配图。')
+    return
+  }
+
+  if (!memberStore.hasCloudGardenAccess) {
+    showFormError('成长相册和云端打卡配图仅对会员开放。')
+    return
+  }
+
   const remainingCount = 4 - formState.images.length
 
   if (remainingCount <= 0) {
@@ -148,17 +162,25 @@ async function handleChooseImages(): Promise<void> {
     const nextImages = [...formState.images]
 
     for (const tempFilePath of imageResult.tempFilePaths) {
-      const compressedResult = await compressImageSafely(tempFilePath)
-      const cachedImagePath = await cacheImageForOffline(compressedResult.filePath)
+      const compressedResult = await compressImageSafely(tempFilePath, {
+        maxSizeInBytes: 1.8 * 1024 * 1024,
+      })
+      const dataUrl = await readImageAsDataUrl(compressedResult.filePath)
+      const uploadedImage = await uploadPreparedImage({
+        dataUrl,
+        scope: 'record',
+        cropMode: 'card',
+        maxWidth: 1440,
+        quality: 82,
+      })
 
-      if (compressedResult.filePath !== cachedImagePath) {
+      if (compressedResult.filePath !== tempFilePath) {
         revokeCompressedImageUrl(compressedResult.filePath)
       }
 
       nextImages.push(
         createImageAsset(
-          cachedImagePath,
-          compressedResult.filePath !== cachedImagePath ? compressedResult.filePath : undefined,
+          uploadedImage.url,
         ),
       )
     }

@@ -243,6 +243,7 @@ export class UsersService {
       data: {
         nickname: payload.nickname?.trim() || currentUser.nickname,
         avatarUrl: normalizeOptionalString(payload.avatarUrl),
+        profileSignature: normalizeOptionalString(payload.profileSignature),
         cityCipher: payload.city
           ? this.cryptoService.encryptText(payload.city.trim())
           : null,

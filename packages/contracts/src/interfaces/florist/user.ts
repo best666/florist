@@ -11,6 +11,8 @@ export interface IUser {
   readonly nickname: string
   /** 用户头像地址。 */
   readonly avatarUrl?: string
+  /** 个性签名。 */
+  readonly profileSignature?: string
   /** 绑定城市，可用于默认天气查询。 */
   readonly city?: string
   /** 手机号脱敏展示值。 */

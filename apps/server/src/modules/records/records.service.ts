@@ -1,8 +1,10 @@
 import { RecordActionType, type IImageAsset, type IRecord } from '@florist/contracts';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { MemberBenefitType } from '@florist/contracts';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CareRecord, CareRecordImage, Prisma, RecordUndoLog } from '@prisma/client';
 import { createEntityId } from '../../common/utils/entity-id';
 import { FlowersService } from '../flowers/flowers.service';
+import { MembersService } from '../members/members.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecordDto } from './dto/create-record.dto';
 import { SyncRecordDto } from './dto/sync-record.dto';
@@ -71,10 +73,21 @@ export class RecordsService {
     private readonly prisma: PrismaService,
     private readonly flowersService: FlowersService,
     private readonly usersService: UsersService,
+    private readonly membersService: MembersService,
   ) {}
 
+  private async assertCloudAccess(userIdInput?: string): Promise<string> {
+    const access = await this.membersService.checkMemberBenefit(MemberBenefitType.CloudBackup, userIdInput);
+
+    if (!access.allowed) {
+      throw new ForbiddenException('当前账号未开通会员，云端打卡与相册仅对会员开放');
+    }
+
+    return access.member.userId;
+  }
+
   public async getRecordCenter(userIdInput?: string): Promise<RecordCenterResponse> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const records = await this.prisma.careRecord.findMany({
       where: { userId },
       include: { images: true },
@@ -93,7 +106,7 @@ export class RecordsService {
   }
 
   public async addRecord(payload: CreateRecordDto, userIdInput?: string): Promise<IRecord> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     await this.flowersService.getFlowerById(payload.flowerId, userId);
 
     const recordId = createEntityId('record');
@@ -160,7 +173,7 @@ export class RecordsService {
   }
 
   public async undoRecord(recordId: string, userIdInput?: string): Promise<{ succeeded: boolean, center: RecordCenterResponse }> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
     const targetRecord = await this.prisma.careRecord.findFirst({
       where: { id: recordId, userId },
       include: { images: true },
@@ -239,7 +252,7 @@ export class RecordsService {
     payloads: ReadonlyArray<SyncRecordDto>,
     userIdInput?: string,
   ): Promise<RecordCenterResponse> {
-    const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    const userId = await this.assertCloudAccess(userIdInput);
 
     await this.prisma.$transaction(async (transaction) => {
       for (const payload of payloads) {

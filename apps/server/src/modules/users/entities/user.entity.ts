@@ -11,6 +11,7 @@ export function toUserEntity(user: User, cryptoService: DatabaseCryptoService): 
     id: user.id,
     nickname: user.nickname,
     ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+    ...(user.profileSignature ? { profileSignature: user.profileSignature } : {}),
     ...(city ? { city } : {}),
     ...(phoneMasked ? { phoneMasked } : {}),
     ...(user.loginType ? { loginType } : {}),

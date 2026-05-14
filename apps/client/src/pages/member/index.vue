@@ -3,16 +3,11 @@ import type { IMemberPackagePlan } from '@florist/contracts'
 import {
   MemberBenefitType,
   MemberPaymentChannel,
-  MemberPaymentStatus,
   MemberPackageType,
 } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
-import PaymentQrPanel from '@/components/PaymentQrPanel.vue'
 import { useAppStore, useMemberStore } from '@/store'
-import {
-  requestMiniProgramMemberPayment,
-} from '@/api'
 import {
   THEME_SKIN_DEFINITIONS,
   formatDateTime,
@@ -29,13 +24,12 @@ const pageMessage = ref('')
 const isSubmittingPayment = ref(false)
 
 onShow(() => {
-  memberStore.syncMembershipStatus()
+  void memberStore.initializeMembership(true)
 })
 
 const packagePlans = computed<ReadonlyArray<IMemberPackagePlan>>(() => memberStore.packagePlans)
 const selectedPlan = computed(() => resolveMemberPlan(memberStore.selectedPackageType))
 const themeSkins = computed(() => THEME_SKIN_DEFINITIONS)
-const currentOrder = computed(() => memberStore.currentOrder)
 const currentThemeId = computed(() => memberStore.memberCache.themeSkinId)
 const paymentChannel = computed(() => resolveMemberPaymentChannel(appStore.runtimePlatform ?? 'h5'))
 const isH5Payment = computed(() => paymentChannel.value === MemberPaymentChannel.H5QrCode)
@@ -80,43 +74,12 @@ async function handleSubmitPayment(): Promise<void> {
   isSubmittingPayment.value = true
 
   try {
-    if (isH5Payment.value) {
-      memberStore.createPaymentOrder(MemberPaymentChannel.H5QrCode)
-      pageMessage.value = '二维码已生成，请扫码后点击“我已完成支付”确认一次性购买。'
-      return
-    }
-
-    const order = memberStore.createPaymentOrder(MemberPaymentChannel.MpWeixin)
-    const result = await requestMiniProgramMemberPayment(order)
-    memberStore.replaceCurrentOrder(result)
-
-    if (result.status === MemberPaymentStatus.Paid) {
-      memberStore.completeCurrentOrder()
-      pageMessage.value = memberStore.latestMessage
-      return
-    }
-
-    memberStore.cancelCurrentOrder()
-    pageMessage.value = '你已取消本次支付，没有发生自动续费或隐性扣费。'
+    await memberStore.purchaseSelectedPackage(paymentChannel.value)
+    pageMessage.value = memberStore.latestMessage
   }
   finally {
     isSubmittingPayment.value = false
   }
-}
-
-function handleConfirmH5Payment(): void {
-  if (!currentOrder.value || currentOrder.value.status !== MemberPaymentStatus.Pending) {
-    pageMessage.value = '先生成一笔待支付订单，再确认扫码结果。'
-    return
-  }
-
-  memberStore.completeCurrentOrder()
-  pageMessage.value = memberStore.latestMessage
-}
-
-function handleCancelOrder(): void {
-  memberStore.cancelCurrentOrder()
-  pageMessage.value = '当前订单已取消，不会继续扣费。'
 }
 
 function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']): void {
@@ -236,35 +199,20 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
         <view class="flex items-center justify-between gap-3">
           <view>
             <text class="block text-base font-800 text-slate-800">支付确认</text>
-            <text class="mt-1 block text-sm text-slate-500">小程序优先走微信支付桥接，H5 展示扫码二维码。</text>
+            <text class="mt-1 block text-sm text-slate-500">当前开发阶段会直接调用后端开通会员，并立即刷新真实会员状态。</text>
           </view>
-          <TagLabel :text="isH5Payment ? 'H5 扫码支付' : '微信支付'" tone="blush" :icon="isH5Payment ? '⌘' : '¥'" size="md" />
+          <TagLabel :text="isH5Payment ? 'H5 直开通' : '微信环境开通'" tone="blush" :icon="isH5Payment ? '⌘' : '¥'" size="md" />
         </view>
 
         <view class="mt-4 rounded-[24rpx] bg-[#FBF7F1] px-4 py-4 text-sm leading-6 text-slate-600">
-          当前不会自动续费。每次购买前都需要你显式确认套餐和金额，取消支付不会产生后续扣费。
+          当前不会自动续费。点击后会把套餐和渠道直接提交给后端，返回成功后立即按真实会员数据刷新页面。
         </view>
 
         <button
           class="mt-4 h-[92rpx] rounded-[24rpx] border-none bg-linear-to-r from-[#EFD3A4] to-[#E6E6C7] text-sm font-800 text-slate-700"
           hover-class="opacity-92" :loading="isSubmittingPayment" @tap="handleSubmitPayment">
-          {{ isH5Payment ? '生成 H5 支付二维码' : '发起微信支付' }}
+          {{ isH5Payment ? '直接开通 H5 会员' : '直接开通微信环境会员' }}
         </button>
-
-        <view v-if="currentOrder && currentOrder.status === MemberPaymentStatus.Pending && isH5Payment"
-          class="mt-4 flex flex-col gap-3">
-          <PaymentQrPanel :text="currentOrder.qrCodeText ?? currentOrder.id" />
-          <view class="grid grid-cols-2 gap-3">
-            <button class="h-[88rpx] rounded-[22rpx] border-none bg-[#E8F6EE] text-sm font-700 text-emerald-700"
-              hover-class="opacity-92" @tap="handleConfirmH5Payment">
-              我已完成支付
-            </button>
-            <button class="h-[88rpx] rounded-[22rpx] border-none bg-[#F9E6E6] text-sm font-700 text-rose-600"
-              hover-class="opacity-92" @tap="handleCancelOrder">
-              取消订单
-            </button>
-          </view>
-        </view>
       </view>
 
       <view class="card-soft rounded-[32rpx] bg-white">

@@ -258,30 +258,6 @@ export function guardMemberBenefit(
   }
 }
 
-export function createLocalMemberPaymentOrder(
-  packageType: MemberPackageType,
-  channel: MemberPaymentChannel,
-): IMemberPaymentOrder {
-  const now = new Date()
-  const plan = resolveMemberPlan(packageType)
-  const orderId = `member-order-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`
-
-  return {
-    id: orderId,
-    packageType,
-    channel,
-    amountInCents: plan.priceInCents,
-    status: MemberPaymentStatus.Pending,
-    createdAt: now.toISOString(),
-    expiredAt: new Date(now.getTime() + ORDER_EXPIRES_IN_MS).toISOString(),
-    ...(channel === MemberPaymentChannel.H5QrCode
-      ? {
-          qrCodeText: `florist://member-pay/${orderId}?package=${packageType}&amount=${plan.priceInCents}`,
-        }
-      : {}),
-  }
-}
-
 export function resolveMemberPaymentChannel(platform: string): MemberPaymentChannel {
   return platform === 'mp-weixin'
     ? MemberPaymentChannel.MpWeixin

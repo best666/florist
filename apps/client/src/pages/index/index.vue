@@ -24,11 +24,12 @@ import {
   getFlowerCareDifficultyLabel,
   getFlowerPlacementLabel,
 } from '@/interfaces'
-import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
+import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
+const memberStore = useMemberStore()
 const recordStore = useRecordStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
@@ -446,6 +447,14 @@ function handleRefreshSingleFlowerAiAdvice(): void {
 }
 
 function handleOpenGrowthAlbum(): void {
+  if (!memberStore.hasCloudGardenAccess) {
+    showGentleToast('成长相册仅对会员开放，开通后才能查看和管理植物图片。')
+    uni.navigateTo({
+      url: '/pages/member/index',
+    })
+    return
+  }
+
   const flowerId = selectedAdviceFlower.value?.id ?? ''
   const suffix = flowerId ? `?flowerId=${flowerId}` : ''
 
