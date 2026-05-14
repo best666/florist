@@ -41,5 +41,8 @@
     "manifest.config.ts",
     "vite.config.ts",
     "uno.config.ts"
+  ],
+  "exclude": [
+    "dist"
   ]
 }
