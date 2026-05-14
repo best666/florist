@@ -14,21 +14,21 @@ import { useSingleFlowerAiAdvice } from '@/hooks/useSingleFlowerAiAdvice'
 import {
   FLOWER_CATEGORY_OPTIONS,
   FLOWER_PLACEMENT_OPTIONS,
-  FLOWER_STATUS_OPTIONS,
   type FlowerCardCareItem,
   type FlowerFilterState,
   type FlowerFormValues,
   type LocalFlower,
   type TimelineItem,
+  createCurrentFlowerCareTime,
   createDefaultFlowerFormValues,
   getFlowerCareDifficultyLabel,
-  getFlowerCategoryLabel,
   getFlowerPlacementLabel,
 } from '@/interfaces'
-import { useFlowerStore, useRecordStore } from '@/store'
+import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
 import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const flowerStore = useFlowerStore()
+const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const recordStore = useRecordStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
@@ -53,6 +53,7 @@ const aiAdvice = ref<IAiAdvice | null>(null)
 const loadingAiAdvice = ref(false)
 const aiAdviceMessage = ref('')
 const selectedAdviceFlowerId = ref<string | null>(null)
+const isQuickDrawerVisible = ref(false)
 
 const {
   state: singleFlowerAiState,
@@ -123,6 +124,52 @@ watch(
   },
 )
 
+const formInitialValue = computed<FlowerFormValues>(() => {
+  if (!editingFlowerId.value) {
+    return createDefaultFlowerFormValues()
+  }
+
+  const targetFlower = flowerStore.getFlowerById(editingFlowerId.value)
+
+  if (!targetFlower) {
+    return createDefaultFlowerFormValues()
+  }
+
+  return {
+    name: targetFlower.name,
+    nickname: targetFlower.nickname ?? '',
+    category: targetFlower.category,
+    customCategoryId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCategoryId,
+    placement: targetFlower.placement,
+    careDifficulty: targetFlower.careDifficulty,
+    careStatus: targetFlower.careStatus,
+    customCareStatusId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareStatusId,
+    note: targetFlower.note ?? '',
+    images: [...targetFlower.images],
+    lastWateredAt: targetFlower.lastWateredAt ?? createCurrentFlowerCareTime(),
+    lastFertilizedAt: targetFlower.lastFertilizedAt ?? createCurrentFlowerCareTime(),
+  }
+})
+
+const flowerCategoryOptions = computed(() => flowerTaxonomyStore.categoryOptions)
+const flowerCareStatusOptions = computed(() => flowerTaxonomyStore.careStatusOptions)
+
+const filteredFlowers = computed(() => activeFlowers.value.filter((flower) => {
+  if (filterState.category !== 'all' && flowerTaxonomyStore.resolveFlowerCategoryFilterKey(flower) !== filterState.category) {
+    return false
+  }
+
+  if (filterState.placement !== 'all' && flower.placement !== filterState.placement) {
+    return false
+  }
+
+  if (filterState.careStatus !== 'all' && flowerTaxonomyStore.resolveFlowerCareStatusFilterKey(flower) !== filterState.careStatus) {
+    return false
+  }
+
+  return true
+}))
+
 const selectedAdviceFlower = computed<LocalFlower | null>(() => {
   if (selectedAdviceFlowerId.value) {
     const targetFlower = activeFlowers.value.find(flower => flower.id === selectedAdviceFlowerId.value)
@@ -160,47 +207,6 @@ watch(
   },
 )
 
-const formInitialValue = computed<FlowerFormValues>(() => {
-  if (!editingFlowerId.value) {
-    return createDefaultFlowerFormValues()
-  }
-
-  const targetFlower = flowerStore.getFlowerById(editingFlowerId.value)
-
-  if (!targetFlower) {
-    return createDefaultFlowerFormValues()
-  }
-
-  return {
-    name: targetFlower.name,
-    nickname: targetFlower.nickname ?? '',
-    category: targetFlower.category,
-    placement: targetFlower.placement,
-    careDifficulty: targetFlower.careDifficulty,
-    careStatus: targetFlower.careStatus,
-    note: targetFlower.note ?? '',
-    images: [...targetFlower.images],
-    lastWateredAt: targetFlower.lastWateredAt ?? '',
-    lastFertilizedAt: targetFlower.lastFertilizedAt ?? '',
-  }
-})
-
-const filteredFlowers = computed(() => activeFlowers.value.filter((flower) => {
-  if (filterState.category !== 'all' && flower.category !== filterState.category) {
-    return false
-  }
-
-  if (filterState.placement !== 'all' && flower.placement !== filterState.placement) {
-    return false
-  }
-
-  if (filterState.careStatus !== 'all' && flower.careStatus !== filterState.careStatus) {
-    return false
-  }
-
-  return true
-}))
-
 const flowerGridClass = computed(() => (
   viewportWidth.value >= 680 ? 'grid-cols-2' : 'grid-cols-1'
 ))
@@ -226,6 +232,33 @@ const summaryCards = computed(() => ([
   },
 ]))
 
+const quickDrawerActions = computed(() => ([
+  {
+    key: 'album',
+    title: '成长相册',
+    hint: '查看最近照片、成长节点，并生成海报。',
+    icon: '▣',
+  },
+  {
+    key: 'doctor',
+    title: 'AI 看病与出差方案',
+    hint: '把问诊、诊断和临时出差照护集中到这里。',
+    icon: '✦',
+  },
+  {
+    key: 'mine',
+    title: '个人中心',
+    hint: '会员、备份、权限和反馈都放在这里。',
+    icon: '◌',
+  },
+  {
+    key: 'shop',
+    title: '极简商城',
+    hint: '外链种草入口，不打断首页主流程。',
+    icon: '↗',
+  },
+]))
+
 const recycleTimelineItems = computed<ReadonlyArray<TimelineItem>>(() => (
   recycleBinFlowers.value.slice(0, 5).map(flower => ({
     id: flower.id,
@@ -238,7 +271,7 @@ const recycleTimelineItems = computed<ReadonlyArray<TimelineItem>>(() => (
       : '已进入待清理队列。',
     status: 'dormant',
     tone: 'slate',
-    tags: [getFlowerCategoryLabel(flower.category), getFlowerPlacementLabel(flower.placement)],
+    tags: [flowerTaxonomyStore.resolveFlowerCategoryLabel(flower), getFlowerPlacementLabel(flower.placement)],
   }))
 ))
 
@@ -421,6 +454,15 @@ function handleOpenGrowthAlbum(): void {
   })
 }
 
+function handleOpenRecord(): void {
+  const flowerId = selectedAdviceFlower.value?.id ?? ''
+  const suffix = flowerId ? `?flowerId=${flowerId}` : ''
+
+  uni.navigateTo({
+    url: `/pages/record/index${suffix}`,
+  })
+}
+
 function handleOpenPlantDoctor(): void {
   const flowerId = selectedAdviceFlower.value?.id ?? ''
   const suffix = flowerId ? `?flowerId=${flowerId}` : ''
@@ -441,79 +483,93 @@ function handleOpenShop(): void {
     url: '/pages/shop/index',
   })
 }
+
+function handleSelectQuickDrawerAction(actionKey: string): void {
+  if (actionKey === 'album') {
+    handleOpenGrowthAlbum()
+    return
+  }
+
+  if (actionKey === 'doctor') {
+    handleOpenPlantDoctor()
+    return
+  }
+
+  if (actionKey === 'mine') {
+    handleOpenMine()
+    return
+  }
+
+  if (actionKey === 'shop') {
+    handleOpenShop()
+  }
+}
 </script>
 
 <template>
-  <view
-    class="page-shell safe-pb bg-linear-to-b from-[#FFFDF6] via-app-ivory to-[#FFF6EC] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
+  <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
       <view
-        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#95E1D3] via-[#DDF9E6] to-[#FFF1D6] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(149,225,211,0.22)] dark:from-slate-900 dark:via-emerald-950 dark:to-amber-950">
+        class="hero-shell app-fade-up bg-linear-to-br from-[#8edcca] via-[#ecfbf2] to-[#fff1d5] dark:from-slate-900 dark:via-emerald-950 dark:to-amber-950">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
               {{ isOffline ? '离线小花园模式' : '在线加密缓存模式' }}
             </view>
-            <view class="mt-3 text-[44rpx] font-900 leading-tight text-slate-800 dark:text-slate-50">
+            <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
               今天也把花园照顾得软乎乎的
             </view>
-            <view class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-200">
+            <view class="mt-2 text-body text-app-muted dark:text-slate-200">
               首页会优先读取本地加密缓存。断网也能继续新增、编辑、查看植株和相册，不会丢记录。
             </view>
           </view>
 
           <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
             🌷
           </view>
         </view>
 
-        <view class="mt-5 flex flex-wrap gap-3">
+        <view class="mt-5 flex flex-wrap gap-3 app-fade-up app-fade-up-delay-1">
           <SubmitBtn text="新增植株" variant="sunrise" :block="false" @click="handleOpenCreate" />
-          <SubmitBtn text="成长相册" variant="mint" :block="false" @click="handleOpenGrowthAlbum" />
-          <SubmitBtn text="AI 看病与出差方案" variant="blush" :block="false" @click="handleOpenPlantDoctor" />
-          <SubmitBtn text="个人中心" variant="mint" :block="false" @click="handleOpenMine" />
-          <SubmitBtn text="极简商城" variant="sunrise" :block="false" @click="handleOpenShop" />
+          <SubmitBtn text="今天去打卡" variant="mint" :block="false" @click="handleOpenRecord" />
+          <SubmitBtn text="更多工具" variant="blush" :block="false" @click="isQuickDrawerVisible = true" />
         </view>
       </view>
 
       <view v-if="isOffline"
-        class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">
+        class="info-soft app-fade-up bg-[#fff4e0]/92 text-[#8a633e] dark:bg-amber-500/14 dark:text-amber-100">
         当前网络不可用，已自动切到本地离线使用。你现在的新增、编辑、图片缓存和删除操作都会保存在设备加密存储里。
       </view>
 
-      <HomeWeatherReminderPanel :state="weatherReminderState" :flowers="activeFlowers" :ai-advice="aiAdvice"
-        :loading-ai-advice="loadingAiAdvice" :ai-advice-message="aiAdviceMessage" @locate="locateCity"
-        @open-permission="requestLocationPermissionAgain" @search-city="searchCities" @select-city="setManualCity"
-        @toggle-reminder="handleToggleReminderEnabled" @update-reminder-hour="handleReminderHourInput"
-        @update-reminder-minute="handleReminderMinuteInput" @update-quiet-start-hour="handleQuietStartHourInput"
-        @update-quiet-end-hour="handleQuietEndHourInput" @update-reminder-text="handleReminderTextInput" />
-
       <view class="grid grid-cols-3 gap-3">
-        <view v-for="card in summaryCards" :key="card.key"
-          class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
+        <view v-for="card in summaryCards" :key="card.key" class="surface-soft app-fade-up px-4 py-4 dark:bg-slate-900">
           <view class="h-2 w-14 rounded-full bg-linear-to-r" :class="card.accentClass" />
-          <text class="mt-3 block text-2xs text-slate-400 dark:text-slate-500">
+          <text class="mt-3 block text-2xs tracking-[0.08em] text-app-muted/80 dark:text-slate-500">
             {{ card.label }}
           </text>
-          <text class="mt-1 block text-xl font-800 text-slate-800 dark:text-slate-100">
+          <text class="mt-1 block text-xl font-800 text-app-ink dark:text-slate-100">
             {{ card.value }}
           </text>
         </view>
       </view>
 
-      <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
+      <CollapsibleSection title="天气提醒与花园节奏" description="天气、定位、提醒和 AI 园艺建议归到同一块，避免首页继续摊开。" tag-text="今日照护"
+        tag-tone="mint" tag-icon="✓" :default-expanded="true">
+        <HomeWeatherReminderPanel :state="weatherReminderState" :flowers="activeFlowers" :ai-advice="aiAdvice"
+          :loading-ai-advice="loadingAiAdvice" :ai-advice-message="aiAdviceMessage" @locate="locateCity"
+          @open-permission="requestLocationPermissionAgain" @search-city="searchCities" @select-city="setManualCity"
+          @toggle-reminder="handleToggleReminderEnabled" @update-reminder-hour="handleReminderHourInput"
+          @update-reminder-minute="handleReminderMinuteInput" @update-quiet-start-hour="handleQuietStartHourInput"
+          @update-quiet-end-hour="handleQuietEndHourInput" @update-reminder-text="handleReminderTextInput" />
+      </CollapsibleSection>
+      <CollapsibleSection title="筛选植物卡片" description="筛选作为整理工具，不再常驻抢占首页主视觉。" :tag-text="`${filteredFlowers.length} 株`"
+        tag-tone="blush" tag-icon="⌕">
         <view class="flex items-center justify-between gap-3">
-          <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
-              轻松筛一筛
-            </text>
-            <text class="mt-1 block text-sm text-slate-500 dark:text-slate-300">
-              按品类、位置和养护状态快速整理植物卡片。
-            </text>
+          <view class="text-sm leading-6 text-app-muted dark:text-slate-300">
+            按品类、位置和养护状态快速整理植物卡片。
           </view>
-          <button
-            class="h-9 rounded-full border-none bg-slate-100 px-4 text-2xs font-700 text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+          <button class="btn-chip surface-soft bg-white/74 text-app-muted dark:bg-slate-800 dark:text-slate-200"
             hover-class="opacity-92" @tap="resetFilters">
             重置
           </button>
@@ -521,13 +577,12 @@ function handleOpenShop(): void {
 
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
-            <button class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button class="btn-chip-wide"
               :class="filterState.category === 'all' ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.category = 'all'">
               全部品类
             </button>
-            <button v-for="option in FLOWER_CATEGORY_OPTIONS" :key="option.value"
-              class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button v-for="option in flowerCategoryOptions" :key="option.value" class="btn-chip"
               :class="filterState.category === option.value ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.category = option.value">
               {{ option.label }}
@@ -537,13 +592,12 @@ function handleOpenShop(): void {
 
         <scroll-view scroll-x class="mt-3 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
-            <button class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button class="btn-chip-wide"
               :class="filterState.placement === 'all' ? 'bg-app-blush text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.placement = 'all'">
               全部位置
             </button>
-            <button v-for="option in FLOWER_PLACEMENT_OPTIONS" :key="option.value"
-              class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button v-for="option in FLOWER_PLACEMENT_OPTIONS" :key="option.value" class="btn-chip"
               :class="filterState.placement === option.value ? 'bg-app-blush text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.placement = option.value">
               {{ option.label }}
@@ -553,25 +607,25 @@ function handleOpenShop(): void {
 
         <scroll-view scroll-x class="mt-3 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
-            <button class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button class="btn-chip-wide"
               :class="filterState.careStatus === 'all' ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.careStatus = 'all'">
               全部状态
             </button>
-            <button v-for="option in FLOWER_STATUS_OPTIONS" :key="option.value"
-              class="h-9 rounded-full border-none px-4 text-2xs font-700"
+            <button v-for="option in flowerCareStatusOptions" :key="option.value" class="btn-chip"
               :class="filterState.careStatus === option.value ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="filterState.careStatus = option.value">
               {{ option.label }}
             </button>
           </view>
         </scroll-view>
-      </view>
+      </CollapsibleSection>
 
       <view v-if="filteredFlowers.length > 0" class="grid gap-4" :class="flowerGridClass">
         <FlowerCard v-for="flower in filteredFlowers" :key="flower.id" :title="flower.name"
-          :subtitle="`${getFlowerCategoryLabel(flower.category)} · ${getFlowerPlacementLabel(flower.placement)}`"
+          :subtitle="`${flowerTaxonomyStore.resolveFlowerCategoryLabel(flower)} · ${getFlowerPlacementLabel(flower.placement)}`"
           :image-src="flower.images[0]?.url ?? ''" :status="flower.careStatus"
+          :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower)"
           :care-items="buildFlowerCardItems(flower)" :quick-actions="[
             { key: 'album', label: '成长相册' },
             { key: 'ai-advice', label: selectedAdviceFlower?.id === flower.id ? '正在查看建议' : 'AI建议' },
@@ -586,28 +640,19 @@ function handleOpenShop(): void {
         ? '先添加第一盆植物吧，后续的图片、状态、养护信息都会自动收进本地花园。'
         : '可以换个筛选条件看看，或者新增一盆不同状态的小植物。'" action-text="去新增植株" @action="handleOpenCreate" />
 
-      <SingleFlowerAiAdvicePanel :flower="selectedAdviceFlower" :advice="singleFlowerAiState.advice"
-        :loading="singleFlowerAiState.loading"
-        :message="singleFlowerAiState.latestMessage || (selectedAdviceFlower ? `${getFlowerDisplayName(selectedAdviceFlower)} 的专属建议会结合天气、摆放位置和历史养护记录来写。` : '')"
-        :disabled="singleFlowerAiState.disabled" @refresh="handleRefreshSingleFlowerAiAdvice" />
+      <CollapsibleSection title="单株 AI 建议" description="专属建议不再直接铺满首页，按需展开查看。"
+        :tag-text="selectedAdviceFlower ? getFlowerDisplayName(selectedAdviceFlower) : '未选择'" tag-tone="cream"
+        tag-icon="✦">
+        <SingleFlowerAiAdvicePanel :flower="selectedAdviceFlower" :advice="singleFlowerAiState.advice"
+          :loading="singleFlowerAiState.loading"
+          :message="singleFlowerAiState.latestMessage || (selectedAdviceFlower ? `${getFlowerDisplayName(selectedAdviceFlower)} 的专属建议会结合天气、摆放位置和历史养护记录来写。` : '')"
+          :disabled="singleFlowerAiState.disabled" @refresh="handleRefreshSingleFlowerAiAdvice" />
+      </CollapsibleSection>
 
-      <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
-        <view class="flex items-start justify-between gap-3">
-          <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
-              回收站温柔倒计时
-            </text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-              删除不会立刻消失，而是先留在本地回收站 7 天，系统会自动清理。
-            </text>
-          </view>
-          <TagLabel :text="`${recycleBinFlowers.length} 条待清理`" tone="slate" />
-        </view>
-
-        <view class="mt-4">
-          <TimeLine :items="recycleTimelineItems" empty-text="回收站现在是空的，花园状态很整洁。" />
-        </view>
-      </view>
+      <CollapsibleSection title="回收站倒计时" description="删除后的内容先温柔保留，避免首页长期展示低频信息。"
+        :tag-text="`${recycleBinFlowers.length} 条待清理`" tag-tone="slate" tag-icon="↺">
+        <TimeLine :items="recycleTimelineItems" empty-text="回收站现在是空的，花园状态很整洁。" />
+      </CollapsibleSection>
 
       <FlowerFormPopup v-model="isFormVisible" :mode="formMode" :initial-value="formInitialValue" :submitting="isSaving"
         @submit="handleSubmitFlower" />
@@ -616,6 +661,11 @@ function handleOpenShop(): void {
         ? `${deletingFlower.name} 会先留在回收站 7 天，期间仍会保留本地加密缓存，之后自动清除。`
         : '这次删除会先进回收站，不会立刻彻底消失。'" confirm-text="确认删除" cancel-text="我再看看" @update:model-value="deletingFlower = null"
         @cancel="deletingFlower = null" @confirm="handleConfirmDelete" />
+
+      <HomeQuickDrawer v-model="isQuickDrawerVisible" :actions="quickDrawerActions"
+        @select="handleSelectQuickDrawerAction" />
     </view>
+
+    <AppBottomNav active-key="home" />
   </view>
 </template>

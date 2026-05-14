@@ -3,7 +3,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import RecordCheckinPopup from '@/components/RecordCheckinPopup.vue'
-import { useFlowerStore, useRecordStore } from '@/store'
+import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
@@ -21,6 +21,7 @@ interface RecordTimelineGroup {
 }
 
 const flowerStore = useFlowerStore()
+const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const recordStore = useRecordStore()
 
 const { activeFlowers } = storeToRefs(flowerStore)
@@ -49,6 +50,12 @@ const selectedFlower = computed<LocalFlower | null>(() => (
 ))
 
 const flowerDisplayNameMap = computed(() => createFlowerDisplayNameMap(activeFlowers.value))
+const selectedFlowerCategoryLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCategoryLabel(selectedFlower.value) : '全部植物'
+))
+const selectedFlowerStatusLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCareStatusLabel(selectedFlower.value) : '按时间查看'
+))
 
 const recordTabs = computed(() => ([
   {
@@ -170,37 +177,36 @@ async function handleUndoLatestRecord(): Promise<void> {
 </script>
 
 <template>
-  <view
-    class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#FFF6EC] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
+  <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
       <view
-        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#F8CADB] via-[#FFF5E4] to-[#D7F7EF] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(248,200,220,0.22)] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
+        class="hero-shell app-fade-up bg-linear-to-br from-[#f5ccdb] via-[#fff6e7] to-[#dff7ee] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
               养护记录打卡簿
             </view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-slate-800 dark:text-slate-50">
+            <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
               每一次照顾，都给它留一个轻轻的脚印
             </view>
-            <view class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-200">
+            <view class="mt-2 text-body text-app-muted dark:text-slate-200">
               快捷打卡、备注、配图、撤回和时间轴都只保存在本地加密数据里，断网也能继续使用。
             </view>
           </view>
           <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
             🌼
           </view>
         </view>
       </view>
 
-      <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
+      <view class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">
               快捷打卡
             </text>
-            <text class="mt-1 block text-sm text-slate-500 dark:text-slate-300">
+            <text class="mt-1 block text-sm text-app-muted dark:text-slate-300">
               轻点一下，就把今天的照顾和心情一起收好。
             </text>
           </view>
@@ -209,15 +215,15 @@ async function handleUndoLatestRecord(): Promise<void> {
 
         <view class="mt-4 grid grid-cols-3 gap-3">
           <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
-            class="min-h-[122rpx] rounded-[26rpx] border-none bg-app-ivory px-3 py-3 text-left shadow-[0_12rpx_28rpx_rgba(148,163,184,0.08)] dark:bg-slate-800"
+            class="surface-soft app-pressable min-h-[122rpx] rounded-[26rpx] border-none bg-white/76 px-3 py-3 text-left dark:bg-slate-800"
             hover-class="opacity-92" @tap="openCheckin(option.value)">
             <view class="text-2xl">
               {{ option.emoji }}
             </view>
-            <text class="mt-2 block text-sm font-700 text-slate-700 dark:text-slate-100">
+            <text class="mt-2 block text-sm font-800 text-app-ink dark:text-slate-100">
               {{ option.label }}
             </text>
-            <text class="mt-1 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+            <text class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-slate-500">
               {{ option.description }}
             </text>
           </button>
@@ -225,13 +231,13 @@ async function handleUndoLatestRecord(): Promise<void> {
       </view>
 
       <view v-if="latestUndoableRecord"
-        class="rounded-[28rpx] bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-700 shadow-[0_12rpx_28rpx_rgba(16,185,129,0.12)] dark:bg-emerald-500/14 dark:text-emerald-100">
+        class="info-soft app-fade-up bg-[#edf9f3] text-[#2f7a64] dark:bg-emerald-500/14 dark:text-emerald-100">
         <view class="flex items-start justify-between gap-3">
           <text class="flex-1">
             {{ latestUndoText }}
           </text>
           <button
-            class="h-9 rounded-full border-none bg-white px-4 text-2xs font-700 text-emerald-700 dark:bg-slate-900 dark:text-emerald-200"
+            class="surface-soft app-pressable h-9 rounded-full border-none bg-white px-4 text-2xs font-700 text-[#2f7a64] dark:bg-slate-900 dark:text-emerald-200"
             hover-class="opacity-92" @tap="handleUndoLatestRecord">
             一键撤回
           </button>
@@ -239,31 +245,35 @@ async function handleUndoLatestRecord(): Promise<void> {
       </view>
 
       <view v-if="duplicateMessage"
-        class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">
+        class="info-soft app-fade-up bg-[#fff4e4] text-[#9a7144] dark:bg-amber-500/14 dark:text-amber-100">
         {{ duplicateMessage }}
       </view>
 
-      <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
-        <view class="flex items-center gap-2 rounded-full bg-app-ivory p-1 dark:bg-slate-800">
-          <button v-for="tab in recordTabs" :key="tab.key"
-            class="h-10 flex-1 rounded-full border-none px-4 text-2xs font-700"
-            :class="activeTab === tab.key ? 'bg-white text-slate-700 shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-slate-400 dark:text-slate-400'"
+      <CollapsibleSection title="记录范围与筛选" description="切换单株/全部、快速选植物，都收进这一层。"
+        :tag-text="activeTab === 'single' ? '单株视角' : '全部视角'" tag-tone="cream" tag-icon="⌕" :default-expanded="true">
+        <view class="surface-soft flex items-center gap-2 rounded-full bg-white/66 p-1 dark:bg-slate-800">
+          <button v-for="tab in recordTabs" :key="tab.key" class="btn-segment flex-1"
+            :class="activeTab === tab.key ? 'bg-white text-app-ink shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-app-muted/80 dark:text-slate-400'"
             hover-class="opacity-92" @tap="activeTab = tab.key">
-            {{ tab.label }}
+            <text class="truncate">{{ tab.label }}</text>
           </button>
         </view>
 
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
-            <button v-for="flower in activeFlowers" :key="flower.id"
-              class="h-10 rounded-full border-none px-4 text-2xs font-700"
-              :class="selectedFlowerId === flower.id ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
+            <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip"
+              :class="selectedFlowerId === flower.id ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]' : 'surface-soft bg-white/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="handleSwitchFlower(flower.id)">
               {{ flowerDisplayNameMap[flower.id] ?? flower.name }}
             </button>
           </view>
         </scroll-view>
-      </view>
+
+        <view v-if="selectedFlower" class="mt-3 flex flex-wrap gap-2">
+          <TagLabel :text="selectedFlowerCategoryLabel" tone="blush" icon="✿" />
+          <TagLabel :text="selectedFlowerStatusLabel" :status="selectedFlower.careStatus" />
+        </view>
+      </CollapsibleSection>
 
       <EmptyEmpty v-if="displayedRecords.length === 0" scene="record"
         :title="activeTab === 'single' ? '这盆植物还没有专属记录' : '还没有任何养护记录'" :description="activeTab === 'single'
@@ -271,13 +281,13 @@ async function handleUndoLatestRecord(): Promise<void> {
           : '从今天开始留痕，后面的照顾节奏就会越来越清楚。'" action-text="去打卡" @action="openCheckin()" />
 
       <view v-for="group in groupedTimeline" v-else :key="group.dateLabel"
-        class="card-soft rounded-[32rpx] dark:bg-slate-900">
+        class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">
               {{ group.dateLabel }}
             </text>
-            <text class="mt-1 block text-sm text-slate-500 dark:text-slate-300">
+            <text class="mt-1 block text-sm text-app-muted dark:text-slate-300">
               倒序时间轴，今天的照顾会排在最前面。
             </text>
           </view>
@@ -289,27 +299,16 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
       </view>
 
-      <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
-        <view class="flex items-start justify-between gap-3">
-          <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
-              撤回留存日志
-            </text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-              撤回不会抹掉痕迹，只是把那条记录从时间轴里温柔地收回去。
-            </text>
-          </view>
-          <TagLabel :text="`${recentUndoLogs.length} 条`" tone="slate" />
-        </view>
-
-        <view class="mt-4">
-          <TimeLine :items="undoTimelineItems" empty-text="最近还没有撤回记录，时间轴保持得很完整。" />
-        </view>
-      </view>
+      <CollapsibleSection title="撤回留存日志" description="低频日志折叠收纳，默认不干扰主时间轴浏览。" :tag-text="`${recentUndoLogs.length} 条`"
+        tag-tone="slate" tag-icon="↺">
+        <TimeLine :items="undoTimelineItems" empty-text="最近还没有撤回记录，时间轴保持得很完整。" />
+      </CollapsibleSection>
 
       <RecordCheckinPopup v-model="isCheckinVisible" :flower-options="activeFlowers"
         :initial-flower-id="selectedFlowerId" :initial-action-type="currentActionType" :submitting="isSubmitting"
         @submit="handleSubmitRecord" />
     </view>
+
+    <AppBottomNav active-key="record" />
   </view>
 </template>

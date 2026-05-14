@@ -36,7 +36,9 @@ const flowerName = computed(() => (
           只围绕 {{ flowerName }} 这一盆来想，语气轻一点，动作也会更具体一点。
         </text>
       </view>
-      <TagLabel :text="props.loading ? '思考中' : props.disabled ? '离线已暂停' : '已准备好'" tone="blush" />
+      <TagLabel :text="props.loading ? '思考中' : props.disabled ? '离线已暂停' : '已准备好'"
+        :tone="props.loading ? 'blush' : props.disabled ? 'slate' : 'mint'"
+        :icon="props.loading ? '◌' : props.disabled ? '⏸' : '✓'" size="md" />
     </view>
 
     <view v-if="props.advice"

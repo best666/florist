@@ -158,7 +158,8 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
             <text class="mt-1 block text-sm text-slate-500">{{ memberStore.currentStatusLabel }}</text>
           </view>
           <TagLabel :text="memberStore.isMemberActive ? '权益生效中' : '免费版'"
-            :tone="memberStore.isMemberActive ? 'mint' : 'slate'" />
+            :tone="memberStore.isMemberActive ? 'mint' : 'slate'" :icon="memberStore.isMemberActive ? '✓' : '○'"
+            size="md" />
         </view>
 
         <view class="mt-4 grid grid-cols-2 gap-3">
@@ -223,7 +224,8 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
             <view class="flex items-center justify-between gap-3">
               <text class="text-sm font-800 text-slate-800">{{ getMemberBenefitLabel(benefit) }}</text>
               <TagLabel :text="memberStore.hasBenefit(benefit) ? '已解锁' : '会员专属'"
-                :tone="memberStore.hasBenefit(benefit) ? 'mint' : 'cream'" />
+                :tone="memberStore.hasBenefit(benefit) ? 'mint' : 'cream'"
+                :icon="memberStore.hasBenefit(benefit) ? '✓' : '★'" />
             </view>
             <text class="mt-2 block text-2xs leading-6 text-slate-500">{{ getMemberBenefitDescription(benefit) }}</text>
           </view>
@@ -236,7 +238,7 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
             <text class="block text-base font-800 text-slate-800">支付确认</text>
             <text class="mt-1 block text-sm text-slate-500">小程序优先走微信支付桥接，H5 展示扫码二维码。</text>
           </view>
-          <TagLabel :text="isH5Payment ? 'H5 扫码支付' : '微信支付'" tone="blush" />
+          <TagLabel :text="isH5Payment ? 'H5 扫码支付' : '微信支付'" tone="blush" :icon="isH5Payment ? '⌘' : '¥'" size="md" />
         </view>
 
         <view class="mt-4 rounded-[24rpx] bg-[#FBF7F1] px-4 py-4 text-sm leading-6 text-slate-600">

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { IUser, IUserAuthSession, UserLoginType } from '@florist/contracts';
 import { UserStatus } from '@florist/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -17,27 +18,68 @@ function normalizeOptionalString(value?: string): string | null {
   return normalizedValue && normalizedValue.length > 0 ? normalizedValue : null;
 }
 
+function maskPhoneNumber(phoneNumber: string): string {
+  const digits = phoneNumber.replace(/\s+/g, '');
+
+  if (!/^1\d{10}$/.test(digits)) {
+    return digits;
+  }
+
+  return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
+}
+
 @Injectable()
 export class UsersService {
+  private defaultUserReadyPromise: Promise<string> | null = null;
+
   public constructor(
     private readonly prisma: PrismaService,
     private readonly cryptoService: DatabaseCryptoService,
   ) {}
 
   public async ensureDefaultUserId(): Promise<string> {
-    await this.prisma.user.upsert({
-      where: { id: DEFAULT_LOCAL_USER_ID },
-      update: {},
-      create: {
-        id: DEFAULT_LOCAL_USER_ID,
-        nickname: DEFAULT_LOCAL_USER_NICKNAME,
-        loginType: DEFAULT_LOCAL_USER_LOGIN_TYPE,
-        status: UserStatus.Normal,
-        lastLoginAt: new Date(),
-      },
-    });
+    if (this.defaultUserReadyPromise) {
+      return this.defaultUserReadyPromise;
+    }
 
-    return DEFAULT_LOCAL_USER_ID;
+    this.defaultUserReadyPromise = this.prisma.user.findUnique({
+      where: { id: DEFAULT_LOCAL_USER_ID },
+    }).then(async (existingUser) => {
+      if (existingUser) {
+        return DEFAULT_LOCAL_USER_ID;
+      }
+
+      try {
+        await this.prisma.user.create({
+          data: {
+            id: DEFAULT_LOCAL_USER_ID,
+            nickname: DEFAULT_LOCAL_USER_NICKNAME,
+            loginType: DEFAULT_LOCAL_USER_LOGIN_TYPE,
+            status: UserStatus.Normal,
+            lastLoginAt: new Date(),
+          },
+        });
+
+        return DEFAULT_LOCAL_USER_ID;
+      }
+      catch (error) {
+        const createdUser = await this.prisma.user.findUnique({
+          where: { id: DEFAULT_LOCAL_USER_ID },
+        });
+
+        if (createdUser) {
+          return DEFAULT_LOCAL_USER_ID;
+        }
+
+        throw error;
+      }
+    })
+      .catch((error) => {
+        this.defaultUserReadyPromise = null;
+        throw error;
+      });
+
+    return this.defaultUserReadyPromise;
   }
 
   public async resolveCurrentUserId(requestUserId?: string): Promise<string> {
@@ -136,6 +178,47 @@ export class UsersService {
         avatarUrl: normalizeOptionalString(input.avatarUrl),
         loginType: input.loginType,
         wechatOpenIdHash: input.wechatOpenIdHash,
+        status: UserStatus.Normal,
+        lastLoginAt: now,
+      },
+    });
+
+    return this.buildUserSession(createdUser.id, true);
+  }
+
+  public async loginH5PhoneUser(input: {
+    phoneNumber: string;
+    nickname?: string;
+    loginType: UserLoginType;
+  }): Promise<IUserAuthSession> {
+    const now = new Date();
+    const normalizedPhone = input.phoneNumber.trim();
+    const userId = `h5-phone-${createHash('sha256').update(normalizedPhone).digest('hex').slice(0, 24)}`;
+    const phoneMasked = maskPhoneNumber(normalizedPhone);
+    const phoneMaskedCipher = this.cryptoService.encryptText(phoneMasked);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (existingUser) {
+      await this.prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          nickname: input.nickname?.trim() || existingUser.nickname,
+          phoneMaskedCipher,
+          lastLoginAt: now,
+        },
+      });
+
+      return this.buildUserSession(existingUser.id, false);
+    }
+
+    const createdUser = await this.prisma.user.create({
+      data: {
+        id: userId,
+        nickname: input.nickname?.trim() || 'H5 花友',
+        loginType: input.loginType,
+        phoneMaskedCipher,
         status: UserStatus.Normal,
         lastLoginAt: now,
       },

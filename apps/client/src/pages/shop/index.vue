@@ -80,11 +80,9 @@ async function handleOpenProduct(url: string): Promise<void> {
             </view>
           </view>
 
-          <button
-            class="mt-4 h-[88rpx] rounded-[24rpx] border-none bg-linear-to-r from-[#E7F4EB] to-[#FFF2DE] text-sm font-800 text-slate-700"
-            hover-class="opacity-92" @tap="handleOpenProduct(product.externalUrl)">
-            {{ '查看外链，不在站内交易' }}
-          </button>
+          <view class="mt-4">
+            <ActionHintButton title="查看外链" hint="不在站内交易" icon="↗" @click="handleOpenProduct(product.externalUrl)" />
+          </view>
         </view>
       </view>
     </view>

@@ -7,6 +7,7 @@ import type {
   UseLocationWeatherReminderState,
   WeatherCareTip,
 } from '@/interfaces'
+import { formatCityDisplayName } from '@/interfaces'
 import { buildFlowerWeatherContextTips, formatDateTime } from '@/utils'
 import TagLabel from './TagLabel.vue'
 
@@ -41,14 +42,12 @@ const emit = defineEmits<{
 }>()
 
 const cityDisplayName = computed(() => {
-  if (!props.state.city) {
-    return '还没选城市'
-  }
-
-  return props.state.city.admin1
-    ? `${props.state.city.name} · ${props.state.city.admin1}`
-    : props.state.city.name
+  return formatCityDisplayName(props.state.city)
 })
+
+function formatCandidateCity(city: CityOption): string {
+  return formatCityDisplayName(city)
+}
 
 const weatherMetrics = computed<ReadonlyArray<WeatherMetricItem>>(() => {
   if (!props.state.weather) {
@@ -142,11 +141,11 @@ function emitReminderText(event: { detail: { value: string } }): void {
     <view
       class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#F7FBFF] via-white to-[#FFF8F1] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
       <view class="flex items-center justify-between gap-3">
-        <view>
-          <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">
+        <view class="min-w-0 flex-1 pr-2">
+          <text class="block text-base font-800 leading-6 text-slate-800 dark:text-slate-100">
             {{ cityDisplayName }}
           </text>
-          <text class="mt-1 block text-sm text-slate-500 dark:text-slate-300">
+          <text class="mt-1 block text-2xs leading-5 text-slate-500 dark:text-slate-300">
             {{ props.state.weather
               ? `更新时间 ${formatDateTime(props.state.weather.fetchedAt, { pattern: 'YYYY-MM-DD HH:mm' })}`
               : '还没有拉到天气，先定位或选城市。' }}
@@ -154,14 +153,20 @@ function emitReminderText(event: { detail: { value: string } }): void {
         </view>
 
         <view class="flex flex-wrap justify-end gap-2">
-          <button class="h-9 rounded-full border-none bg-app-mint px-4 text-2xs font-700 text-slate-700"
+          <button class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs text-slate-700 bg-app-mint"
             :class="props.state.loadingLocation ? 'opacity-60' : ''" hover-class="opacity-92" @tap="emit('locate')">
-            {{ props.state.loadingLocation ? '定位中' : '重新定位' }}
+            <view class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+              ⌖
+            </view>
+            <text class="whitespace-nowrap">{{ props.state.loadingLocation ? '定位中' : '重新定位' }}</text>
           </button>
           <button v-if="props.state.locationDenied"
-            class="h-9 rounded-full border-none bg-app-blush px-4 text-2xs font-700 text-slate-700"
+            class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs text-slate-700 bg-app-blush"
             hover-class="opacity-92" @tap="emit('open-permission')">
-            去开权限
+            <view class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+              ⚙
+            </view>
+            <text class="whitespace-nowrap">去开权限</text>
           </button>
         </view>
       </view>
@@ -200,7 +205,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
           <text class="block text-sm font-700 text-slate-800 dark:text-slate-100">
             AI 养护建议
           </text>
-          <TagLabel :text="props.loadingAiAdvice ? '生成中' : '已就绪'" tone="blush" />
+          <TagLabel :text="props.loadingAiAdvice ? '生成中' : '已就绪'" :tone="props.loadingAiAdvice ? 'blush' : 'mint'"
+            :icon="props.loadingAiAdvice ? '◌' : '✓'" size="md" />
         </view>
 
         <view v-if="props.aiAdvice" class="mt-3 flex flex-col gap-3">
@@ -242,16 +248,15 @@ function emitReminderText(event: { detail: { value: string } }): void {
       </view>
 
       <input :value="props.state.citySearchKeyword" placeholder="输入城市名，例如 杭州"
-        class="mt-3 h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        @input="emitSearchCity">
+        class="field-input-md mt-3 dark:bg-slate-900 dark:text-slate-100" @input="emitSearchCity">
 
       <scroll-view scroll-x class="mt-3 whitespace-nowrap">
         <view class="flex items-center gap-2 pb-1">
           <button v-for="city in props.state.citySearchResults" :key="city.id"
-            class="h-10 rounded-full border-none px-4 text-2xs font-700"
+            class="btn-chip h-[68rpx] min-h-[68rpx] px-4 text-2xs"
             :class="props.state.city?.id === city.id ? 'bg-app-mint text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
             hover-class="opacity-92" @tap="emit('select-city', city)">
-            {{ city.name }}{{ city.admin1 ? ` · ${city.admin1}` : '' }}
+            {{ formatCandidateCity(city) }}
           </button>
         </view>
       </scroll-view>
@@ -268,7 +273,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
           </text>
         </view>
 
-        <button class="h-9 rounded-full border-none px-4 text-2xs font-700"
+        <button class="btn-pill-sm"
           :class="props.state.reminderConfig.enabled ? 'bg-app-mint text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
           hover-class="opacity-92" @tap="emit('toggle-reminder')">
           {{ props.state.reminderConfig.enabled ? '提醒已开启' : '开启提醒' }}
@@ -279,33 +284,29 @@ function emitReminderText(event: { detail: { value: string } }): void {
         <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒小时</text>
           <input :value="String(props.state.reminderConfig.reminderHour)" type="number"
-            class="mt-2 h-10 rounded-[18rpx] bg-app-ivory px-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            @input="emitReminderHour">
+            class="field-input-sm mt-2 bg-app-ivory dark:bg-slate-800 dark:text-slate-100" @input="emitReminderHour">
         </view>
         <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒分钟</text>
           <input :value="String(props.state.reminderConfig.reminderMinute)" type="number"
-            class="mt-2 h-10 rounded-[18rpx] bg-app-ivory px-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            @input="emitReminderMinute">
+            class="field-input-sm mt-2 bg-app-ivory dark:bg-slate-800 dark:text-slate-100" @input="emitReminderMinute">
         </view>
         <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-slate-400 dark:text-slate-500">免打扰开始小时</text>
           <input :value="String(props.state.reminderConfig.quietHours.startHour)" type="number"
-            class="mt-2 h-10 rounded-[18rpx] bg-app-ivory px-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            @input="emitQuietStartHour">
+            class="field-input-sm mt-2 bg-app-ivory dark:bg-slate-800 dark:text-slate-100" @input="emitQuietStartHour">
         </view>
         <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-slate-400 dark:text-slate-500">免打扰结束小时</text>
           <input :value="String(props.state.reminderConfig.quietHours.endHour)" type="number"
-            class="mt-2 h-10 rounded-[18rpx] bg-app-ivory px-3 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            @input="emitQuietEndHour">
+            class="field-input-sm mt-2 bg-app-ivory dark:bg-slate-800 dark:text-slate-100" @input="emitQuietEndHour">
         </view>
       </view>
 
       <view class="mt-3 rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
         <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒文案</text>
         <textarea :value="props.state.reminderConfig.reminderText" :maxlength="50" auto-height
-          class="mt-2 min-h-[120rpx] rounded-[18rpx] bg-app-ivory px-3 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="field-textarea mt-2 min-h-[120rpx] rounded-[18rpx] bg-app-ivory px-3 dark:bg-slate-800 dark:text-slate-100"
           placeholder="写一段温柔提醒自己看看小植物的话。" @input="emitReminderText" />
       </view>
     </view>

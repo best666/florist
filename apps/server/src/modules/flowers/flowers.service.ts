@@ -65,13 +65,14 @@ export class FlowersService {
 
   public async getFlowerCenter(userIdInput?: string): Promise<FlowerCenterResponse> {
     const userId = await this.usersService.resolveCurrentUserId(userIdInput);
-    await this.cleanupRecycleBin(userId);
+    await this.cleanupRecycleBinByUserId(userId);
 
     const flowers = await this.prisma.flower.findMany({
       where: { userId, isDeleted: false },
       include: { images: true },
       orderBy: { updatedAt: 'desc' },
     });
+
     const recycleBin = await this.prisma.flower.findMany({
       where: { userId, isDeleted: true },
       include: { images: true },
@@ -304,6 +305,10 @@ export class FlowersService {
 
   public async cleanupRecycleBin(userIdInput?: string): Promise<void> {
     const userId = await this.usersService.resolveCurrentUserId(userIdInput);
+    await this.cleanupRecycleBinByUserId(userId);
+  }
+
+  private async cleanupRecycleBinByUserId(userId: string): Promise<void> {
 
     await this.prisma.flower.deleteMany({
       where: {

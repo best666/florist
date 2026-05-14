@@ -129,3 +129,18 @@ export const DEFAULT_LOCAL_REMINDER_CONFIG: LocalReminderConfig = {
   reminderText: '今天也来看看小植物吧，轻轻浇水、擦叶或记录一下状态。',
   lastTriggeredDate: null,
 }
+
+export function formatCityDisplayName(city: Nullable<CityOption>): string {
+  if (!city) {
+    return '还没选城市'
+  }
+
+  const normalizedName = city.name.trim()
+  const normalizedAdmin1 = city.admin1?.trim()
+
+  if (!normalizedAdmin1 || normalizedAdmin1 === normalizedName) {
+    return normalizedName
+  }
+
+  return `${normalizedName} · ${normalizedAdmin1}`
+}

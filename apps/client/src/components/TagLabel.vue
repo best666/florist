@@ -19,6 +19,14 @@ interface TagLabelProps {
    * 是否显示小圆点，适合在卡片和时间轴中弱化状态信息。
    */
   showDot?: boolean
+  /**
+   * 可选图标字符，适合“已就绪”“已准备好”这类状态提示。
+   */
+  icon?: string
+  /**
+   * 标签尺寸。
+   */
+  size?: 'sm' | 'md'
 }
 
 const props = withDefaults(defineProps<TagLabelProps>(), {
@@ -26,13 +34,15 @@ const props = withDefaults(defineProps<TagLabelProps>(), {
   text: '',
   tone: 'mint',
   showDot: true,
+  icon: '',
+  size: 'sm',
 })
 
 const toneClassMap: Record<SoftTone, string> = {
-  mint: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/18 dark:text-emerald-200',
-  blush: 'bg-rose-100 text-rose-700 dark:bg-rose-500/18 dark:text-rose-200',
-  cream: 'bg-amber-50 text-amber-700 dark:bg-amber-500/16 dark:text-amber-100',
-  slate: 'bg-slate-100 text-slate-600 dark:bg-slate-700/55 dark:text-slate-100',
+  mint: 'bg-[#e9f8f3] text-[#377864] dark:bg-emerald-500/18 dark:text-emerald-200',
+  blush: 'bg-[#fcecf3] text-[#925972] dark:bg-rose-500/18 dark:text-rose-200',
+  cream: 'bg-[#fff4df] text-[#9b7242] dark:bg-amber-500/16 dark:text-amber-100',
+  slate: 'bg-[#eef1f4] text-[#5d6875] dark:bg-slate-700/55 dark:text-slate-100',
 }
 
 const statusMetaMap: Record<Exclude<TagLabelStatus, 'custom'>, { text: string, tone: SoftTone }> = {
@@ -75,14 +85,21 @@ const resolvedTone = computed<SoftTone>(() => {
 })
 
 const badgeClass = computed(() => toneClassMap[resolvedTone.value])
+const hasLeadingIcon = computed(() => props.icon.trim().length > 0)
+const sizeClass = computed(() => (
+  props.size === 'md'
+    ? 'min-h-[60rpx] gap-2 px-3.5 py-2 text-xs'
+    : 'gap-1.5 px-3 py-1.5 text-2xs'
+))
 </script>
 
 <template>
-  <view :class="['badge-soft gap-1.5 px-3 py-1.5 text-2xs', badgeClass]">
-    <view
-      v-if="props.showDot"
-      class="h-1.5 w-1.5 rounded-full bg-current opacity-70"
-    />
-    <text>{{ resolvedLabel }}</text>
+  <view :class="['badge-soft whitespace-nowrap shadow-[0_8rpx_18rpx_rgba(148,163,184,0.08)]', sizeClass, badgeClass]">
+    <view v-if="hasLeadingIcon"
+      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white/65 text-[20rpx] leading-none">
+      {{ props.icon }}
+    </view>
+    <view v-else-if="props.showDot" class="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+    <text class="leading-none whitespace-nowrap">{{ resolvedLabel }}</text>
   </view>
 </template>

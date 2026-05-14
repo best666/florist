@@ -4,7 +4,7 @@ import type { IImageAsset } from '@florist/contracts'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, ref } from 'vue'
-import { useFlowerStore, useMemberStore, useRecordStore } from '@/store'
+import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import type {
   GrowthAlbumPhotoItem,
   GrowthPosterTemplateDefinition,
@@ -33,6 +33,7 @@ import {
 type CanvasContext2D = UniApp.CanvasContext
 
 const flowerStore = useFlowerStore()
+const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const memberStore = useMemberStore()
 const recordStore = useRecordStore()
 const { activeFlowers } = storeToRefs(flowerStore)
@@ -232,6 +233,12 @@ const selectedFlower = computed<LocalFlower | null>(() => {
 })
 
 const careDays = computed(() => createCareDayCount(selectedFlower.value))
+const selectedFlowerCategoryLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCategoryLabel(selectedFlower.value) : ''
+))
+const selectedFlowerStatusLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCareStatusLabel(selectedFlower.value) : ''
+))
 
 const albumItems = computed<ReadonlyArray<GrowthAlbumPhotoItem>>(() => {
   const flower = selectedFlower.value
@@ -474,7 +481,7 @@ onBeforeUnmount(() => {
 <template>
   <view
     class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#F7FFF8] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
       <view
         class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#FFE9D9] via-[#FFF8EA] to-[#E3FFF4] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(255,219,194,0.26)] transition-all duration-300 dark:from-slate-900 dark:via-amber-950 dark:to-emerald-950">
         <view class="flex items-start justify-between gap-4">
@@ -509,19 +516,24 @@ onBeforeUnmount(() => {
               相册会自动按时间汇总这盆植物的档案照片和打卡配图。
             </text>
           </view>
-          <TagLabel :text="selectedFlower ? `${careDays} 天陪伴` : '待选择'" tone="mint" />
+          <TagLabel :text="selectedFlower ? `${careDays} 天陪伴` : '待选择'" :tone="selectedFlower ? 'mint' : 'slate'"
+            :icon="selectedFlower ? '✓' : '○'" size="md" />
         </view>
 
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex gap-2 pb-1">
-            <button v-for="flower in activeFlowers" :key="flower.id"
-              class="h-10 rounded-full border-none px-4 text-2xs font-700 transition-all duration-300"
+            <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip transition-all duration-300"
               :class="selectedFlower?.id === flower.id ? 'bg-app-mint text-slate-700 shadow-[0_10rpx_24rpx_rgba(134,214,193,0.18)]' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="handleOpenGrowthAlbum(flower.id)">
               {{ getFlowerDisplayName(flower) }}
             </button>
           </view>
         </scroll-view>
+
+        <view v-if="selectedFlower" class="mt-3 flex flex-wrap gap-2">
+          <TagLabel :text="selectedFlowerCategoryLabel" tone="blush" icon="✿" />
+          <TagLabel :text="selectedFlowerStatusLabel" :status="selectedFlower.careStatus" />
+        </view>
       </view>
 
       <EmptyEmpty v-if="!selectedFlower" scene="flower" title="还没有可用的成长相册" description="先新增一盆植物，后续的档案照片和打卡配图就会自动汇总到这里。"
@@ -548,21 +560,10 @@ onBeforeUnmount(() => {
           </view>
         </view>
 
-        <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
-          <view class="flex items-start justify-between gap-3">
-            <view>
-              <text class="block text-base font-800 text-slate-800 dark:text-slate-100">成长时间轴</text>
-              <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-                从入住花园开始，到每次打卡和配图，变化会按时间自动排好。
-              </text>
-            </view>
-            <TagLabel :text="selectedFlower.name" tone="blush" />
-          </view>
-
-          <view class="mt-4">
-            <TimeLine :items="timelineItems" empty-text="这盆植物暂时还没有可展示的成长节点。" />
-          </view>
-        </view>
+        <CollapsibleSection title="成长时间轴" description="关键节点折叠收纳，默认先看相册和海报操作。" :tag-text="selectedFlowerCategoryLabel"
+          tag-tone="blush" tag-icon="✿">
+          <TimeLine :items="timelineItems" empty-text="这盆植物暂时还没有可展示的成长节点。" />
+        </CollapsibleSection>
 
         <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
           <view class="flex items-start justify-between gap-3">
@@ -572,7 +573,7 @@ onBeforeUnmount(() => {
                 已按时间从早到晚自动整理，点开就能直接查看大图。
               </text>
             </view>
-            <TagLabel :text="`${albumItems.length} 张`" tone="slate" />
+            <TagLabel :text="`${albumItems.length} 张`" tone="slate" icon="▣" />
           </view>
 
           <view v-if="albumItems.length > 0" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -597,20 +598,14 @@ onBeforeUnmount(() => {
           </view>
         </view>
 
-        <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
-          <view class="flex items-start justify-between gap-3">
-            <view>
-              <text class="block text-base font-800 text-slate-800 dark:text-slate-100">海报模板</text>
-              <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-                免费模板 2 套可直接用，会员模板支持无水印和高清导出。
-              </text>
-            </view>
+        <CollapsibleSection title="海报模板" description="模板选择收起后，相册主线会更清楚。" :tag-text="selectedTemplate.name"
+          tag-tone="cream" tag-icon="★">
+          <template #header-extra>
             <button class="h-9 rounded-full border-none bg-app-blush px-4 text-2xs font-700 text-slate-700"
               hover-class="opacity-92" @tap="handleOpenMemberPosterBenefits">
               会员权益
             </button>
-          </view>
-
+          </template>
           <view class="mt-4 grid gap-3">
             <view class="grid gap-3 md:grid-cols-2">
               <view v-for="template in freeTemplates" :key="template.id"
@@ -623,7 +618,7 @@ onBeforeUnmount(() => {
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
                       }}</text>
                   </view>
-                  <TagLabel :text="template.badgeText" tone="mint" />
+                  <TagLabel :text="template.badgeText" tone="mint" icon="✓" />
                 </view>
               </view>
             </view>
@@ -639,12 +634,12 @@ onBeforeUnmount(() => {
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
                       }}</text>
                   </view>
-                  <TagLabel :text="template.badgeText" tone="cream" />
+                  <TagLabel :text="template.badgeText" tone="cream" icon="★" />
                 </view>
               </view>
             </view>
           </view>
-        </view>
+        </CollapsibleSection>
 
         <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
           <view class="flex items-start justify-between gap-3">
@@ -654,7 +649,8 @@ onBeforeUnmount(() => {
                 海报会自动拼接最近图片，并排入植株名称和养护天数。
               </text>
             </view>
-            <TagLabel :text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'" :tone="isMemberUnlocked ? 'mint' : 'slate'" />
+            <TagLabel :text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'" :tone="isMemberUnlocked ? 'mint' : 'slate'"
+              :icon="isMemberUnlocked ? '✓' : '△'" size="md" />
           </view>
 
           <view v-if="posterImagePath"
@@ -680,5 +676,7 @@ onBeforeUnmount(() => {
       <canvas canvas-id="growthPosterCanvas" id="growthPosterCanvas"
         class="pointer-events-none fixed left-[-9999px] top-[-9999px] h-[720px] w-[480px] opacity-0" />
     </view>
+
+    <AppBottomNav active-key="album" />
   </view>
 </template>

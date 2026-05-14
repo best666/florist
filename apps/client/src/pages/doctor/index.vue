@@ -7,8 +7,8 @@ import { fetchPlantDiagnosis, fetchTripCarePlan } from '@/api'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { usePlantDoctorCenter } from '@/hooks/usePlantDoctorCenter'
-import type { LocalFlower, PlantDoctorHistoryItem } from '@/interfaces'
-import { useFlowerStore } from '@/store'
+import { formatCityDisplayName, type CityOption, type LocalFlower, type PlantDoctorHistoryItem } from '@/interfaces'
+import { useFlowerStore, useFlowerTaxonomyStore } from '@/store'
 import {
   cacheImageForOffline,
   compressImageSafely,
@@ -20,6 +20,7 @@ import {
 } from '@/utils'
 
 const flowerStore = useFlowerStore()
+const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const { activeFlowers } = storeToRefs(flowerStore)
 const { isOffline } = useNetworkStatus()
 const {
@@ -71,6 +72,17 @@ const quotaText = computed(() => {
     ? `今日免费次数已用完（${quota.freeLimit}/${quota.freeLimit}）`
     : `今日还可免费识别 ${quota.remainingCount} 次`
 })
+const selectedFlowerCategoryLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCategoryLabel(selectedFlower.value) : '未绑定类别'
+))
+const selectedFlowerStatusLabel = computed(() => (
+  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCareStatusLabel(selectedFlower.value) : '未绑定状态'
+))
+const cityDisplayName = computed(() => formatCityDisplayName(weatherState.city))
+
+function formatCandidateCity(city: CityOption): string {
+  return formatCityDisplayName(city)
+}
 
 onLoad((query) => {
   if (query && typeof query.flowerId === 'string') {
@@ -334,10 +346,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
 
         <view class="mt-4 rounded-[26rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
           <view class="flex items-center justify-between gap-3">
-            <view>
-              <text class="block text-sm font-700 text-slate-800 dark:text-slate-100">
-                {{ weatherState.city ? `${weatherState.city.name}${weatherState.city.admin1 ? ` ·
-                ${weatherState.city.admin1}` : ''}` : '还没选城市' }}
+            <view class="min-w-0 flex-1 pr-2">
+              <text class="block text-sm font-700 leading-6 text-slate-800 dark:text-slate-100">
+                {{ cityDisplayName }}
               </text>
               <text class="mt-1 block text-2xs leading-5 text-slate-500 dark:text-slate-300">
                 {{ weatherState.weather
@@ -346,15 +357,23 @@ function handleOpenHistoryImage(imageUrl: string): void {
                   : '还没有拉到天气，定位或手动选城市后就能生成更稳的出差方案。' }}
               </text>
             </view>
-            <view class="flex gap-2">
-              <button class="h-9 rounded-full border-none bg-app-mint px-4 text-2xs font-700 text-slate-700"
+            <view class="flex flex-wrap justify-end gap-2">
+              <button class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-mint text-slate-700"
                 hover-class="opacity-92" @tap="locateCity">
-                重新定位
+                <view
+                  class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+                  ⌖
+                </view>
+                <text class="whitespace-nowrap">重新定位</text>
               </button>
               <button v-if="weatherState.locationDenied"
-                class="h-9 rounded-full border-none bg-app-blush px-4 text-2xs font-700 text-slate-700"
+                class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-blush text-slate-700"
                 hover-class="opacity-92" @tap="requestLocationPermissionAgain">
-                去开权限
+                <view
+                  class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+                  ⚙
+                </view>
+                <text class="whitespace-nowrap">去开权限</text>
               </button>
             </view>
           </view>
@@ -366,9 +385,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
           <scroll-view scroll-x class="mt-3 whitespace-nowrap">
             <view class="flex gap-2 pb-1">
               <button v-for="city in weatherState.citySearchResults.slice(0, 8)" :key="city.id"
-                class="h-9 rounded-full border-none bg-white px-4 text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                class="btn-chip h-[68rpx] min-h-[68rpx] bg-white px-4 text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 hover-class="opacity-92" @tap="setManualCity(city)">
-                {{ city.name }}
+                {{ formatCandidateCity(city) }}
               </button>
             </view>
           </scroll-view>
@@ -388,19 +407,23 @@ function handleOpenHistoryImage(imageUrl: string): void {
 
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex gap-2 pb-1">
-            <button class="h-10 rounded-full border-none px-4 text-2xs font-700"
+            <button class="btn-chip-wide"
               :class="!selectedFlowerId ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="selectedFlowerId = ''">
               暂不绑定植株
             </button>
-            <button v-for="flower in activeFlowers" :key="flower.id"
-              class="h-10 rounded-full border-none px-4 text-2xs font-700"
+            <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip"
               :class="selectedFlower?.id === flower.id ? 'bg-app-blush text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="selectedFlowerId = flower.id">
               {{ getFlowerDisplayName(flower) }}
             </button>
           </view>
         </scroll-view>
+
+        <view v-if="selectedFlower" class="mt-3 flex flex-wrap gap-2">
+          <TagLabel :text="selectedFlowerCategoryLabel" tone="blush" icon="✿" />
+          <TagLabel :text="selectedFlowerStatusLabel" :status="selectedFlower.careStatus" />
+        </view>
       </view>
 
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
@@ -411,20 +434,19 @@ function handleOpenHistoryImage(imageUrl: string): void {
               建议拍叶背、病斑、虫点或受损局部，光线稳定一点，识别会更准。
             </text>
           </view>
-          <TagLabel :text="selectedImage ? '已准备好' : '待上传'" tone="slate" />
+          <TagLabel :text="selectedImage ? '已准备好' : '待上传'" :tone="selectedImage ? 'mint' : 'slate'"
+            :icon="selectedImage ? '✓' : '↑'" size="md" />
         </view>
 
         <view v-if="selectedImage" class="mt-4 rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
           <AppImage class="h-[320rpx] w-full rounded-[24rpx] bg-white object-cover dark:bg-slate-900"
             :src="selectedImage.url" mode="aspectFill" error-text="识别图片先休息一下" @tap="handlePreviewSelectedImage" />
           <view class="mt-3 flex gap-2">
-            <button
-              class="h-9 flex-1 rounded-full border-none bg-white text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            <button class="btn-pill-md flex-1 bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-100"
               hover-class="opacity-92" @tap="handleChooseImage">
               重新拍 / 重新选
             </button>
-            <button
-              class="h-9 flex-1 rounded-full border-none bg-white text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            <button class="btn-pill-md flex-1 bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-100"
               hover-class="opacity-92" @tap="cleanupSelectedImage">
               移除图片
             </button>
@@ -468,9 +490,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-            }}</text>
+          }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-            }}</text>
+          }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">
@@ -505,7 +527,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
               结合天气、摆放位置和出差天数，帮你生成无人托管时的照顾节奏。
             </text>
           </view>
-          <TagLabel :text="selectedFlower ? getFlowerDisplayName(selectedFlower) : '请先选植株'" tone="mint" />
+          <TagLabel :text="selectedFlower ? selectedFlowerStatusLabel : '请先选植株'"
+            :tone="selectedFlower ? 'mint' : 'slate'" />
         </view>
 
         <view class="mt-4 rounded-[28rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">

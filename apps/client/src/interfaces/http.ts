@@ -82,7 +82,8 @@ export interface ErrorInterceptor {
 
 export interface MaybeApiResponse<TData> extends Partial<ApiResponse<TData>> {
   data?: TData
-  code?: number
+  code?: number | string
+  success?: boolean
   message?: string
 }
 

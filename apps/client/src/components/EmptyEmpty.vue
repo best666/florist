@@ -62,24 +62,20 @@ function handleAction(): void {
 </script>
 
 <template>
-  <view class="card-soft flex flex-col items-center justify-center gap-4 rounded-[32rpx] px-6 py-8 text-center dark:bg-slate-900 dark:text-slate-100">
-    <view class="flex h-22 w-22 items-center justify-center rounded-full bg-linear-to-br from-app-cream to-white text-4xl shadow-[0_14rpx_32rpx_rgba(248,200,220,0.24)] dark:from-slate-800 dark:to-slate-700">
+  <view
+    class="card-soft app-fade-up flex flex-col items-center justify-center gap-4 rounded-[32rpx] px-6 py-8 text-center dark:bg-slate-900 dark:text-slate-100">
+    <view
+      class="app-float-soft flex h-22 w-22 items-center justify-center rounded-full bg-linear-to-br from-app-cream via-white to-[#ffe9d3] text-4xl shadow-[0_14rpx_32rpx_rgba(248,200,220,0.24)] dark:from-slate-800 dark:to-slate-700">
       {{ resolvedMeta.emoji }}
     </view>
     <view class="flex flex-col gap-2">
-      <text class="text-lg font-700 text-slate-800 dark:text-slate-100">
+      <text class="text-[34rpx] font-800 text-app-ink dark:text-slate-100">
         {{ resolvedTitle }}
       </text>
-      <text class="text-sm leading-6 text-slate-500 dark:text-slate-300">
+      <text class="text-sm leading-6 text-app-muted dark:text-slate-300">
         {{ resolvedDescription }}
       </text>
     </view>
-    <SubmitBtn
-      v-if="props.actionText"
-      :text="props.actionText"
-      variant="blush"
-      :block="false"
-      @click="handleAction"
-    />
+    <SubmitBtn v-if="props.actionText" :text="props.actionText" variant="blush" :block="false" @click="handleAction" />
   </view>
 </template>

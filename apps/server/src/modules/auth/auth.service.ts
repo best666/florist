@@ -1,15 +1,24 @@
 import { createHash } from 'node:crypto';
 import type { IUserAuthSession } from '@florist/contracts';
 import { UserLoginType } from '@florist/contracts';
+import { ConfigService } from '@nestjs/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { createEntityId } from '../../common/utils/entity-id';
+import type { ServerEnvConfig } from '../../config/server-env';
 import { UsersService } from '../users/users.service';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
+import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
 
 @Injectable()
 export class AuthService {
-  public constructor(private readonly usersService: UsersService) {}
+  private readonly appEnv: ServerEnvConfig;
+
+  public constructor(
+    private readonly usersService: UsersService,
+    configService: ConfigService,
+  ) {
+    this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
+  }
 
   public async registerAnonymousUser(payload: RegisterAnonymousUserDto): Promise<IUserAuthSession> {
     return this.usersService.createAnonymousUser(payload.nickname);
@@ -35,6 +44,25 @@ export class AuthService {
       loginType: UserLoginType.WechatMiniProgram,
       ...(payload.nickname ? { nickname: payload.nickname } : {}),
       ...(payload.avatarUrl ? { avatarUrl: payload.avatarUrl } : {}),
+    });
+  }
+
+  public async loginH5PhoneUser(payload: LoginH5PhoneUserDto): Promise<IUserAuthSession> {
+    const normalizedPhone = payload.phoneNumber.trim();
+    const normalizedCode = payload.verificationCode.trim();
+
+    if (!this.appEnv.h5LoginPhone || !this.appEnv.h5LoginCode) {
+      throw new UnauthorizedException('H5 手机验证码登录尚未配置');
+    }
+
+    if (normalizedPhone !== this.appEnv.h5LoginPhone || normalizedCode !== this.appEnv.h5LoginCode) {
+      throw new UnauthorizedException('手机号或验证码不正确');
+    }
+
+    return this.usersService.loginH5PhoneUser({
+      phoneNumber: normalizedPhone,
+      loginType: UserLoginType.H5PhoneCode,
+      nickname: payload.nickname?.trim() || this.appEnv.h5LoginNickname,
     });
   }
 

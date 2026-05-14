@@ -18,9 +18,10 @@ export interface PaginationResult<TItem> {
 }
 
 export interface ApiResponse<TData> {
-  code: number
+  code: number | string
   message: string
   data: TData
+  success?: boolean
   requestId?: string
   timestamp?: string
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import SubmitBtn from './SubmitBtn.vue'
 
 interface ConfirmPopupProps {
@@ -48,21 +48,22 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-const maskClass = computed(() => (
-  props.modelValue
-    ? 'pointer-events-auto opacity-100'
-    : 'pointer-events-none opacity-0'
-))
-
-const panelClass = computed(() => (
-  props.modelValue
-    ? 'translate-y-0 scale-100 opacity-100'
-    : 'translate-y-6 scale-[0.96] opacity-0'
-))
-
 function closePopup(): void {
   emit('update:modelValue', false)
 }
+
+const {
+  handleTouchEnd,
+  handleTouchMove,
+  handleTouchStart,
+  maskMotionStyle,
+  panelMotionStyle,
+} = useBottomSheetGesture({
+  visible: () => props.modelValue,
+  onClose: handleCancel,
+  closeThreshold: 96,
+  hiddenOffset: 56,
+})
 
 function handleMaskTap(): void {
   if (!props.closeOnMask) {
@@ -84,40 +85,33 @@ function handleConfirm(): void {
 </script>
 
 <template>
-  <view
-    class="fixed inset-0 z-60 flex items-end justify-center bg-slate-900/32 px-5 pb-8 pt-10 transition-opacity duration-250"
-    :class="maskClass"
-    @tap="handleMaskTap"
-  >
+  <view class="fixed inset-0 z-60 flex items-end justify-center bg-slate-900/32 px-5 pb-8 pt-10 backdrop-blur-[6rpx]"
+    :class="props.modelValue ? 'pointer-events-auto' : 'pointer-events-none'" :style="maskMotionStyle"
+    @tap="handleMaskTap">
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-white px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] transition-all duration-250 dark:bg-slate-900"
-      :class="panelClass"
-      @tap.stop="() => {}"
-    >
-      <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
-      <view class="mb-5 flex flex-col gap-2 text-center">
-        <text class="text-lg font-700 text-slate-800 dark:text-slate-100">
-          {{ props.title }}
-        </text>
-        <text class="text-sm leading-6 text-slate-500 dark:text-slate-300">
-          {{ props.description }}
-        </text>
+      class="w-full max-w-[720rpx] rounded-[36rpx] bg-white px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] will-change-transform dark:bg-slate-900"
+      :style="panelMotionStyle" @tap.stop="() => { }">
+      <view @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
+        @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
+        <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <view class="mb-5 flex flex-col gap-2 text-center">
+          <text class="text-lg font-700 text-slate-800 dark:text-slate-100">
+            {{ props.title }}
+          </text>
+          <text class="text-sm leading-6 text-slate-500 dark:text-slate-300">
+            {{ props.description }}
+          </text>
+        </view>
       </view>
-      <view class="rounded-[28rpx] bg-linear-to-br from-app-cream to-app-ivory p-4 text-sm leading-6 text-slate-600 dark:from-slate-800 dark:to-slate-800/80 dark:text-slate-200">
+      <view
+        class="rounded-[28rpx] bg-linear-to-br from-app-cream to-app-ivory p-4 text-sm leading-6 text-slate-600 dark:from-slate-800 dark:to-slate-800/80 dark:text-slate-200">
         一点点确认，能让你的花园更稳稳地被照顾好。
       </view>
       <view class="mt-5 flex flex-col gap-3">
-        <SubmitBtn
-          :text="props.confirmText"
-          :loading="props.confirmLoading"
-          variant="mint"
-          @click="handleConfirm"
-        />
-        <button
-          class="h-11 rounded-full border-none bg-slate-100 text-sm font-700 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
-          hover-class="opacity-92"
-          @tap="handleCancel"
-        >
+        <SubmitBtn :text="props.confirmText" :loading="props.confirmLoading" variant="mint" size="md"
+          @click="handleConfirm" />
+        <button class="btn-pill-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          hover-class="opacity-92" @tap="handleCancel">
           {{ props.cancelText }}
         </button>
       </view>

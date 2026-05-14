@@ -32,6 +32,9 @@ const REMINDER_CACHE_KEY = 'weather-reminder-config'
 const WEATHER_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 const REMINDER_POLLING_INTERVAL_MS = 60 * 1000
 
+let reminderConfigRequest: Promise<LocalReminderConfig> | null = null
+const weatherRequestMap = new Map<string, Promise<void>>()
+
 function isSameDay(isoTime: string, compareDate = new Date()): boolean {
   const targetDate = new Date(isoTime)
   return targetDate.getFullYear() === compareDate.getFullYear()
@@ -123,7 +126,7 @@ export function useLocationWeatherReminder() {
   const cachedWeather = weatherStorage.getValue()
 
   const state = reactive<UseLocationWeatherReminderState>({
-    city: cityStorage.getValue(),
+    city: cityStorage.getValue() ?? DEFAULT_CITY_OPTIONS[0] ?? null,
     weather: cachedWeather && isSameDay(cachedWeather.weather.fetchedAt) ? cachedWeather.weather : null,
     weatherTips: cachedWeather && isSameDay(cachedWeather.weather.fetchedAt)
       ? buildWeatherTips(cachedWeather.weather)
@@ -168,23 +171,44 @@ export function useLocationWeatherReminder() {
 
     state.loadingWeather = true
 
-    try {
-      const weather = await fetchWeatherByCity(city)
-      state.weather = weather
-      state.weatherTips = buildWeatherTips(weather)
-      weatherStorage.setValue({ city, weather }, WEATHER_CACHE_TTL_MS)
-      setErrorMessage('')
-    }
-    catch {
-      setErrorMessage('天气暂时没有取到，先看看缓存或手动切换城市也可以。')
-      const cache = weatherStorage.getValue()
+    const weatherRequestKey = city.id
 
-      if (cache) {
-        state.weather = cache.weather
-        state.weatherTips = buildWeatherTips(cache.weather)
+    if (weatherRequestMap.has(weatherRequestKey)) {
+      try {
+        await weatherRequestMap.get(weatherRequestKey)
       }
+      finally {
+        state.loadingWeather = false
+      }
+      return
+    }
+
+    const weatherRequest = (async () => {
+      try {
+        const weather = await fetchWeatherByCity(city)
+        state.weather = weather
+        state.weatherTips = buildWeatherTips(weather)
+        weatherStorage.setValue({ city, weather }, WEATHER_CACHE_TTL_MS)
+        setErrorMessage('')
+      }
+      catch {
+        setErrorMessage('天气暂时没有取到，先看看缓存或手动切换城市也可以。')
+        const cache = weatherStorage.getValue()
+
+        if (cache) {
+          state.weather = cache.weather
+          state.weatherTips = buildWeatherTips(cache.weather)
+        }
+      }
+    })()
+
+    weatherRequestMap.set(weatherRequestKey, weatherRequest)
+
+    try {
+      await weatherRequest
     }
     finally {
+      weatherRequestMap.delete(weatherRequestKey)
       state.loadingWeather = false
     }
   }
@@ -332,13 +356,20 @@ export function useLocationWeatherReminder() {
   onMounted(() => {
     startReminderPolling()
 
-    void fetchReminderConfig()
+    if (!reminderConfigRequest) {
+      reminderConfigRequest = fetchReminderConfig()
+    }
+
+    void reminderConfigRequest
       .then((serverConfig) => {
         state.reminderConfig = serverConfig
         reminderStorage.setValue(serverConfig)
       })
       .catch(() => {
         // 后端不可用时继续使用本地提醒配置。
+      })
+      .finally(() => {
+        reminderConfigRequest = null
       })
 
     if (state.city) {

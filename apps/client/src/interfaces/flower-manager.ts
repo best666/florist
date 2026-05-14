@@ -12,13 +12,28 @@ export type FlowerHealthStatus = Exclude<TagLabelStatus, 'custom'>
 
 export type FlowerFilterValue<TValue extends string> = TValue | 'all'
 
+export interface FlowerCustomOption<TBaseValue extends string> {
+  readonly id: string
+  readonly label: string
+  readonly baseValue: TBaseValue
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface FlowerCustomSelectionMeta {
+  readonly customCategoryId?: string
+  readonly customCareStatusId?: string
+}
+
 export interface FlowerFormValues {
   name: string
   nickname: string
   category: FlowerCategory
+  customCategoryId: string | undefined
   placement: FlowerPlacement
   careDifficulty: FlowerCareDifficulty
   careStatus: FlowerHealthStatus
+  customCareStatusId: string | undefined
   note: string
   images: IImageAsset[]
   lastWateredAt: string
@@ -45,9 +60,9 @@ export interface LocalFlower {
 }
 
 export interface FlowerFilterState {
-  category: FlowerFilterValue<FlowerCategory>
+  category: FlowerFilterValue<string>
   placement: FlowerFilterValue<FlowerPlacement>
-  careStatus: FlowerFilterValue<FlowerHealthStatus>
+  careStatus: FlowerFilterValue<string>
 }
 
 export const FLOWER_CATEGORY_OPTIONS: ReadonlyArray<KeyValueOption<FlowerCategory>> = [
@@ -120,17 +135,32 @@ export function getFlowerHealthStatusLabel(status: FlowerHealthStatus): string {
   return FLOWER_STATUS_LABEL_MAP[status]
 }
 
+export function createCurrentFlowerCareTime(): string {
+  const currentDate = new Date()
+  const year = String(currentDate.getFullYear())
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0')
+  const day = String(currentDate.getDate()).padStart(2, '0')
+  const hours = String(currentDate.getHours()).padStart(2, '0')
+  const minutes = String(currentDate.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
 export function createDefaultFlowerFormValues(): FlowerFormValues {
+  const currentCareTime = createCurrentFlowerCareTime()
+
   return {
     name: '',
     nickname: '',
     category: FlowerCategory.Herbaceous,
+    customCategoryId: undefined,
     placement: FlowerPlacement.IndoorBalcony,
     careDifficulty: FlowerCareDifficulty.Easy,
     careStatus: 'healthy',
+    customCareStatusId: undefined,
     note: '',
     images: [],
-    lastWateredAt: '',
-    lastFertilizedAt: '',
+    lastWateredAt: currentCareTime,
+    lastFertilizedAt: currentCareTime,
   }
 }

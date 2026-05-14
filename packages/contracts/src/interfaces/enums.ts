@@ -120,6 +120,7 @@ export enum FeedbackStatus {
 export enum UserLoginType {
   AnonymousLocal = 'anonymous_local',
   WechatMiniProgram = 'wechat_mini_program',
+  H5PhoneCode = 'h5_phone_code',
 }
 
 /**

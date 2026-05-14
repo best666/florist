@@ -19,3 +19,5 @@ apps/server/env/.env.development
 apps/server/env/.env.production
 apps/server/env/.env.local
 apps/server/env/.env.*.local
+apps/server/.mysql
+apps/server/.runtime

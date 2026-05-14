@@ -15,6 +15,8 @@ export interface AppState {
   syncMessage: string
 }
 
+let syncLocalGardenRequest: Promise<void> | null = null
+
 export const useAppStore = defineStore(
   'app',
   {
@@ -53,24 +55,42 @@ export const useAppStore = defineStore(
         this.syncMessage = message
       },
       async syncLocalGarden(message?: string): Promise<void> {
+        if (syncLocalGardenRequest) {
+          return syncLocalGardenRequest
+        }
+
         if (this.isOffline) {
           this.markSyncFailed('网络先暂时休息一下，离线记录会继续安全留在本地。')
           return
         }
 
-        this.markSyncStarted(message)
+        syncLocalGardenRequest = (async () => {
+          this.markSyncStarted(message)
 
-        const flowerStore = useFlowerStore()
-        const recordStore = useRecordStore()
-        const memberStore = useMemberStore()
+          const flowerStore = useFlowerStore()
+          const recordStore = useRecordStore()
+          const memberStore = useMemberStore()
 
-        await flowerStore.cleanupRecycleBin()
-        await Promise.all([
-          flowerStore.initializeGarden(),
-          recordStore.initializeRecordCenter(),
-        ])
-        memberStore.syncMembershipStatus()
-        this.markSyncFinished(new Date().toISOString())
+          try {
+            await flowerStore.cleanupRecycleBin()
+            await Promise.all([
+              flowerStore.initializeGarden(),
+              recordStore.initializeRecordCenter(),
+            ])
+            memberStore.syncMembershipStatus()
+            this.markSyncFinished(new Date().toISOString())
+          }
+          catch (error) {
+            this.markSyncFailed(error instanceof Error ? error.message : '同步还没完全接上，晚一点再试也可以。')
+          }
+        })()
+
+        try {
+          await syncLocalGardenRequest
+        }
+        finally {
+          syncLocalGardenRequest = null
+        }
       },
     },
     persist: true,

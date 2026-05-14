@@ -75,17 +75,16 @@ export class RecordsService {
 
   public async getRecordCenter(userIdInput?: string): Promise<RecordCenterResponse> {
     const userId = await this.usersService.resolveCurrentUserId(userIdInput);
-    const [records, undoLogs] = await Promise.all([
-      this.prisma.careRecord.findMany({
-        where: { userId },
-        include: { images: true },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.recordUndoLog.findMany({
-        where: { userId },
-        orderBy: { revertedAt: 'desc' },
-      }),
-    ]);
+    const records = await this.prisma.careRecord.findMany({
+      where: { userId },
+      include: { images: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const undoLogs = await this.prisma.recordUndoLog.findMany({
+      where: { userId },
+      orderBy: { revertedAt: 'desc' },
+    });
 
     return {
       records: records.map(mapRecord),

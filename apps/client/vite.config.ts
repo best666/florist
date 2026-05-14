@@ -1,4 +1,8 @@
+import fs from 'node:fs'
+import http from 'node:http'
+import https from 'node:https'
 import path from 'node:path'
+import { createRequire } from 'node:module'
 import process from 'node:process'
 import Uni from '@uni-helper/plugin-uni'
 import UniManifest from '@uni-helper/vite-plugin-uni-manifest'
@@ -7,6 +11,104 @@ import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { resolveClientEnv } from './env.config'
 import { defineConfig, loadEnv } from 'vite'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { Plugin } from 'vite'
+
+const require = createRequire(import.meta.url)
+const VUE_ROUTER_ESM_ENTRY = require.resolve('vue-router/dist/vue-router.mjs')
+const SERVER_RUNTIME_FILE = path.resolve(process.cwd(), '../server/.runtime/dev-server.json')
+
+interface BackendRuntimeInfo {
+  port?: number
+  origin?: string
+}
+
+function resolveDevBackendTarget(defaultTarget: string): string {
+  try {
+    const runtimeContent = fs.readFileSync(SERVER_RUNTIME_FILE, 'utf8')
+    const runtimeInfo = JSON.parse(runtimeContent) as BackendRuntimeInfo
+
+    if (runtimeInfo.origin) {
+      return runtimeInfo.origin.replace(/\/$/, '')
+    }
+
+    if (typeof runtimeInfo.port === 'number' && Number.isFinite(runtimeInfo.port)) {
+      return `http://127.0.0.1:${runtimeInfo.port}`
+    }
+  }
+  catch {
+  }
+
+  return defaultTarget
+}
+
+function createDevApiProxyPlugin(proxyPrefix: string, defaultTarget: string): Plugin {
+  return {
+    name: 'florist-dev-api-proxy',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const requestUrl = request.url ?? ''
+
+        if (!requestUrl.startsWith(proxyPrefix)) {
+          next()
+          return
+        }
+
+        forwardProxyRequest(request, response, resolveDevBackendTarget(defaultTarget))
+      })
+    },
+  }
+}
+
+function forwardProxyRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  targetOrigin: string,
+): void {
+  const targetUrl = new URL(request.url ?? '/', targetOrigin)
+  const transport = targetUrl.protocol === 'https:' ? https : http
+
+  const proxyRequest = transport.request(targetUrl, {
+    method: request.method,
+    headers: {
+      ...request.headers,
+      host: targetUrl.host,
+    },
+  }, (proxyResponse) => {
+    response.writeHead(proxyResponse.statusCode ?? 502, proxyResponse.headers)
+    proxyResponse.pipe(response)
+  })
+
+  proxyRequest.on('error', (error) => {
+    if (response.headersSent) {
+      response.end()
+      return
+    }
+
+    response.writeHead(502, { 'content-type': 'application/json; charset=utf-8' })
+    response.end(JSON.stringify({
+      success: false,
+      code: 'BAD_GATEWAY',
+      message: `Unable to reach florist backend at ${targetOrigin}: ${error.message}`,
+      data: null,
+    }))
+  })
+
+  request.pipe(proxyRequest)
+}
+
+function resolveVueRouterEntryPlugin() {
+  return {
+    name: 'florist-resolve-vue-router-entry',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      if (id === 'vue-router/dist/vue-router.esm-bundler.js') {
+        return VUE_ROUTER_ESM_ENTRY
+      }
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const env = resolveClientEnv({
@@ -17,18 +119,6 @@ export default defineConfig(({ mode }) => {
   const serverConfig = {
     host: '0.0.0.0',
     port: env.appPort,
-    ...(env.proxyEnabled
-      ? {
-          proxy: {
-            [env.proxyPrefix]: {
-              target: env.serverBaseUrl,
-              changeOrigin: true,
-              rewrite: (requestPath: string) =>
-                requestPath.replace(new RegExp(`^${env.proxyPrefix}`), ''),
-            },
-          },
-        }
-      : {}),
   }
   const buildConfig = {
     sourcemap: false,
@@ -61,6 +151,8 @@ export default defineConfig(({ mode }) => {
     envDir: './env',
     base: env.appPublicBase,
     plugins: [
+      ...(env.proxyEnabled ? [createDevApiProxyPlugin(env.proxyPrefix, env.serverBaseUrl)] : []),
+      resolveVueRouterEntryPlugin(),
       UniManifest(),
       UniPages({
         dts: 'src/interfaces/uni-pages.d.ts',

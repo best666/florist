@@ -2,6 +2,7 @@ import type { IImageAsset } from '@florist/contracts'
 import { defineStore } from 'pinia'
 import { createFlower, fetchFlowerCenter, recycleFlower, updateFlower } from '@/api'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
+import { useFlowerTaxonomyStore } from './flower-taxonomy'
 import { removeCachedImage } from '@/utils'
 
 interface FlowerState {
@@ -11,6 +12,10 @@ interface FlowerState {
 }
 
 const FLOWER_RECYCLE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000
+const FLOWER_CENTER_FRESHNESS_MS = 8000
+
+let flowerCenterRequest: Promise<void> | null = null
+let flowerCenterLastLoadedAt = 0
 
 function createEntityId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -87,20 +92,40 @@ export const useFlowerStore = defineStore(
       recycleBinFlowers: state => sortFlowers(state.recycleBin),
     },
     actions: {
-      async initializeGarden(): Promise<void> {
-        try {
-          const center = await fetchFlowerCenter()
-          hydrateFlowerCenter(this, {
-            flowers: center.flowers,
-            recycleBin: center.recycleBin,
-            initialized: true,
-          })
-        }
-        catch {
-          await this.cleanupRecycleBin()
+      async initializeGarden(options?: { force?: boolean }): Promise<void> {
+        const forceRefresh = options?.force ?? false
+
+        if (!forceRefresh && flowerCenterRequest) {
+          return flowerCenterRequest
         }
 
-        this.initialized = true
+        if (!forceRefresh && this.initialized && Date.now() - flowerCenterLastLoadedAt < FLOWER_CENTER_FRESHNESS_MS) {
+          return
+        }
+
+        flowerCenterRequest = (async () => {
+          try {
+            const center = await fetchFlowerCenter()
+            hydrateFlowerCenter(this, {
+              flowers: center.flowers,
+              recycleBin: center.recycleBin,
+              initialized: true,
+            })
+            flowerCenterLastLoadedAt = Date.now()
+          }
+          catch {
+            await this.cleanupRecycleBin()
+          }
+
+          this.initialized = true
+        })()
+
+        try {
+          await flowerCenterRequest
+        }
+        finally {
+          flowerCenterRequest = null
+        }
       },
 
       getFlowerById(flowerId: string): LocalFlower | null {
@@ -108,10 +133,14 @@ export const useFlowerStore = defineStore(
       },
 
       async upsertFlower(values: FlowerFormValues, flowerId?: string): Promise<LocalFlower> {
+        const taxonomyStore = useFlowerTaxonomyStore()
+
         try {
           const nextFlower = flowerId
             ? await updateFlower(flowerId, values)
             : await createFlower(values)
+
+          taxonomyStore.syncFlowerSelection(nextFlower.id, values)
 
           const existingFlower = this.flowers.find(flower => flower.id === nextFlower.id)
 
@@ -119,10 +148,12 @@ export const useFlowerStore = defineStore(
             this.flowers = sortFlowers(
               this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)),
             )
+            flowerCenterLastLoadedAt = Date.now()
             return nextFlower
           }
 
           this.flowers = sortFlowers([...this.flowers, nextFlower])
+          flowerCenterLastLoadedAt = Date.now()
           return nextFlower
         }
         catch {
@@ -134,14 +165,18 @@ export const useFlowerStore = defineStore(
 
           const nextFlower = buildFlowerEntity(values, existingFlower)
 
+          taxonomyStore.syncFlowerSelection(nextFlower.id, values)
+
           if (existingFlower) {
             this.flowers = sortFlowers(
               this.flowers.map(flower => (flower.id === existingFlower.id ? nextFlower : flower)),
             )
+            flowerCenterLastLoadedAt = Date.now()
             return nextFlower
           }
 
           this.flowers = sortFlowers([...this.flowers, nextFlower])
+          flowerCenterLastLoadedAt = Date.now()
           return nextFlower
         }
       },
@@ -151,6 +186,7 @@ export const useFlowerStore = defineStore(
           const trashedFlower = await recycleFlower(flowerId)
           this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
           this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
+          flowerCenterLastLoadedAt = Date.now()
           return true
         }
         catch {
@@ -173,6 +209,7 @@ export const useFlowerStore = defineStore(
 
           this.flowers = this.flowers.filter(flower => flower.id !== flowerId)
           this.recycleBin = sortFlowers([...this.recycleBin, trashedFlower])
+          flowerCenterLastLoadedAt = Date.now()
 
           return true
         }
@@ -194,6 +231,7 @@ export const useFlowerStore = defineStore(
 
         this.recycleBin = this.recycleBin.filter(flower => flower.id !== flowerId)
         this.flowers = sortFlowers([...this.flowers, restoredFlower])
+        flowerCenterLastLoadedAt = Date.now()
         return true
       },
 
@@ -204,17 +242,24 @@ export const useFlowerStore = defineStore(
           initialized: true,
         })
         this.initialized = true
+        flowerCenterLastLoadedAt = Date.now()
       },
 
       async clearLocalGarden(): Promise<void> {
+        const taxonomyStore = useFlowerTaxonomyStore()
+
         await Promise.all([
           ...this.flowers.map(async flower => releaseFlowerImages(flower.images)),
           ...this.recycleBin.map(async flower => releaseFlowerImages(flower.images)),
         ])
 
+        this.flowers.forEach(flower => taxonomyStore.removeFlowerSelection(flower.id))
+        this.recycleBin.forEach(flower => taxonomyStore.removeFlowerSelection(flower.id))
+
         this.flowers = []
         this.recycleBin = []
         this.initialized = true
+        flowerCenterLastLoadedAt = Date.now()
       },
 
       async cleanupRecycleBin(): Promise<void> {

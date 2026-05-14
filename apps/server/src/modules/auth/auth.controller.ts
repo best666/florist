@@ -3,6 +3,7 @@ import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { AuthService } from './auth.service';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
+import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
 
 @Controller('auth')
@@ -22,6 +23,11 @@ export class AuthController {
   @Post('wechat/login')
   public loginWechatUser(@Body() payload: LoginWechatUserDto): Promise<IUserAuthSession> {
     return this.authService.loginWechatUser(payload);
+  }
+
+  @Post('h5/phone/login')
+  public loginH5PhoneUser(@Body() payload: LoginH5PhoneUserDto): Promise<IUserAuthSession> {
+    return this.authService.loginH5PhoneUser(payload);
   }
 
   @Get('session')

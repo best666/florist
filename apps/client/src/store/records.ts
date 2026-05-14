@@ -12,6 +12,10 @@ interface RecordState {
 }
 
 const RECORD_UNDO_WINDOW_MS = 5 * 60 * 1000
+const RECORD_CENTER_FRESHNESS_MS = 8000
+
+let recordCenterRequest: Promise<void> | null = null
+let recordCenterLastLoadedAt = 0
 
 function createEntityId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -89,20 +93,40 @@ export const useRecordStore = defineStore(
       },
     },
     actions: {
-      async initializeRecordCenter(): Promise<void> {
-        try {
-          const center = await fetchRecordCenter()
-          hydrateRecordCenter(this, {
-            records: center.records,
-            undoLogs: center.undoLogs,
-            initialized: true,
-          })
-        }
-        catch {
-          // 离线时保持本地加密缓存即可。
+      async initializeRecordCenter(options?: { force?: boolean }): Promise<void> {
+        const forceRefresh = options?.force ?? false
+
+        if (!forceRefresh && recordCenterRequest) {
+          return recordCenterRequest
         }
 
-        this.initialized = true
+        if (!forceRefresh && this.initialized && Date.now() - recordCenterLastLoadedAt < RECORD_CENTER_FRESHNESS_MS) {
+          return
+        }
+
+        recordCenterRequest = (async () => {
+          try {
+            const center = await fetchRecordCenter()
+            hydrateRecordCenter(this, {
+              records: center.records,
+              undoLogs: center.undoLogs,
+              initialized: true,
+            })
+            recordCenterLastLoadedAt = Date.now()
+          }
+          catch {
+            // 离线时保持本地加密缓存即可。
+          }
+
+          this.initialized = true
+        })()
+
+        try {
+          await recordCenterRequest
+        }
+        finally {
+          recordCenterRequest = null
+        }
       },
 
       getRecordsByFlowerId(flowerId: string): LocalRecord[] {
@@ -163,12 +187,14 @@ export const useRecordStore = defineStore(
         try {
           const nextRecord = await createRecord(values) as LocalRecord
           this.records = sortRecords([nextRecord, ...this.records])
-          await useFlowerStore().initializeGarden()
+          recordCenterLastLoadedAt = Date.now()
+          await useFlowerStore().initializeGarden({ force: true })
           return nextRecord
         }
         catch {
           const nextRecord = buildRecordEntity(values)
           this.records = sortRecords([nextRecord, ...this.records])
+          recordCenterLastLoadedAt = Date.now()
           return nextRecord
         }
       },
@@ -181,7 +207,8 @@ export const useRecordStore = defineStore(
             undoLogs: response.center.undoLogs,
             initialized: true,
           })
-          await useFlowerStore().initializeGarden()
+          recordCenterLastLoadedAt = Date.now()
+          await useFlowerStore().initializeGarden({ force: true })
           return response.succeeded
         }
         catch {
@@ -210,6 +237,7 @@ export const useRecordStore = defineStore(
           ]
 
           await releaseRecordImages(targetRecord.images)
+          recordCenterLastLoadedAt = Date.now()
           return true
         }
       },
@@ -221,6 +249,7 @@ export const useRecordStore = defineStore(
           initialized: true,
         })
         this.initialized = true
+        recordCenterLastLoadedAt = Date.now()
       },
 
       async clearLocalRecords(): Promise<void> {
@@ -228,6 +257,7 @@ export const useRecordStore = defineStore(
         this.records = []
         this.undoLogs = []
         this.initialized = true
+        recordCenterLastLoadedAt = Date.now()
       },
     },
     persist: true,

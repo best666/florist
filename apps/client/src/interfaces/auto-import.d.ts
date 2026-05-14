@@ -90,6 +90,7 @@ declare global {
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAttrs: typeof import('vue').useAttrs
+  const useBottomSheetGesture: typeof import('../hooks/useBottomSheetGesture').useBottomSheetGesture
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useEncryptedStorage: typeof import('../hooks/useEncryptedStorage').useEncryptedStorage
@@ -203,6 +204,7 @@ declare module 'vue' {
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useBottomSheetGesture: UnwrapRef<typeof import('../hooks/useBottomSheetGesture')['useBottomSheetGesture']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useEncryptedStorage: UnwrapRef<typeof import('../hooks/useEncryptedStorage')['useEncryptedStorage']>

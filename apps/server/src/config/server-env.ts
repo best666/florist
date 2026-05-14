@@ -28,6 +28,9 @@ export interface ServerEnvSource {
   readonly ADMIN_PASSWORD?: string;
   readonly ADMIN_SESSION_SECRET?: string;
   readonly ADMIN_SESSION_TTL_MS?: string;
+  readonly H5_LOGIN_PHONE?: string;
+  readonly H5_LOGIN_CODE?: string;
+  readonly H5_LOGIN_NICKNAME?: string;
   readonly APP_LOG_LEVELS?: string;
   readonly EXPOSE_INTERNAL_ERROR_DETAILS?: string;
 }
@@ -56,6 +59,9 @@ export interface ServerEnvConfig {
   readonly adminPassword: string;
   readonly adminSessionSecret: string;
   readonly adminSessionTtlMs: number;
+  readonly h5LoginPhone: string;
+  readonly h5LoginCode: string;
+  readonly h5LoginNickname: string;
   readonly appLogLevels: LogLevel[];
   readonly exposeInternalErrorDetails: boolean;
 }
@@ -84,6 +90,9 @@ export const SERVER_ENV_DEFAULTS = {
   adminPassword: 'change-this-admin-password',
   adminSessionSecret: 'replace-with-admin-session-secret',
   adminSessionTtlMs: 12 * 60 * 60 * 1000,
+  h5LoginPhone: '',
+  h5LoginCode: '',
+  h5LoginNickname: 'H5 花友',
   appLogLevels: ['log', 'warn', 'error', 'debug', 'verbose'] as LogLevel[],
   exposeInternalErrorDetails: true,
 } as const;
@@ -233,6 +242,18 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.ADMIN_SESSION_TTL_MS,
       SERVER_ENV_DEFAULTS.adminSessionTtlMs,
     ),
+    h5LoginPhone: normalizeString(
+      envSource.H5_LOGIN_PHONE,
+      SERVER_ENV_DEFAULTS.h5LoginPhone,
+    ),
+    h5LoginCode: normalizeString(
+      envSource.H5_LOGIN_CODE,
+      SERVER_ENV_DEFAULTS.h5LoginCode,
+    ),
+    h5LoginNickname: normalizeString(
+      envSource.H5_LOGIN_NICKNAME,
+      SERVER_ENV_DEFAULTS.h5LoginNickname,
+    ),
     appLogLevels: normalizeLogLevels(
       envSource.APP_LOG_LEVELS,
       normalizeServerMode(process.env.NODE_ENV) === 'production'
@@ -277,6 +298,9 @@ export function validateServerEnv(
     ADMIN_PASSWORD: parsedEnv.adminPassword,
     ADMIN_SESSION_SECRET: parsedEnv.adminSessionSecret,
     ADMIN_SESSION_TTL_MS: String(parsedEnv.adminSessionTtlMs),
+    H5_LOGIN_PHONE: parsedEnv.h5LoginPhone,
+    H5_LOGIN_CODE: parsedEnv.h5LoginCode,
+    H5_LOGIN_NICKNAME: parsedEnv.h5LoginNickname,
     APP_LOG_LEVELS: parsedEnv.appLogLevels.join(','),
     EXPOSE_INTERNAL_ERROR_DETAILS: String(parsedEnv.exposeInternalErrorDetails),
   };

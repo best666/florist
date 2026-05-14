@@ -15,6 +15,8 @@ setActivePinia(store)
 export default store
 
 export * from './app'
+export * from './auth'
+export * from './flower-taxonomy'
 export * from './flowers'
 export * from './member'
 export * from './records'

@@ -12,6 +12,7 @@ import type {
   ResponseInterceptor,
 } from '@/interfaces'
 import { RequestErrorCode, RequestMethod } from '@/interfaces'
+import { readAuthUserIdFromStorage } from './auth-session'
 import { normalizeGentleMessage, showGentleConfirm, showGentleToast } from './feedback'
 import { getApiBaseUrl, shouldUseProxy } from './env'
 import { getRuntimePlatform } from './platform'
@@ -27,6 +28,10 @@ const errorInterceptors: ErrorInterceptor[] = []
 
 let initialized = false
 let loadingCount = 0
+
+function isSuccessfulApiCode(code: MaybeApiResponse<unknown>['code']): boolean {
+  return code === 0 || code === 200 || code === 'OK'
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -172,6 +177,7 @@ function normalizeRetryOptions(retry?: number | RequestRetryOptions): Required<R
 
 function normalizeResolvedOptions(options: RequestOptions): ResolvedRequestOptions {
   const method = options.method ?? RequestMethod.Get
+  const currentUserId = readAuthUserIdFromStorage()
 
   return {
     rawUrl: options.url,
@@ -182,6 +188,7 @@ function normalizeResolvedOptions(options: RequestOptions): ResolvedRequestOptio
     header: {
       'Content-Type': 'application/json',
       'X-Client-Platform': getRuntimePlatform(),
+      ...(currentUserId ? { 'x-user-id': currentUserId } : {}),
       ...options.header,
     },
     timeout: options.timeout ?? DEFAULT_TIMEOUT,
@@ -351,7 +358,7 @@ function registerDefaultInterceptors(): void {
     }
 
     if (isApiEnvelope(response.data)) {
-      if (response.data.code !== 0 && response.data.code !== 200) {
+      if (response.data.success === false || !isSuccessfulApiCode(response.data.code)) {
         throw createRequestError(
           response.data.message ?? '业务处理失败',
           RequestErrorCode.Business,

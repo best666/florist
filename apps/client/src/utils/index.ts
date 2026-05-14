@@ -1,3 +1,4 @@
+export * from './auth-session'
 export * from './control'
 export * from './crypto'
 export * from './env'

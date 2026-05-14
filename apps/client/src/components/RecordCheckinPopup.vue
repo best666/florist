@@ -20,6 +20,7 @@ import {
   revokeCompressedImageUrl,
   showGentleToast,
 } from '@/utils'
+import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -55,6 +56,17 @@ const panelClass = computed(() => (
 ))
 
 const selectedActionMeta = computed(() => getRecordActionMeta(formState.actionType))
+
+const {
+  handleTouchEnd,
+  handleTouchMove,
+  handleTouchStart,
+  maskMotionStyle,
+  panelMotionStyle,
+} = useBottomSheetGesture({
+  visible: () => props.modelValue,
+  onClose: closePopup,
+})
 
 watch(
   () => [props.modelValue, props.initialFlowerId, props.initialActionType] as const,
@@ -195,23 +207,26 @@ function handleSubmit(): void {
 </script>
 
 <template>
-  <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 transition-opacity duration-250" :class="modalClass"
-    @tap="closePopup">
+  <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 backdrop-blur-[6rpx]" :class="modalClass"
+    :style="maskMotionStyle" @tap="closePopup">
     <view
-      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 transition-all duration-250 dark:bg-slate-900"
-      :class="panelClass" @tap.stop="() => { }">
-      <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
+      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
+      :class="panelClass" :style="panelMotionStyle" @tap.stop="() => { }">
+      <view class="mb-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
+        @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
+        <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
 
-      <view class="mb-4 flex items-start justify-between gap-3">
-        <view>
-          <text class="block text-xl font-800 text-slate-800 dark:text-slate-100">
-            记录一次温柔照顾
-          </text>
-          <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
-            打卡会先保存到本地加密数据里，断网时也能继续写下今天的小进展。
-          </text>
+        <view class="flex items-start justify-between gap-3">
+          <view>
+            <text class="block text-xl font-800 text-slate-800 dark:text-slate-100">
+              记录一次温柔照顾
+            </text>
+            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+              打卡会先保存到本地加密数据里，断网时也能继续写下今天的小进展。
+            </text>
+          </view>
+          <TagLabel :text="selectedActionMeta.label" :tone="selectedActionMeta.tone" />
         </view>
-        <TagLabel :text="selectedActionMeta.label" :tone="selectedActionMeta.tone" />
       </view>
 
       <scroll-view scroll-y class="max-h-[68vh] pr-1">
@@ -225,7 +240,7 @@ function handleSubmit(): void {
             <text class="text-sm font-700 text-slate-700 dark:text-slate-100">打卡类型</text>
             <view class="mt-3 grid grid-cols-3 gap-3">
               <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
-                class="min-h-[110rpx] rounded-[24rpx] border-none px-3 py-3 text-left"
+                class="app-pressable min-h-[110rpx] rounded-[24rpx] border-none px-3 py-3 text-left"
                 :class="formState.actionType === option.value ? 'bg-white shadow-[0_12rpx_28rpx_rgba(148,163,184,0.14)] dark:bg-slate-900' : 'bg-white/60 dark:bg-slate-900/70'"
                 hover-class="opacity-92" @tap="formState.actionType = option.value">
                 <view class="text-2xl">
@@ -244,8 +259,7 @@ function handleSubmit(): void {
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-sm font-700 text-slate-700 dark:text-slate-100">选择植株</text>
             <view class="mt-3 flex flex-wrap gap-2">
-              <button v-for="flower in props.flowerOptions" :key="flower.id"
-                class="h-10 rounded-full border-none px-4 text-2xs font-700"
+              <button v-for="flower in props.flowerOptions" :key="flower.id" class="btn-chip"
                 :class="formState.flowerId === flower.id ? 'bg-app-mint text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
                 hover-class="opacity-92" @tap="formState.flowerId = flower.id">
                 {{ flower.nickname || flower.name }}
@@ -260,8 +274,7 @@ function handleSubmit(): void {
             </text>
 
             <view class="mt-3 flex flex-wrap gap-2">
-              <button v-for="option in RECORD_COOLDOWN_PRESET_OPTIONS" :key="option.value"
-                class="h-9 rounded-full border-none px-4 text-2xs font-700"
+              <button v-for="option in RECORD_COOLDOWN_PRESET_OPTIONS" :key="option.value" class="btn-chip"
                 :class="formState.cooldownMinutes === option.value ? 'bg-app-blush text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
                 hover-class="opacity-92" @tap="formState.cooldownMinutes = option.value">
                 {{ option.label }}
@@ -271,7 +284,7 @@ function handleSubmit(): void {
             <view class="mt-3">
               <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">自定义分钟</text>
               <input :value="String(formState.cooldownMinutes)" type="number" placeholder="输入冷却分钟数"
-                class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                class="field-input-md dark:bg-slate-900 dark:text-slate-100"
                 @input="formState.cooldownMinutes = Number($event.detail.value || 0)">
             </view>
           </view>
@@ -280,7 +293,7 @@ function handleSubmit(): void {
             <text class="text-sm font-700 text-slate-700 dark:text-slate-100">备注与配图</text>
             <view class="mt-3">
               <textarea v-model="formState.note" :maxlength="100" auto-height placeholder="写下今天的变化、叶片状态，或者一点点想说的话。"
-                class="min-h-[150rpx] rounded-[22rpx] bg-white px-4 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-100" />
+                class="field-textarea dark:bg-slate-900 dark:text-slate-100" />
             </view>
 
             <view class="mt-3 grid grid-cols-3 gap-3">
@@ -289,14 +302,14 @@ function handleSubmit(): void {
                 <AppImage :src="image.url" mode="aspectFill" class="h-[180rpx] w-full" error-text="这张配图先休息一下"
                   @tap="handlePreviewImage(image.url)" />
                 <button
-                  class="absolute right-2 top-2 h-7 w-7 rounded-full border-none bg-slate-900/45 px-0 text-xs text-white"
+                  class="btn-pill-sm absolute right-2 top-2 h-7 min-h-7 w-7 min-w-7 rounded-full bg-slate-900/45 px-0 text-xs text-white"
                   hover-class="opacity-90" @tap.stop="handleRemoveImage(image.id)">
                   ×
                 </button>
               </view>
 
               <button v-if="formState.images.length < 4"
-                class="h-[180rpx] rounded-[24rpx] border-none bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
+                class="btn-base h-[180rpx] rounded-[24rpx] bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
                 hover-class="opacity-92" @tap="handleChooseImages">
                 <view class="flex h-full flex-col items-center justify-center gap-2">
                   <text class="text-2xl font-500">+</text>
@@ -309,14 +322,13 @@ function handleSubmit(): void {
       </scroll-view>
 
       <view class="mt-4 flex gap-3">
-        <button
-          class="h-11 flex-1 rounded-full border-none bg-slate-100 text-sm font-700 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+        <button class="btn-pill-md flex-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
           hover-class="opacity-92" @tap="closePopup">
           先不记录
         </button>
         <view class="flex-1">
           <SubmitBtn text="完成打卡" loading-text="保存中..." :loading="props.submitting || isUploadingImages" variant="mint"
-            @click="handleSubmit" />
+            size="md" @click="handleSubmit" />
         </view>
       </view>
     </view>
