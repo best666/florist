@@ -415,8 +415,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view v-if="selectedImage" class="mt-4 rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-          <image class="h-[320rpx] w-full rounded-[24rpx] bg-white object-cover dark:bg-slate-900"
-            :src="selectedImage.url" mode="aspectFill" @tap="handlePreviewSelectedImage" />
+          <AppImage class="h-[320rpx] w-full rounded-[24rpx] bg-white object-cover dark:bg-slate-900"
+            :src="selectedImage.url" mode="aspectFill" error-text="识别图片先休息一下" @tap="handlePreviewSelectedImage" />
           <view class="mt-3 flex gap-2">
             <button
               class="h-9 flex-1 rounded-full border-none bg-white text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
@@ -468,9 +468,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-          }}</text>
+            }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-          }}</text>
+            }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">
@@ -576,8 +576,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
                   ${item.flowerName}` : '' }}{{ item.cityName ? ` · ${item.cityName}` : '' }}
                 </text>
               </view>
-              <image v-if="item.image" class="h-[96rpx] w-[96rpx] rounded-[20rpx] bg-white dark:bg-slate-900"
-                :src="item.image.url" mode="aspectFill" @tap="handleOpenHistoryImage(item.image.url)" />
+              <AppImage v-if="item.image" class="h-[96rpx] w-[96rpx] rounded-[20rpx] bg-white dark:bg-slate-900"
+                :src="item.image.url" mode="aspectFill" error-text="图片暂时不可用"
+                @tap="handleOpenHistoryImage(item.image.url)" />
             </view>
 
             <text v-if="item.diagnosis" class="mt-3 block text-sm leading-6 text-slate-600 dark:text-slate-300">

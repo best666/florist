@@ -1,14 +1,20 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useAppStore } from '@/store'
 
 type NetworkType = 'unknown' | string
 
 export function useNetworkStatus() {
+  const appStore = useAppStore()
   const networkType = ref<NetworkType>('unknown')
   const isOffline = ref(false)
 
   const handleNetworkChange = (event: { isConnected: boolean, networkType: string }) => {
     networkType.value = event.networkType
     isOffline.value = !event.isConnected || event.networkType === 'none'
+    appStore.setNetworkStatus({
+      isOffline: isOffline.value,
+      networkType: networkType.value,
+    })
   }
 
   function refreshNetworkStatus(): void {
@@ -16,10 +22,18 @@ export function useNetworkStatus() {
       success: (result) => {
         networkType.value = result.networkType
         isOffline.value = result.networkType === 'none'
+        appStore.setNetworkStatus({
+          isOffline: isOffline.value,
+          networkType: networkType.value,
+        })
       },
       fail: () => {
         networkType.value = 'unknown'
         isOffline.value = false
+        appStore.setNetworkStatus({
+          isOffline: false,
+          networkType: 'unknown',
+        })
       },
     })
   }

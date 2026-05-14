@@ -54,8 +54,8 @@ export default defineConfig({
     },
   },
   rules: [
-    ['safe-pb', { paddingBottom: 'env(safe-area-inset-bottom)' }],
-    ['safe-pt', { paddingTop: 'env(safe-area-inset-top)' }],
+    ['safe-pb', { 'padding-bottom': 'env(safe-area-inset-bottom)' }],
+    ['safe-pt', { 'padding-top': 'env(safe-area-inset-top)' }],
   ],
   safelist: ['text-app-mint', 'bg-app-cream', 'bg-app-blush'],
 })

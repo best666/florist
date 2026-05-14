@@ -1,7 +1,7 @@
 import type { IMemberPaymentOrder, IMemberPackagePlan } from '@florist/contracts'
 import { MemberPaymentChannel, MemberPaymentStatus } from '@florist/contracts'
 import type { MemberCheckoutPayload } from '@/interfaces'
-import { MEMBER_PACKAGE_PLANS, createLocalMemberPaymentOrder, resolveMemberPlan } from '@/utils'
+import { MEMBER_PACKAGE_PLANS, createLocalMemberPaymentOrder, resolveMemberPlan, showGentleConfirm } from '@/utils'
 
 export function fetchMemberPackagePlans(): Promise<ReadonlyArray<IMemberPackagePlan>> {
   return Promise.resolve(MEMBER_PACKAGE_PLANS)
@@ -29,16 +29,12 @@ export async function requestMiniProgramMemberPayment(order: IMemberPaymentOrder
     }
   }
 
-  const confirmed = await new Promise<boolean>((resolve) => {
-    const plan = resolveMemberPlan(order.packageType)
-
-    uni.showModal({
-      title: '确认支付',
-      content: `当前为演示环境，将模拟微信支付成功回调。开通 ${plan.title} 需一次性支付 ${(plan.priceInCents / 100).toFixed(0)} 元，不自动续费。`,
-      confirmText: '确认支付',
-      success: result => resolve(Boolean(result.confirm)),
-      fail: () => resolve(false),
-    })
+  const plan = resolveMemberPlan(order.packageType)
+  const confirmed = await showGentleConfirm({
+    title: '确认支付',
+    content: `当前为演示环境，会模拟微信支付成功回调。开通 ${plan.title} 需要一次性支付 ${(plan.priceInCents / 100).toFixed(0)} 元，不会自动续费。`,
+    confirmText: '确认支付',
+    cancelText: '先看看',
   })
 
   return {

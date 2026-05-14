@@ -22,6 +22,9 @@ import {
   readPlantDoctorHistoryFromStorage,
   readReminderConfigFromStorage,
   removeCachedImage,
+  showGentleConfirm,
+  showGentleSuccess,
+  showGentleToast,
   writeMineFeedbackHistory,
   writePlantDoctorHistoryToStorage,
   writeReminderConfigToStorage,
@@ -190,14 +193,10 @@ function copyText(value: string): Promise<void> {
 }
 
 function showConfirm(options: { title: string, content: string, confirmText?: string }): Promise<boolean> {
-  return new Promise((resolve) => {
-    uni.showModal({
-      title: options.title,
-      content: options.content,
-      confirmText: options.confirmText ?? '确认',
-      success: result => resolve(Boolean(result.confirm)),
-      fail: () => resolve(false),
-    })
+  return showGentleConfirm({
+    title: options.title,
+    content: options.content,
+    ...(options.confirmText ? { confirmText: options.confirmText } : {}),
   })
 }
 
@@ -209,6 +208,10 @@ async function handleGenerateBackup(): Promise<void> {
       appState: {
         runtimePlatform: appStore.runtimePlatform,
         lastSyncAt: appStore.lastSyncAt,
+        isOffline: appStore.isOffline,
+        networkType: appStore.networkType,
+        syncStatus: appStore.syncStatus,
+        syncMessage: appStore.syncMessage,
       },
       flowers: activeFlowers.value,
       recycleBin: recycleBinFlowers.value,
@@ -222,16 +225,10 @@ async function handleGenerateBackup(): Promise<void> {
     latestBackupString.value = encodeLocalBackup(backupPayload)
     await copyText(latestBackupString.value)
 
-    uni.showToast({
-      title: '备份串已复制',
-      icon: 'success',
-    })
+    showGentleSuccess('备份串已经复制好啦。')
   }
   catch (error) {
-    uni.showToast({
-      title: error instanceof Error ? error.message : '备份生成失败',
-      icon: 'none',
-    })
+    showGentleToast(error instanceof Error ? error.message : '备份生成时刚好卡了一下。')
   }
   finally {
     isGeneratingBackup.value = false
@@ -240,10 +237,7 @@ async function handleGenerateBackup(): Promise<void> {
 
 async function handleRestoreBackup(): Promise<void> {
   if (!restoreBackupString.value.trim()) {
-    uni.showToast({
-      title: '先粘贴备份串再恢复',
-      icon: 'none',
-    })
+    showGentleToast('先把备份串贴进来，我们再继续恢复。')
     return
   }
 
@@ -253,10 +247,7 @@ async function handleRestoreBackup(): Promise<void> {
     parsedBackup = decodeLocalBackup(restoreBackupString.value)
   }
   catch (error) {
-    uni.showToast({
-      title: error instanceof Error ? error.message : '备份解析失败',
-      icon: 'none',
-    })
+    showGentleToast(error instanceof Error ? error.message : '备份解析时有一点不完整。')
     return
   }
 
@@ -282,8 +273,7 @@ async function handleRestoreBackup(): Promise<void> {
       undoLogs: parsedBackup.undoLogs,
     })
     appStore.$patch({
-      runtimePlatform: parsedBackup.appState.runtimePlatform,
-      lastSyncAt: parsedBackup.appState.lastSyncAt,
+      ...parsedBackup.appState,
     })
     weatherReminderState.reminderConfig = parsedBackup.reminderConfig
     writeReminderConfigToStorage(parsedBackup.reminderConfig)
@@ -293,10 +283,7 @@ async function handleRestoreBackup(): Promise<void> {
     feedbackDraft.images = []
     refreshLocalSnapshots()
 
-    uni.showToast({
-      title: '本地数据已恢复',
-      icon: 'success',
-    })
+    showGentleSuccess('本地数据已经恢复好了。')
   }
   finally {
     isRestoringBackup.value = false
@@ -334,10 +321,7 @@ async function handleClearAllLocalData(): Promise<void> {
     feedbackHistory.value = []
     plantDoctorHistoryCount.value = 0
 
-    uni.showToast({
-      title: '本地数据已清空',
-      icon: 'success',
-    })
+    showGentleSuccess('本地数据已经清理完成。')
   }
   finally {
     isClearingData.value = false
@@ -370,10 +354,7 @@ async function handleOpenPermissionSetting(): Promise<void> {
   const opened = await openPlatformPermissionSetting()
 
   if (!opened) {
-    uni.showToast({
-      title: '当前平台暂不支持直接打开权限设置',
-      icon: 'none',
-    })
+    showGentleToast('当前平台还不能直接打开权限设置。')
   }
 }
 
@@ -381,10 +362,7 @@ async function handleRestoreLocationPermission(): Promise<void> {
   const succeeded = await requestLocationPermissionAgain()
 
   if (succeeded) {
-    uni.showToast({
-      title: '已重新尝试定位权限',
-      icon: 'success',
-    })
+    showGentleSuccess('已经重新帮你尝试定位权限啦。')
   }
 }
 
@@ -392,10 +370,7 @@ async function handleChooseFeedbackImages(): Promise<void> {
   const remaining = 3 - feedbackDraft.images.length
 
   if (remaining <= 0) {
-    uni.showToast({
-      title: '最多上传 3 张反馈图片',
-      icon: 'none',
-    })
+    showGentleToast('反馈图片先保留 3 张以内，会更好整理。')
     return
   }
 
@@ -443,10 +418,7 @@ async function handleRemoveFeedbackImage(imageId: string): Promise<void> {
 
 async function handleSubmitFeedback(): Promise<void> {
   if (feedbackDraft.content.trim().length < 5) {
-    uni.showToast({
-      title: '反馈内容至少写 5 个字',
-      icon: 'none',
-    })
+    showGentleToast('反馈内容写满 5 个字，我们会更容易看懂你的想法。')
     return
   }
 
@@ -466,10 +438,7 @@ async function handleSubmitFeedback(): Promise<void> {
     feedbackDraft.content = ''
     feedbackDraft.images = []
 
-    uni.showToast({
-      title: '反馈已本地保存',
-      icon: 'success',
-    })
+    showGentleSuccess('反馈草稿已经本地保存好啦。')
   }
   finally {
     isSubmittingFeedback.value = false
@@ -480,17 +449,11 @@ async function handleRestoreFlower(flowerId: string): Promise<void> {
   const restored = await flowerStore.restoreFlowerFromRecycleBin(flowerId)
 
   if (!restored) {
-    uni.showToast({
-      title: '这株植物可能已经被恢复',
-      icon: 'none',
-    })
+    showGentleToast('这株植物可能已经先一步回到花园了。')
     return
   }
 
-  uni.showToast({
-    title: '植物已恢复到花园',
-    icon: 'success',
-  })
+  showGentleSuccess('植物已经回到花园啦。')
 }
 
 function handleOpenPage(url: string): void {
@@ -751,7 +714,7 @@ function handleOpenShop(): void {
         <view class="mt-4 grid grid-cols-3 gap-3">
           <view v-for="image in feedbackDraft.images" :key="image.id"
             class="relative overflow-hidden rounded-[24rpx] bg-[#F6F1E8]">
-            <image class="h-[180rpx] w-full" :src="image.url" mode="aspectFill" />
+            <AppImage class="h-[180rpx] w-full" :src="image.url" mode="aspectFill" error-text="反馈图片先休息一下" />
             <button
               class="absolute right-2 top-2 h-8 min-h-8 w-8 min-w-8 rounded-full border-none bg-black/55 px-0 text-xs text-white"
               hover-class="opacity-92" @tap="handleRemoveFeedbackImage(image.id)">

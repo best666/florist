@@ -16,6 +16,12 @@ export type RequestBody =
   | string
   | undefined
 
+export interface RequestRetryOptions {
+  count?: number
+  delayMs?: number
+  retryOn?: RequestErrorCode[]
+}
+
 export interface RequestOptions<TBody = RequestBody, TQuery extends RequestQuery = RequestQuery> {
   url: string
   method?: RequestMethod
@@ -28,9 +34,12 @@ export interface RequestOptions<TBody = RequestBody, TQuery extends RequestQuery
   skipErrorToast?: boolean
   cancelDuplicate?: boolean
   responseType?: UniApp.RequestOptions['responseType']
+  retry?: number | RequestRetryOptions
+  showRetryDialog?: boolean
 }
 
 export interface ResolvedRequestOptions {
+  rawUrl: string
   url: string
   method: RequestMethod
   data: RequestBody
@@ -42,6 +51,8 @@ export interface ResolvedRequestOptions {
   skipErrorToast: boolean
   cancelDuplicate: boolean
   responseType: UniApp.RequestOptions['responseType'] | undefined
+  retry: Required<RequestRetryOptions>
+  showRetryDialog: boolean
 }
 
 export interface RequestError extends Error {

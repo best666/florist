@@ -13,7 +13,7 @@ import {
   type RecordFormValues,
   type TimelineItem,
 } from '@/interfaces'
-import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo } from '@/utils'
+import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 interface RecordTimelineGroup {
   readonly dateLabel: string
@@ -136,10 +136,7 @@ async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
 
   if (cooldownResult.cooling) {
     duplicateMessage.value = `刚刚已经替它${getRecordActionLabel(values.actionType)}过啦，先休息 ${cooldownResult.remainingMinutes} 分钟再记录会更准确。`
-    uni.showToast({
-      title: duplicateMessage.value,
-      icon: 'none',
-    })
+    showGentleToast(duplicateMessage.value)
     return
   }
 
@@ -149,10 +146,7 @@ async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
     await recordStore.addRecord(values)
     isCheckinVisible.value = false
     duplicateMessage.value = ''
-    uni.showToast({
-      title: '打卡已轻轻记下',
-      icon: 'success',
-    })
+    showGentleSuccess('这次打卡已经轻轻记下啦。')
   }
   finally {
     isSubmitting.value = false
@@ -167,24 +161,20 @@ async function handleUndoLatestRecord(): Promise<void> {
   const succeeded = await recordStore.undoRecord(latestUndoableRecord.value.id)
 
   if (!succeeded) {
-    uni.showToast({
-      title: '这条记录已经超过撤回时间啦',
-      icon: 'none',
-    })
+    showGentleToast('这条记录已经超过撤回时间啦，我们把后面的记录继续照顾好就行。')
     return
   }
 
-  uni.showToast({
-    title: '这次记录已经温柔撤回',
-    icon: 'none',
-  })
+  showGentleToast('这次记录已经被温柔撤回。')
 }
 </script>
 
 <template>
-  <view class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#FFF6EC] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+  <view
+    class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#FFF6EC] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
-      <view class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#F8CADB] via-[#FFF5E4] to-[#D7F7EF] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(248,200,220,0.22)] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
+      <view
+        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#F8CADB] via-[#FFF5E4] to-[#D7F7EF] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(248,200,220,0.22)] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
@@ -197,7 +187,8 @@ async function handleUndoLatestRecord(): Promise<void> {
               快捷打卡、备注、配图、撤回和时间轴都只保存在本地加密数据里，断网也能继续使用。
             </view>
           </view>
-          <view class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+          <view
+            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
             🌼
           </view>
         </view>
@@ -217,13 +208,9 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
 
         <view class="mt-4 grid grid-cols-3 gap-3">
-          <button
-            v-for="option in RECORD_ACTION_OPTIONS"
-            :key="option.value"
+          <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
             class="min-h-[122rpx] rounded-[26rpx] border-none bg-app-ivory px-3 py-3 text-left shadow-[0_12rpx_28rpx_rgba(148,163,184,0.08)] dark:bg-slate-800"
-            hover-class="opacity-92"
-            @tap="openCheckin(option.value)"
-          >
+            hover-class="opacity-92" @tap="openCheckin(option.value)">
             <view class="text-2xl">
               {{ option.emoji }}
             </view>
@@ -237,78 +224,54 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
       </view>
 
-      <view
-        v-if="latestUndoableRecord"
-        class="rounded-[28rpx] bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-700 shadow-[0_12rpx_28rpx_rgba(16,185,129,0.12)] dark:bg-emerald-500/14 dark:text-emerald-100"
-      >
+      <view v-if="latestUndoableRecord"
+        class="rounded-[28rpx] bg-emerald-50 px-4 py-4 text-sm leading-6 text-emerald-700 shadow-[0_12rpx_28rpx_rgba(16,185,129,0.12)] dark:bg-emerald-500/14 dark:text-emerald-100">
         <view class="flex items-start justify-between gap-3">
           <text class="flex-1">
             {{ latestUndoText }}
           </text>
           <button
             class="h-9 rounded-full border-none bg-white px-4 text-2xs font-700 text-emerald-700 dark:bg-slate-900 dark:text-emerald-200"
-            hover-class="opacity-92"
-            @tap="handleUndoLatestRecord"
-          >
+            hover-class="opacity-92" @tap="handleUndoLatestRecord">
             一键撤回
           </button>
         </view>
       </view>
 
-      <view
-        v-if="duplicateMessage"
-        class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100"
-      >
+      <view v-if="duplicateMessage"
+        class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">
         {{ duplicateMessage }}
       </view>
 
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center gap-2 rounded-full bg-app-ivory p-1 dark:bg-slate-800">
-          <button
-            v-for="tab in recordTabs"
-            :key="tab.key"
+          <button v-for="tab in recordTabs" :key="tab.key"
             class="h-10 flex-1 rounded-full border-none px-4 text-2xs font-700"
             :class="activeTab === tab.key ? 'bg-white text-slate-700 shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-slate-400 dark:text-slate-400'"
-            hover-class="opacity-92"
-            @tap="activeTab = tab.key"
-          >
+            hover-class="opacity-92" @tap="activeTab = tab.key">
             {{ tab.label }}
           </button>
         </view>
 
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
-            <button
-              v-for="flower in activeFlowers"
-              :key="flower.id"
+            <button v-for="flower in activeFlowers" :key="flower.id"
               class="h-10 rounded-full border-none px-4 text-2xs font-700"
               :class="selectedFlowerId === flower.id ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
-              hover-class="opacity-92"
-              @tap="handleSwitchFlower(flower.id)"
-            >
+              hover-class="opacity-92" @tap="handleSwitchFlower(flower.id)">
               {{ flowerDisplayNameMap[flower.id] ?? flower.name }}
             </button>
           </view>
         </scroll-view>
       </view>
 
-      <EmptyEmpty
-        v-if="displayedRecords.length === 0"
-        scene="record"
-        :title="activeTab === 'single' ? '这盆植物还没有专属记录' : '还没有任何养护记录'"
-        :description="activeTab === 'single'
+      <EmptyEmpty v-if="displayedRecords.length === 0" scene="record"
+        :title="activeTab === 'single' ? '这盆植物还没有专属记录' : '还没有任何养护记录'" :description="activeTab === 'single'
           ? '先为它记下一次浇水、施肥或擦叶吧，时间轴会慢慢长出来。'
-          : '从今天开始留痕，后面的照顾节奏就会越来越清楚。'"
-        action-text="去打卡"
-        @action="openCheckin()"
-      />
+          : '从今天开始留痕，后面的照顾节奏就会越来越清楚。'" action-text="去打卡" @action="openCheckin()" />
 
-      <view
-        v-for="group in groupedTimeline"
-        v-else
-        :key="group.dateLabel"
-        class="card-soft rounded-[32rpx] dark:bg-slate-900"
-      >
+      <view v-for="group in groupedTimeline" v-else :key="group.dateLabel"
+        class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">
           <view>
             <text class="block text-base font-800 text-slate-800 dark:text-slate-100">
@@ -340,21 +303,13 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
 
         <view class="mt-4">
-          <TimeLine
-            :items="undoTimelineItems"
-            empty-text="最近还没有撤回记录，时间轴保持得很完整。"
-          />
+          <TimeLine :items="undoTimelineItems" empty-text="最近还没有撤回记录，时间轴保持得很完整。" />
         </view>
       </view>
 
-      <RecordCheckinPopup
-        v-model="isCheckinVisible"
-        :flower-options="activeFlowers"
-        :initial-flower-id="selectedFlowerId"
-        :initial-action-type="currentActionType"
-        :submitting="isSubmitting"
-        @submit="handleSubmitRecord"
-      />
+      <RecordCheckinPopup v-model="isCheckinVisible" :flower-options="activeFlowers"
+        :initial-flower-id="selectedFlowerId" :initial-action-type="currentActionType" :submitting="isSubmitting"
+        @submit="handleSubmitRecord" />
     </view>
   </view>
 </template>

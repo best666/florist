@@ -23,6 +23,7 @@ import {
   debounce,
   getCurrentDeviceLocation,
   openPlatformPermissionSetting,
+  showGentleToast,
 } from '@/utils'
 
 const WEATHER_CACHE_KEY = 'weather-cache'
@@ -291,9 +292,8 @@ export function useLocationWeatherReminder() {
   }
 
   function triggerReminderToast(): void {
-    uni.showToast({
+    showGentleToast({
       title: state.reminderConfig.reminderText,
-      icon: 'none',
       duration: 3000,
     })
 

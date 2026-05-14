@@ -7,15 +7,18 @@ import type {
   RequestOptions,
   RequestQuery,
   RequestQueryValue,
+  RequestRetryOptions,
   ResolvedRequestOptions,
   ResponseInterceptor,
 } from '@/interfaces'
 import { RequestErrorCode, RequestMethod } from '@/interfaces'
+import { normalizeGentleMessage, showGentleConfirm, showGentleToast } from './feedback'
 import { getApiBaseUrl, shouldUseProxy } from './env'
 import { getRuntimePlatform } from './platform'
 
 const DEFAULT_TIMEOUT = 15000
 const DEFAULT_LOADING_TEXT = '加载中'
+const DEFAULT_RETRY_DELAY_MS = 1200
 
 const pendingTaskMap = new Map<string, UniApp.RequestTask>()
 const requestInterceptors: RequestInterceptor[] = []
@@ -133,28 +136,47 @@ function createRequestError(
 
 function resolveMessageByStatus(statusCode: number): string {
   if (statusCode >= 500) {
-    return '服务开小差了，请稍后再试'
+    return '服务刚刚有点忙，我们稍后再试一次。'
   }
 
   if (statusCode === 404) {
-    return '请求资源不存在'
+    return '想找的内容暂时没有找到。'
   }
 
   if (statusCode === 401) {
-    return '登录状态已失效，请重新登录'
+    return '登录状态轻轻过期了，重新进入就好。'
   }
 
   if (statusCode === 403) {
-    return '当前操作没有权限'
+    return '这一步暂时还没有开放权限。'
   }
 
-  return '请求失败，请稍后重试'
+  return '请求刚刚没接稳，我们等一下再试。'
+}
+
+function normalizeRetryOptions(retry?: number | RequestRetryOptions): Required<RequestRetryOptions> {
+  if (typeof retry === 'number') {
+    return {
+      count: Math.max(retry, 0),
+      delayMs: DEFAULT_RETRY_DELAY_MS,
+      retryOn: [RequestErrorCode.Network, RequestErrorCode.Timeout, RequestErrorCode.Http],
+    }
+  }
+
+  return {
+    count: Math.max(retry?.count ?? 0, 0),
+    delayMs: retry?.delayMs ?? DEFAULT_RETRY_DELAY_MS,
+    retryOn: retry?.retryOn ?? [RequestErrorCode.Network, RequestErrorCode.Timeout, RequestErrorCode.Http],
+  }
 }
 
 function normalizeResolvedOptions(options: RequestOptions): ResolvedRequestOptions {
+  const method = options.method ?? RequestMethod.Get
+
   return {
+    rawUrl: options.url,
     url: normalizeUrl(options.url, options.params),
-    method: options.method ?? RequestMethod.Get,
+    method,
     data: options.data,
     params: options.params,
     header: {
@@ -168,6 +190,8 @@ function normalizeResolvedOptions(options: RequestOptions): ResolvedRequestOptio
     skipErrorToast: options.skipErrorToast ?? false,
     cancelDuplicate: options.cancelDuplicate ?? true,
     responseType: options.responseType,
+    retry: normalizeRetryOptions(options.retry),
+    showRetryDialog: options.showRetryDialog ?? method === RequestMethod.Get,
   }
 }
 
@@ -218,6 +242,95 @@ function abortDuplicateRequest(requestKey: string): void {
   }
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function shouldRetry(error: RequestError, options: ResolvedRequestOptions, attempt: number): boolean {
+  if (error.canceled) {
+    return false
+  }
+
+  return attempt < options.retry.count && options.retry.retryOn.includes(error.code as RequestErrorCode)
+}
+
+function canPromptManualRetry(error: RequestError, options: ResolvedRequestOptions): boolean {
+  if (!options.showRetryDialog || options.method !== RequestMethod.Get || error.canceled) {
+    return false
+  }
+
+  return error.code === RequestErrorCode.Network
+    || error.code === RequestErrorCode.Timeout
+    || error.code === RequestErrorCode.Http
+}
+
+async function executeRequest<TResponse>(
+  options: ResolvedRequestOptions,
+  requestKey: string,
+): Promise<TResponse> {
+  return new Promise<TResponse>((resolve, reject) => {
+    const uniRequestOptions: UniApp.RequestOptions = {
+      url: options.url,
+      method: options.method,
+      header: options.header,
+      timeout: options.timeout,
+      success: response => {
+        void (async () => {
+          try {
+            const responseData = await applyResponseInterceptors<TResponse>(response, options)
+            resolve(responseData)
+          }
+          catch (error) {
+            reject(
+              error instanceof Error
+                ? createRequestError(error.message, RequestErrorCode.Unknown, { raw: error })
+                : createRequestError('请求处理失败', RequestErrorCode.Unknown, { raw: error }),
+            )
+          }
+        })()
+      },
+      fail: requestError => {
+        const canceled = requestError.errMsg.includes('abort')
+        const timedOut = requestError.errMsg.includes('timeout')
+
+        reject(createRequestError(
+          canceled
+            ? '重复请求已取消'
+            : timedOut
+              ? '请求稍微超时了，我们可以再试一次。'
+              : '网络暂时不太稳，本地记录会先替你留好。',
+          canceled
+            ? RequestErrorCode.Canceled
+            : timedOut
+              ? RequestErrorCode.Timeout
+              : RequestErrorCode.Network,
+          {
+            canceled,
+            raw: requestError,
+          },
+        ))
+      },
+      complete: () => {
+        pendingTaskMap.delete(requestKey)
+      },
+    }
+
+    if (options.data !== undefined) {
+      uniRequestOptions.data = options.data as Exclude<RequestBody, undefined>
+    }
+
+    if (options.responseType !== undefined) {
+      uniRequestOptions.responseType = options.responseType
+    }
+
+    const requestTask = uni.request(uniRequestOptions) as unknown as UniApp.RequestTask
+
+    if (options.cancelDuplicate) {
+      pendingTaskMap.set(requestKey, requestTask)
+    }
+  })
+}
+
 function isApiEnvelope<TResponse>(payload: unknown): payload is MaybeApiResponse<TResponse> {
   return isRecord(payload) && 'code' in payload && 'message' in payload
 }
@@ -257,9 +370,8 @@ function registerDefaultInterceptors(): void {
 
   errorInterceptors.push(async (error, options) => {
     if (!error.canceled && !options.skipErrorToast) {
-      uni.showToast({
-        title: error.message,
-        icon: 'none',
+      showGentleToast({
+        title: normalizeGentleMessage(error.message),
       })
     }
 
@@ -305,82 +417,49 @@ export async function request<TResponse>(
     showGlobalLoading(resolvedOptions.loadingText)
   }
 
-  return new Promise<TResponse>((resolve, reject) => {
-    const uniRequestOptions: UniApp.RequestOptions = {
-      url: resolvedOptions.url,
-      method: resolvedOptions.method,
-      header: resolvedOptions.header,
-      timeout: resolvedOptions.timeout,
-      success: response => {
-        void (async () => {
-          try {
-            const responseData = await applyResponseInterceptors<TResponse>(
-              response,
-              resolvedOptions,
-            )
-            resolve(responseData)
-          }
-          catch (error) {
-            const normalizedError =
-              error instanceof Error
-                ? createRequestError(error.message, RequestErrorCode.Unknown, {
-                    raw: error,
-                  })
-                : createRequestError('请求处理失败', RequestErrorCode.Unknown, {
-                    raw: error,
-                  })
+  let attempt = 0
 
-            reject(await applyErrorInterceptors(normalizedError, resolvedOptions))
-          }
-        })()
-      },
-      fail: requestError => {
-        void (async () => {
-          const canceled = requestError.errMsg.includes('abort')
-          const timedOut = requestError.errMsg.includes('timeout')
-          const normalizedError = createRequestError(
-            canceled
-              ? '重复请求已取消'
-              : timedOut
-                ? '请求超时，请稍后重试'
-                : '网络异常，请检查后重试',
-            canceled
-              ? RequestErrorCode.Canceled
-              : timedOut
-                ? RequestErrorCode.Timeout
-                : RequestErrorCode.Network,
-            {
-              canceled,
-              raw: requestError,
-            },
-          )
+  try {
+    while (true) {
+      try {
+        return await executeRequest<TResponse>(resolvedOptions, requestKey)
+      }
+      catch (error) {
+        const normalizedError = error instanceof Error
+          ? error as RequestError
+          : createRequestError('请求处理失败', RequestErrorCode.Unknown, {
+              raw: error,
+            })
 
-          reject(await applyErrorInterceptors(normalizedError, resolvedOptions))
-        })()
-      },
-      complete: () => {
-        pendingTaskMap.delete(requestKey)
-
-        if (resolvedOptions.showLoading) {
-          hideGlobalLoading()
+        if (shouldRetry(normalizedError, resolvedOptions, attempt)) {
+          attempt += 1
+          await wait(resolvedOptions.retry.delayMs)
+          continue
         }
-      },
-    }
 
-    if (resolvedOptions.data !== undefined) {
-      uniRequestOptions.data = resolvedOptions.data as Exclude<RequestBody, undefined>
-    }
+        if (canPromptManualRetry(normalizedError, resolvedOptions)) {
+          const confirmed = await showGentleConfirm({
+            title: '网络刚刚晃了一下',
+            content: '要不要现在重新连一次？已经写下的本地内容会继续安全保留。',
+            confirmText: '重新试试',
+            cancelText: '先等等',
+          })
 
-    if (resolvedOptions.responseType !== undefined) {
-      uniRequestOptions.responseType = resolvedOptions.responseType
-    }
+          if (confirmed) {
+            attempt = 0
+            continue
+          }
+        }
 
-    const requestTask = uni.request(uniRequestOptions) as unknown as UniApp.RequestTask
-
-    if (resolvedOptions.cancelDuplicate) {
-      pendingTaskMap.set(requestKey, requestTask)
+        throw await applyErrorInterceptors(normalizedError, resolvedOptions)
+      }
     }
-  })
+  }
+  finally {
+    if (resolvedOptions.showLoading) {
+      hideGlobalLoading()
+    }
+  }
 }
 
 export const http = {
@@ -393,6 +472,7 @@ export const http = {
       ...options,
       url,
       method: RequestMethod.Get,
+      retry: options?.retry ?? 1,
       ...(params ? { params } : {}),
     })
   },

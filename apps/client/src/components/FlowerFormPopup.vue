@@ -16,6 +16,7 @@ import {
   isBlankString,
   removeCachedImage,
   revokeCompressedImageUrl,
+  showGentleToast,
 } from '@/utils'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
@@ -92,10 +93,7 @@ function closePopup(): void {
 
 function showFormError(message: string): void {
   formError.value = message
-  uni.showToast({
-    title: message,
-    icon: 'none',
-  })
+  showGentleToast(message)
 }
 
 function validateForm(): boolean {
@@ -223,16 +221,11 @@ function handleSubmit(): void {
 </script>
 
 <template>
-  <view
-    class="fixed inset-0 z-70 flex items-end bg-slate-900/34 transition-opacity duration-250"
-    :class="modalClass"
-    @tap="closePopup"
-  >
+  <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 transition-opacity duration-250" :class="modalClass"
+    @tap="closePopup">
     <view
       class="max-h-[90vh] w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 transition-all duration-250 dark:bg-slate-900"
-      :class="panelClass"
-      @tap.stop="() => {}"
-    >
+      :class="panelClass" @tap.stop="() => { }">
       <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
       <view class="mb-4 flex items-start justify-between gap-3">
         <view>
@@ -246,15 +239,10 @@ function handleSubmit(): void {
         <TagLabel :text="props.mode === 'edit' ? '编辑中' : '新增中'" tone="blush" />
       </view>
 
-      <scroll-view
-        scroll-y
-        class="max-h-[68vh] pr-1"
-      >
+      <scroll-view scroll-y class="max-h-[68vh] pr-1">
         <view class="flex flex-col gap-4 pb-4">
-          <view
-            v-if="formError"
-            class="rounded-[24rpx] bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:bg-rose-500/16 dark:text-rose-200"
-          >
+          <view v-if="formError"
+            class="rounded-[24rpx] bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:bg-rose-500/16 dark:text-rose-200">
             {{ formError }}
           </view>
 
@@ -263,21 +251,13 @@ function handleSubmit(): void {
             <view class="mt-3 flex flex-col gap-3">
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">植株名称</text>
-                <input
-                  v-model="formState.name"
-                  :maxlength="20"
-                  placeholder="例如：龟背竹"
-                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
+                <input v-model="formState.name" :maxlength="20" placeholder="例如：龟背竹"
+                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100">
               </view>
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">昵称</text>
-                <input
-                  v-model="formState.nickname"
-                  :maxlength="20"
-                  placeholder="给它一个可爱称呼"
-                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
+                <input v-model="formState.nickname" :maxlength="20" placeholder="给它一个可爱称呼"
+                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100">
               </view>
             </view>
           </view>
@@ -289,32 +269,20 @@ function handleSubmit(): void {
             </text>
 
             <view class="mt-3 grid grid-cols-3 gap-3">
-              <view
-                v-for="image in formState.images"
-                :key="image.id"
-                class="relative overflow-hidden rounded-[24rpx] bg-white dark:bg-slate-900"
-              >
-                <image
-                  :src="image.url"
-                  mode="aspectFill"
-                  class="h-[180rpx] w-full"
-                  @tap="handlePreviewImage(image.url)"
-                />
+              <view v-for="image in formState.images" :key="image.id"
+                class="relative overflow-hidden rounded-[24rpx] bg-white dark:bg-slate-900">
+                <AppImage :src="image.url" mode="aspectFill" class="h-[180rpx] w-full" error-text="这张图片先休息一下"
+                  @tap="handlePreviewImage(image.url)" />
                 <button
                   class="absolute right-2 top-2 h-7 w-7 rounded-full border-none bg-slate-900/45 px-0 text-xs text-white"
-                  hover-class="opacity-90"
-                  @tap.stop="handleRemoveImage(image.id)"
-                >
+                  hover-class="opacity-90" @tap.stop="handleRemoveImage(image.id)">
                   ×
                 </button>
               </view>
 
-              <button
-                v-if="formState.images.length < 6"
+              <button v-if="formState.images.length < 6"
                 class="h-[180rpx] rounded-[24rpx] border-none bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
-                hover-class="opacity-92"
-                @tap="handleChooseImages"
-              >
+                hover-class="opacity-92" @tap="handleChooseImages">
                 <view class="flex h-full flex-col items-center justify-center gap-2">
                   <text class="text-2xl font-500">+</text>
                   <text class="text-2xs">添加图片</text>
@@ -330,14 +298,10 @@ function handleSubmit(): void {
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">品类</text>
                 <view class="flex flex-wrap gap-2">
-                  <button
-                    v-for="option in FLOWER_CATEGORY_OPTIONS"
-                    :key="option.value"
+                  <button v-for="option in FLOWER_CATEGORY_OPTIONS" :key="option.value"
                     class="h-9 rounded-full border-none px-4 text-2xs font-700"
                     :class="formState.category === option.value ? 'bg-app-mint text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
-                    hover-class="opacity-92"
-                    @tap="formState.category = option.value"
-                  >
+                    hover-class="opacity-92" @tap="formState.category = option.value">
                     {{ option.label }}
                   </button>
                 </view>
@@ -346,14 +310,10 @@ function handleSubmit(): void {
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">位置</text>
                 <view class="flex flex-wrap gap-2">
-                  <button
-                    v-for="option in FLOWER_PLACEMENT_OPTIONS"
-                    :key="option.value"
+                  <button v-for="option in FLOWER_PLACEMENT_OPTIONS" :key="option.value"
                     class="h-9 rounded-full border-none px-4 text-2xs font-700"
                     :class="formState.placement === option.value ? 'bg-app-blush text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
-                    hover-class="opacity-92"
-                    @tap="formState.placement = option.value"
-                  >
+                    hover-class="opacity-92" @tap="formState.placement = option.value">
                     {{ option.label }}
                   </button>
                 </view>
@@ -362,14 +322,10 @@ function handleSubmit(): void {
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">养护难度</text>
                 <view class="flex flex-wrap gap-2">
-                  <button
-                    v-for="option in FLOWER_DIFFICULTY_OPTIONS"
-                    :key="option.value"
+                  <button v-for="option in FLOWER_DIFFICULTY_OPTIONS" :key="option.value"
                     class="h-9 rounded-full border-none px-4 text-2xs font-700"
                     :class="formState.careDifficulty === option.value ? 'bg-app-cream text-slate-700' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
-                    hover-class="opacity-92"
-                    @tap="formState.careDifficulty = option.value"
-                  >
+                    hover-class="opacity-92" @tap="formState.careDifficulty = option.value">
                     {{ option.label }}
                   </button>
                 </view>
@@ -378,14 +334,10 @@ function handleSubmit(): void {
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">当前状态</text>
                 <view class="flex flex-wrap gap-2">
-                  <button
-                    v-for="option in FLOWER_STATUS_OPTIONS"
-                    :key="option.value"
+                  <button v-for="option in FLOWER_STATUS_OPTIONS" :key="option.value"
                     class="h-9 rounded-full border-none px-4 text-2xs font-700"
                     :class="formState.careStatus === option.value ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'"
-                    hover-class="opacity-92"
-                    @tap="formState.careStatus = option.value"
-                  >
+                    hover-class="opacity-92" @tap="formState.careStatus = option.value">
                     {{ option.label }}
                   </button>
                 </view>
@@ -398,29 +350,18 @@ function handleSubmit(): void {
             <view class="mt-3 flex flex-col gap-3">
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近浇水日期</text>
-                <input
-                  v-model="formState.lastWateredAt"
-                  placeholder="例如：2026-05-13"
-                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
+                <input v-model="formState.lastWateredAt" placeholder="例如：2026-05-13"
+                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100">
               </view>
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近施肥日期</text>
-                <input
-                  v-model="formState.lastFertilizedAt"
-                  placeholder="例如：2026-05-01"
-                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                >
+                <input v-model="formState.lastFertilizedAt" placeholder="例如：2026-05-01"
+                  class="h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100">
               </view>
               <view>
                 <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">备注</text>
-                <textarea
-                  v-model="formState.note"
-                  :maxlength="120"
-                  auto-height
-                  placeholder="写下这盆小植物的养护偏好或当前状态"
-                  class="min-h-[160rpx] rounded-[22rpx] bg-white px-4 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                />
+                <textarea v-model="formState.note" :maxlength="120" auto-height placeholder="写下这盆小植物的养护偏好或当前状态"
+                  class="min-h-[160rpx] rounded-[22rpx] bg-white px-4 py-3 text-sm leading-6 text-slate-700 dark:bg-slate-900 dark:text-slate-100" />
               </view>
             </view>
           </view>
@@ -430,19 +371,12 @@ function handleSubmit(): void {
       <view class="mt-4 flex gap-3">
         <button
           class="h-11 flex-1 rounded-full border-none bg-slate-100 text-sm font-700 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
-          hover-class="opacity-92"
-          @tap="closePopup"
-        >
+          hover-class="opacity-92" @tap="closePopup">
           先放一放
         </button>
         <view class="flex-1">
-          <SubmitBtn
-            :text="submitText"
-            loading-text="保存中..."
-            :loading="isSubmitDisabled"
-            variant="mint"
-            @click="handleSubmit"
-          />
+          <SubmitBtn :text="submitText" loading-text="保存中..." :loading="isSubmitDisabled" variant="mint"
+            @click="handleSubmit" />
         </view>
       </view>
     </view>

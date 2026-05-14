@@ -538,7 +538,7 @@ onBeforeUnmount(() => {
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
             <text class="block text-2xs text-slate-400 dark:text-slate-500">关键节点</text>
             <text class="mt-1 block text-xl font-800 text-slate-800 dark:text-slate-100">{{ timelineItems.length
-            }}</text>
+              }}</text>
           </view>
           <view
             class="rounded-[28rpx] bg-white/88 px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.12)] dark:bg-slate-900">
@@ -578,8 +578,9 @@ onBeforeUnmount(() => {
           <view v-if="albumItems.length > 0" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <view v-for="item in albumItems" :key="item.id"
               class="rounded-[28rpx] bg-app-ivory/90 p-3 shadow-[0_12rpx_28rpx_rgba(148,163,184,0.08)] transition-all duration-300 active:scale-[0.98] dark:bg-slate-800">
-              <image class="h-[220rpx] w-full rounded-[22rpx] bg-white object-cover dark:bg-slate-900"
-                :src="item.image.url" mode="aspectFill" @tap="handlePreviewAlbumImage(item.image.url)" />
+              <AppImage class="h-[220rpx] w-full rounded-[22rpx] bg-white object-cover dark:bg-slate-900"
+                :src="item.image.url" mode="aspectFill" error-text="相册图片先休息一下"
+                @tap="handlePreviewAlbumImage(item.image.url)" />
               <text class="mt-3 block text-sm font-700 text-slate-800 dark:text-slate-100">{{ item.title }}</text>
               <text class="mt-1 block text-2xs leading-5 text-slate-500 dark:text-slate-300">{{
                 formatDateTime(item.createdAt, { pattern: 'YYYY-MM-DD HH:mm' }) }}</text>
@@ -620,7 +621,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                    }}</text>
+                      }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="mint" />
                 </view>
@@ -636,7 +637,7 @@ onBeforeUnmount(() => {
                   <view>
                     <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
                     <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                    }}</text>
+                      }}</text>
                   </view>
                   <TagLabel :text="template.badgeText" tone="cream" />
                 </view>
@@ -658,9 +659,9 @@ onBeforeUnmount(() => {
 
           <view v-if="posterImagePath"
             class="mt-4 rounded-[32rpx] bg-linear-to-b from-[#FFF8F2] to-[#F5FFF9] p-4 dark:from-slate-800 dark:to-slate-900">
-            <image
+            <AppImage
               class="mx-auto w-full max-w-[560rpx] rounded-[28rpx] bg-white object-cover shadow-[0_16rpx_40rpx_rgba(148,163,184,0.16)] dark:bg-slate-900"
-              :src="posterImagePath" mode="widthFix" />
+              :src="posterImagePath" mode="widthFix" error-text="海报预览正在整理" />
           </view>
           <view v-else
             class="mt-4 rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-app-ivory/70 px-4 py-8 text-center text-sm leading-6 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">

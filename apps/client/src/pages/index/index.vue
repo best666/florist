@@ -26,7 +26,7 @@ import {
   getFlowerPlacementLabel,
 } from '@/interfaces'
 import { useFlowerStore, useRecordStore } from '@/store'
-import { formatDateTime, getFlowerDisplayName, getTimeAgo } from '@/utils'
+import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const flowerStore = useFlowerStore()
 const recordStore = useRecordStore()
@@ -275,10 +275,7 @@ function handlePreviewFlower(flower: LocalFlower): void {
   const firstImage = flower.images[0]
 
   if (!firstImage) {
-    uni.showToast({
-      title: '这盆植物还没有图片',
-      icon: 'none',
-    })
+    showGentleToast('这盆植物还没有配图，等你拍一张好看的再来看。')
     return
   }
 
@@ -333,10 +330,7 @@ async function handleSubmitFlower(values: FlowerFormValues): Promise<void> {
     await flowerStore.upsertFlower(values, editingFlowerId.value ?? undefined)
     isFormVisible.value = false
     editingFlowerId.value = null
-    uni.showToast({
-      title: formMode.value === 'edit' ? '植株已更新' : '植株已创建',
-      icon: 'success',
-    })
+    showGentleSuccess(formMode.value === 'edit' ? '植株档案已经更新好啦。' : '新的植物档案已经安稳住进花园。')
   }
   finally {
     isSaving.value = false
@@ -351,10 +345,7 @@ async function handleConfirmDelete(): Promise<void> {
   const deletedFlowerName = deletingFlower.value.name
   await flowerStore.moveFlowerToRecycleBin(deletingFlower.value.id)
   deletingFlower.value = null
-  uni.showToast({
-    title: `${deletedFlowerName} 已移入回收站`,
-    icon: 'none',
-  })
+  showGentleToast(`${deletedFlowerName} 已移到回收站，7 天内都还能轻轻找回来。`)
 }
 
 function resetFilters(): void {

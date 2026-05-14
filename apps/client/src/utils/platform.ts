@@ -5,6 +5,7 @@ import type {
   Nullable,
   WeixinMiniProgramInfo,
 } from '@/interfaces'
+import { showGentleConfirm, showGentleToast } from './feedback'
 
 export function getRuntimePlatform(): ClientPlatform {
   // #ifdef H5
@@ -58,10 +59,7 @@ export function openPlatformPermissionSetting(): Promise<boolean> {
   // #endif
 
   // #ifndef MP-WEIXIN
-  uni.showToast({
-    title: '当前平台不支持该能力',
-    icon: 'none',
-  })
+  showGentleToast('当前平台还不支持直接打开这里。')
 
   return Promise.resolve(false)
   // #endif
@@ -104,11 +102,11 @@ export async function openExternalLink(url: string): Promise<boolean> {
       })
     })
 
-    uni.showModal({
-      title: '外链已复制',
-      content: '小程序不能直接打开外部商城，链接已复制。你可以粘贴到浏览器或微信对话框后再打开。',
-      showCancel: false,
+    void showGentleConfirm({
+      title: '链接已经帮你复制好',
+      content: '小程序里不能直接跳去外部商城，你可以把链接粘贴到浏览器或微信对话框里继续打开。',
       confirmText: '知道了',
+      showCancel: false,
     })
     return true
   }

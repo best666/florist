@@ -1,6 +1,7 @@
 export * from './control'
 export * from './crypto'
 export * from './env'
+export * from './feedback'
 export * from './flower'
 export * from './image'
 export * from './member'
