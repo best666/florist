@@ -7,6 +7,7 @@ import process from 'node:process'
 import Uni from '@uni-helper/plugin-uni'
 import UniManifest from '@uni-helper/vite-plugin-uni-manifest'
 import UniPages from '@uni-helper/vite-plugin-uni-pages'
+import { codeInspectorPlugin } from 'code-inspector-plugin'
 import UnoCSS from 'unocss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { resolveClientEnv } from './env.config'
@@ -110,12 +111,13 @@ function resolveVueRouterEntryPlugin() {
   }
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = resolveClientEnv({
     MODE: mode,
     ...loadEnv(mode, path.resolve(process.cwd(), 'env')),
   })
   const isProduction = env.mode === 'production'
+  const enableCodeInspector = command === 'serve' && !isProduction
   const serverConfig = {
     host: '0.0.0.0',
     port: env.appPort,
@@ -152,6 +154,7 @@ export default defineConfig(({ mode }) => {
     base: env.appPublicBase,
     plugins: [
       ...(env.proxyEnabled ? [createDevApiProxyPlugin(env.proxyPrefix, env.serverBaseUrl)] : []),
+      ...(enableCodeInspector ? [codeInspectorPlugin({ bundler: 'vite' })] : []),
       resolveVueRouterEntryPlugin(),
       UniManifest(),
       UniPages({

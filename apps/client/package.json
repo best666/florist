@@ -36,6 +36,7 @@
     "@uni-helper/vite-plugin-uni-pages": "0.3.23",
     "@unocss/preset-legacy-compat": "66.0.0",
     "@vue/runtime-core": "3.4.21",
+    "code-inspector-plugin": "^1.5.1",
     "miniprogram-api-typings": "^4.1.0",
     "terser": "^5.39.0",
     "typescript": "^5.8.3",

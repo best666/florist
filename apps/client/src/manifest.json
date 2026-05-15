@@ -1,9 +1,10 @@
 {
-  "name": "养花人开发版",
+  "name": "养花人",
   "appid": "__UNI__FLORIST",
   "description": "养花人花卉养护小程序",
   "versionName": "0.1.0",
   "versionCode": "1",
+  "transformPx": false,
   "app-plus": {
     "usingComponents": true,
     "nvueStyleCompiler": "uni-app",
@@ -11,7 +12,8 @@
     "splashscreen": {
       "alwaysShowBeforeRender": true,
       "waiting": true,
-      "autoclose": true
+      "autoclose": true,
+      "delay": 0
     },
     "modules": {},
     "distribute": {
