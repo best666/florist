@@ -65,17 +65,57 @@ export function openPlatformPermissionSetting(): Promise<boolean> {
   // #endif
 }
 
+function normalizeDeviceLocation(payload: {
+  latitude: number
+  longitude: number
+  accuracy?: number
+}): DeviceLocation {
+  return {
+    latitude: payload.latitude,
+    longitude: payload.longitude,
+    ...(typeof payload.accuracy === 'number' ? { accuracy: payload.accuracy } : {}),
+  }
+}
+
 export function getCurrentDeviceLocation(): Promise<Nullable<DeviceLocation>> {
+  // #ifdef H5
+  if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (result) => {
+          resolve(normalizeDeviceLocation({
+            latitude: result.coords.latitude,
+            longitude: result.coords.longitude,
+            ...(typeof result.coords.accuracy === 'number' ? { accuracy: result.coords.accuracy } : {}),
+          }))
+        },
+        () => {
+          uni.getLocation({
+            type: 'wgs84',
+            isHighAccuracy: true,
+            highAccuracyExpireTime: 4_000,
+            success: (result) => resolve(normalizeDeviceLocation(result)),
+            fail: () => resolve(null),
+          })
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8_000,
+          maximumAge: 0,
+        },
+      )
+    })
+  }
+  // #endif
+
   return new Promise((resolve) => {
     uni.getLocation({
-      type: 'gcj02',
-      success: (result) => {
-        resolve({
-          latitude: result.latitude,
-          longitude: result.longitude,
-          ...(typeof result.accuracy === 'number' ? { accuracy: result.accuracy } : {}),
-        })
-      },
+      type: 'wgs84',
+      // #ifdef H5
+      isHighAccuracy: true,
+      highAccuracyExpireTime: 4_000,
+      // #endif
+      success: (result) => resolve(normalizeDeviceLocation(result)),
       fail: () => resolve(null),
     })
   })

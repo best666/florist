@@ -15,6 +15,7 @@ import type {
   WeatherCareTip,
 } from '@/interfaces'
 import {
+  ClientPlatform,
   DEFAULT_CITY_OPTIONS,
   DEFAULT_LOCAL_REMINDER_CONFIG,
 } from '@/interfaces'
@@ -22,6 +23,7 @@ import {
   containsIllegalCharacters,
   debounce,
   getCurrentDeviceLocation,
+  getRuntimePlatform,
   openPlatformPermissionSetting,
   showGentleToast,
 } from '@/utils'
@@ -33,6 +35,8 @@ const WEATHER_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 const REMINDER_POLLING_INTERVAL_MS = 60 * 1000
 
 let reminderConfigRequest: Promise<LocalReminderConfig> | null = null
+let initialLocationRequest: Promise<void> | null = null
+let hasAttemptedInitialLocationRequest = false
 const weatherRequestMap = new Map<string, Promise<void>>()
 
 function isSameDay(isoTime: string, compareDate = new Date()): boolean {
@@ -119,6 +123,10 @@ function shouldTriggerReminder(config: LocalReminderConfig, currentDate = new Da
     && currentDate.getMinutes() >= config.reminderMinute
 }
 
+function getFallbackCity(): CityOption | null {
+  return DEFAULT_CITY_OPTIONS[0] ?? null
+}
+
 export function useLocationWeatherReminder() {
   const cityStorage = useEncryptedStorage<CityOption>(CITY_CACHE_KEY)
   const weatherStorage = useEncryptedStorage<LocationWeatherCache>(WEATHER_CACHE_KEY)
@@ -126,7 +134,7 @@ export function useLocationWeatherReminder() {
   const cachedWeather = weatherStorage.getValue()
 
   const state = reactive<UseLocationWeatherReminderState>({
-    city: cityStorage.getValue() ?? DEFAULT_CITY_OPTIONS[0] ?? null,
+    city: cityStorage.getValue(),
     weather: cachedWeather && isSameDay(cachedWeather.weather.fetchedAt) ? cachedWeather.weather : null,
     weatherTips: cachedWeather && isSameDay(cachedWeather.weather.fetchedAt)
       ? buildWeatherTips(cachedWeather.weather)
@@ -221,7 +229,11 @@ export function useLocationWeatherReminder() {
 
       if (!deviceLocation) {
         state.locationDenied = true
-        setErrorMessage('定位权限没有开启，先手动选择城市也能继续用天气和提醒。')
+        setErrorMessage(
+          getRuntimePlatform() === ClientPlatform.H5
+            ? 'H5 没有拿到定位权限，请检查浏览器站点定位权限，并确保当前运行在 localhost 或 HTTPS。'
+            : '定位权限没有开启，先手动选择城市也能继续用天气和提醒。',
+        )
         return
       }
 
@@ -277,6 +289,16 @@ export function useLocationWeatherReminder() {
   }
 
   async function requestLocationPermissionAgain(): Promise<boolean> {
+    if (getRuntimePlatform() === ClientPlatform.H5) {
+      await locateCity()
+
+      if (state.locationDenied) {
+        showGentleToast('H5 请检查浏览器地址栏里的站点定位权限，然后重新点击定位。')
+      }
+
+      return !state.locationDenied
+    }
+
     const opened = await openPlatformPermissionSetting()
 
     if (!opened) {
@@ -286,6 +308,27 @@ export function useLocationWeatherReminder() {
 
     await locateCity()
     return true
+  }
+
+  async function ensureInitialLocationPermissionRequest(): Promise<void> {
+    if (state.city || state.loadingLocation || hasAttemptedInitialLocationRequest) {
+      return
+    }
+
+    if (initialLocationRequest) {
+      return initialLocationRequest
+    }
+
+    hasAttemptedInitialLocationRequest = true
+    initialLocationRequest = locateCity()
+      .catch(() => {
+        // 首次主动请求失败时保留现有手动选城兜底，本次应用启动不重复弹权限。
+      })
+      .finally(() => {
+        initialLocationRequest = null
+      })
+
+    return initialLocationRequest
   }
 
   function updateReminderConfig(partialConfig: Partial<LocalReminderConfig>): void {
@@ -374,7 +417,16 @@ export function useLocationWeatherReminder() {
 
     if (state.city) {
       void refreshWeather(state.city)
+      return
     }
+
+    const fallbackCity = getFallbackCity()
+
+    if (fallbackCity) {
+      void refreshWeather(fallbackCity)
+    }
+
+    void ensureInitialLocationPermissionRequest()
   })
 
   onBeforeUnmount(() => {
@@ -386,6 +438,7 @@ export function useLocationWeatherReminder() {
     hasWeatherData,
     locateCity,
     requestLocationPermissionAgain,
+    ensureInitialLocationPermissionRequest,
     searchCities,
     setManualCity,
     refreshWeather,

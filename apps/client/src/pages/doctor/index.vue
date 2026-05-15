@@ -103,7 +103,9 @@ onShow(async () => {
     return
   }
 
-  await locateCity()
+  if (!weatherState.loadingLocation) {
+    await locateCity()
+  }
 })
 
 async function cleanupSelectedImage(): Promise<void> {
@@ -490,9 +492,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-          }}</text>
+            }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-          }}</text>
+            }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">

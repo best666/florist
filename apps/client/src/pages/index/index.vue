@@ -77,7 +77,9 @@ onShow(async () => {
     return
   }
 
-  await locateCity()
+  if (!weatherReminderState.loadingLocation) {
+    await locateCity()
+  }
 })
 
 watch(

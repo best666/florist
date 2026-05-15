@@ -7,7 +7,7 @@ import type {
   UseLocationWeatherReminderState,
   WeatherCareTip,
 } from '@/interfaces'
-import { formatCityDisplayName } from '@/interfaces'
+import { DEFAULT_CITY_OPTIONS, formatCityDisplayName } from '@/interfaces'
 import { buildFlowerWeatherContextTips, formatDateTime } from '@/utils'
 import TagLabel from './TagLabel.vue'
 
@@ -42,7 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const cityDisplayName = computed(() => {
-  return formatCityDisplayName(props.state.city)
+  return formatCityDisplayName(props.state.city ?? props.state.weather?.city ?? DEFAULT_CITY_OPTIONS[0] ?? null)
 })
 
 function formatCandidateCity(city: CityOption): string {

@@ -50,6 +50,45 @@ interface OpenMeteoWeatherResponse {
   };
 }
 
+interface NominatimReverseResponse {
+  lat: string;
+  lon: string;
+  display_name?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+  };
+}
+
+function resolveReverseGeocodeAdmin1(result: NominatimReverseResponse, cityName: string): string | null {
+  const normalizedState = result.address?.state?.trim();
+
+  if (!/区|县$/.test(cityName)) {
+    return normalizedState ?? null;
+  }
+
+  const displaySegments = result.display_name
+    ?.split(',')
+    .map(segment => segment.trim())
+    .filter(segment => segment.length > 0) ?? [];
+  const citySegmentIndex = displaySegments.findIndex(segment => segment === cityName);
+
+  if (citySegmentIndex >= 0) {
+    const nextCityLevelSegment = displaySegments
+      .slice(citySegmentIndex + 1)
+      .find(segment => /市$/.test(segment));
+
+    if (nextCityLevelSegment) {
+      return nextCityLevelSegment;
+    }
+  }
+
+  return normalizedState ?? null;
+}
+
 function buildCityId(city: Pick<CityOptionResponse, 'name' | 'country'>): string {
   return `${city.name}-${city.country}`.toLowerCase().replace(/\s+/g, '-');
 }
@@ -63,6 +102,36 @@ function mapCity(result: OpenMeteoGeocodingResult): CityOptionResponse {
     latitude: result.latitude,
     longitude: result.longitude,
     ...(result.timezone ? { timezone: result.timezone } : {}),
+  };
+}
+
+function mapReverseGeocodeCity(result: NominatimReverseResponse): CityOptionResponse | null {
+  const country = result.address?.country?.trim();
+  const cityName = result.address?.city?.trim()
+    || result.address?.town?.trim()
+    || result.address?.county?.trim();
+
+  if (!country || !cityName) {
+    return null;
+  }
+
+  const latitude = Number(result.lat);
+  const longitude = Number(result.lon);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return {
+    id: buildCityId({ name: cityName, country }),
+    name: cityName,
+    country,
+    ...(resolveReverseGeocodeAdmin1(result, cityName)
+      ? { admin1: resolveReverseGeocodeAdmin1(result, cityName) as string }
+      : {}),
+    latitude,
+    longitude,
+    timezone: 'Asia/Shanghai',
   };
 }
 
@@ -106,7 +175,15 @@ export class WeatherService {
     this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
   }
 
-  private async requestJson<TResponse>(endpoint: string, baseUrl: string, query: Record<string, string | number>): Promise<TResponse> {
+  private async requestJson<TResponse>(
+    endpoint: string,
+    baseUrl: string,
+    query: Record<string, string | number>,
+    options?: {
+      provider?: string;
+      headers?: Record<string, string>;
+    },
+  ): Promise<TResponse> {
     const url = new URL(baseUrl);
 
     Object.entries(query).forEach(([key, value]) => {
@@ -122,7 +199,7 @@ export class WeatherService {
       `weather:${requestHash}`,
       this.appEnv.weatherCacheTtlMs,
       async () => {
-        const response = await fetch(url);
+        const response = await fetch(url, options?.headers ? { headers: options.headers } : undefined);
 
         if (!response.ok) {
           throw new Error('天气服务请求失败');
@@ -140,7 +217,7 @@ export class WeatherService {
       success: true,
       statusCode: 200,
       durationMs: Date.now() - startedAt,
-      upstreamProvider: 'open-meteo',
+      upstreamProvider: options?.provider ?? 'open-meteo',
     });
 
     return value;
@@ -162,19 +239,24 @@ export class WeatherService {
   }
 
   public async reverseGeocode(latitude: number, longitude: number): Promise<CityOptionResponse | null> {
-    const response = await this.requestJson<OpenMeteoGeocodingResponse>(
+    const response = await this.requestJson<NominatimReverseResponse>(
       'reverse',
-      'https://geocoding-api.open-meteo.com/v1/reverse',
+      'https://nominatim.openstreetmap.org/reverse',
       {
-        latitude,
-        longitude,
-        language: 'zh',
-        format: 'json',
+        lat: latitude,
+        lon: longitude,
+        format: 'jsonv2',
+        'accept-language': 'zh-CN',
+      },
+      {
+        provider: 'nominatim',
+        headers: {
+          'User-Agent': 'florist-dev/0.1 weather-reverse',
+        },
       },
     );
 
-    const targetCity = response.results?.[0];
-    return targetCity ? mapCity(targetCity) : null;
+    return mapReverseGeocodeCity(response);
   }
 
   public async fetchWeather(city: CityOptionResponse): Promise<WeatherSnapshotResponse> {
