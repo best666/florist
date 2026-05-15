@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import type { IUser, IUserAuthSession, UserLoginType } from '@florist/contracts';
 import { UserStatus } from '@florist/contracts';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -27,6 +27,32 @@ function maskPhoneNumber(phoneNumber: string): string {
 
   return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
 }
+
+const FLOWER_NICKNAME_PREFIXES = [
+  '晚樱',
+  '青藤',
+  '晓露',
+  '晴岚',
+  '疏影',
+  '听雨',
+  '映月',
+  '南枝',
+  '拾光',
+  '落霞',
+] as const;
+
+const FLOWER_NICKNAME_SUFFIXES = [
+  '茉莉',
+  '山茶',
+  '铃兰',
+  '木槿',
+  '海棠',
+  '芍药',
+  '玉兰',
+  '桔梗',
+  '鸢尾',
+  '雏菊',
+] as const;
 
 @Injectable()
 export class UsersService {
@@ -174,7 +200,7 @@ export class UsersService {
     const createdUser = await this.prisma.user.create({
       data: {
         id: createEntityId('user'),
-        nickname: input.nickname?.trim() || '微信花友',
+        nickname: this.resolveDefaultNickname(input.nickname),
         avatarUrl: normalizeOptionalString(input.avatarUrl),
         loginType: input.loginType,
         wechatOpenIdHash: input.wechatOpenIdHash,
@@ -216,7 +242,7 @@ export class UsersService {
     const createdUser = await this.prisma.user.create({
       data: {
         id: userId,
-        nickname: input.nickname?.trim() || 'H5 花友',
+        nickname: this.resolveDefaultNickname(input.nickname),
         loginType: input.loginType,
         phoneMaskedCipher,
         status: UserStatus.Normal,
@@ -232,6 +258,19 @@ export class UsersService {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     return toUserEntity(user, this.cryptoService);
+  }
+
+  private resolveDefaultNickname(nickname?: string): string {
+    const normalizedNickname = nickname?.trim();
+
+    if (normalizedNickname) {
+      return normalizedNickname;
+    }
+
+    const prefix = FLOWER_NICKNAME_PREFIXES[randomInt(0, FLOWER_NICKNAME_PREFIXES.length)] ?? '晚樱';
+    const suffix = FLOWER_NICKNAME_SUFFIXES[randomInt(0, FLOWER_NICKNAME_SUFFIXES.length)] ?? '茉莉';
+
+    return `${prefix}${suffix}`;
   }
 
   public async updateCurrentUser(payload: UpdateCurrentUserDto, requestUserId?: string): Promise<IUser> {

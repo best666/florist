@@ -162,15 +162,17 @@ apps/server/env
 - DATABASE_URL
 - AI_PROXY_BASE_URL
 - AI_PROXY_API_KEY
-- H5_LOGIN_PHONE
-- H5_LOGIN_CODE
-- H5_LOGIN_NICKNAME
+- H5_LOGIN_PHONE：H5 测试登录手机号，建议使用本地自定义测试号
+- H5_LOGIN_CODE：H5 测试登录验证码，建议使用本地自定义测试码
+- H5_LOGIN_NICKNAME：H5 可选默认昵称，留空时自动生成双段随机花名
+- WECHAT_MINI_PROGRAM_APP_ID
+- WECHAT_MINI_PROGRAM_SECRET
 
-当前本地 H5 登录测试配置：
+当前本地 H5 登录测试配置建议：
 
-- H5_LOGIN_PHONE=15559870086
-- H5_LOGIN_CODE=230318
-- H5_LOGIN_NICKNAME=王超
+- H5_LOGIN_PHONE=replace-with-local-test-phone
+- H5_LOGIN_CODE=replace-with-local-test-code
+- H5_LOGIN_NICKNAME= 留空时自动生成双段随机花名
 
 ## 认证机制说明
 
@@ -193,18 +195,24 @@ apps/server/env
 
 ### H5
 
-H5 当前是开发态“固定手机号 + 固定验证码”方案，不依赖短信平台。
+H5 当前是开发态“测试手机号 + 测试验证码”方案，不依赖短信平台。
 
-测试账号：
+测试账号请以本地 apps/server/env/.env 为准，文档中不再展示具体测试手机号和验证码。
 
-- 手机号：15559870086
-- 验证码：230318
+昵称规则：
+
+- 微信小程序登录默认使用用户微信昵称
+- H5 登录可使用请求传入昵称或 H5_LOGIN_NICKNAME
+- 若没有可用昵称，后端自动生成双段随机花名，例如晚樱铃兰
 
 ### 微信小程序
 
 小程序前端已经调用 uni.login 获取微信临时 code，再请求 /api/auth/wechat/login。
 
-当前后端仍是开发态基于 code 创建或复用用户，还没有接入微信官方 code2Session 生产链路。
+当前后端已经支持两种模式：
+
+- 生产态配置了 WECHAT_MINI_PROGRAM_APP_ID 和 WECHAT_MINI_PROGRAM_SECRET 后，会调用微信官方 code2Session 换取 openid / session_key
+- 开发态如果未配置这两个变量，会继续回退到基于 code 的本地联调链路
 
 ## 会员与上传说明
 

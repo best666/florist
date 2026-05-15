@@ -19,6 +19,19 @@ interface H5PhoneCodeResponse {
   readonly verificationCode?: string;
 }
 
+interface WechatCode2SessionResponse {
+  readonly openid?: string;
+  readonly session_key?: string;
+  readonly unionid?: string;
+  readonly errcode?: number;
+  readonly errmsg?: string;
+}
+
+interface ResolvedWechatSession {
+  readonly openId: string;
+  readonly sessionKey: string;
+}
+
 const H5_PHONE_CODE_COOLDOWN_MS = 60_000;
 const H5_PHONE_CODE_EXPIRES_MS = 5 * 60 * 1000;
 
@@ -88,8 +101,9 @@ export class AuthService {
   }
 
   public async loginWechatUser(payload: LoginWechatUserDto): Promise<IUserAuthSession> {
+    const wechatSession = await this.resolveWechatSession(payload.code.trim());
     const wechatOpenIdHash = createHash('sha256')
-      .update(payload.code.trim())
+      .update(wechatSession.openId)
       .digest('hex');
 
     return this.usersService.loginWechatUser({
@@ -138,6 +152,65 @@ export class AuthService {
 
   private isDevelopmentRuntime(): boolean {
     return process.env.NODE_ENV !== 'production';
+  }
+
+  private async resolveWechatSession(code: string): Promise<ResolvedWechatSession> {
+    if (this.shouldUseWechatCodeFallback()) {
+      return this.createDevelopmentWechatSession(code);
+    }
+
+    const url = new URL('https://api.weixin.qq.com/sns/jscode2session');
+    url.searchParams.set('appid', this.appEnv.wechatMiniProgramAppId);
+    url.searchParams.set('secret', this.appEnv.wechatMiniProgramSecret);
+    url.searchParams.set('js_code', code);
+    url.searchParams.set('grant_type', 'authorization_code');
+
+    let response: Response;
+
+    try {
+      response = await fetch(url);
+    }
+    catch {
+      throw new HttpException('微信登录服务暂时不可用，请稍后再试', HttpStatus.BAD_GATEWAY);
+    }
+
+    if (!response.ok) {
+      throw new HttpException('微信登录服务暂时不可用，请稍后再试', HttpStatus.BAD_GATEWAY);
+    }
+
+    const payload = await response.json() as WechatCode2SessionResponse;
+
+    if (payload.errcode) {
+      if ([40029, 40163].includes(payload.errcode)) {
+        throw new UnauthorizedException('微信登录凭证已失效，请重新发起登录');
+      }
+
+      throw new HttpException(
+        `微信登录服务异常: ${payload.errmsg ?? 'unknown error'}`,
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    if (!payload.openid || !payload.session_key) {
+      throw new HttpException('微信登录返回缺少 openid 或 session_key', HttpStatus.BAD_GATEWAY);
+    }
+
+    return {
+      openId: payload.openid,
+      sessionKey: payload.session_key,
+    };
+  }
+
+  private shouldUseWechatCodeFallback(): boolean {
+    return this.isDevelopmentRuntime()
+      && (!this.appEnv.wechatMiniProgramAppId || !this.appEnv.wechatMiniProgramSecret);
+  }
+
+  private createDevelopmentWechatSession(code: string): ResolvedWechatSession {
+    return {
+      openId: createHash('sha256').update(`dev-openid:${code}`).digest('hex'),
+      sessionKey: createHash('sha256').update(`dev-session:${code}`).digest('hex'),
+    };
   }
 
   private maskPhoneNumber(phoneNumber: string): string {

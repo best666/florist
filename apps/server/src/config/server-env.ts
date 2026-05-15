@@ -31,6 +31,8 @@ export interface ServerEnvSource {
   readonly H5_LOGIN_PHONE?: string;
   readonly H5_LOGIN_CODE?: string;
   readonly H5_LOGIN_NICKNAME?: string;
+  readonly WECHAT_MINI_PROGRAM_APP_ID?: string;
+  readonly WECHAT_MINI_PROGRAM_SECRET?: string;
   readonly APP_LOG_LEVELS?: string;
   readonly EXPOSE_INTERNAL_ERROR_DETAILS?: string;
 }
@@ -62,6 +64,8 @@ export interface ServerEnvConfig {
   readonly h5LoginPhone: string;
   readonly h5LoginCode: string;
   readonly h5LoginNickname: string;
+  readonly wechatMiniProgramAppId: string;
+  readonly wechatMiniProgramSecret: string;
   readonly appLogLevels: LogLevel[];
   readonly exposeInternalErrorDetails: boolean;
 }
@@ -92,7 +96,9 @@ export const SERVER_ENV_DEFAULTS = {
   adminSessionTtlMs: 12 * 60 * 60 * 1000,
   h5LoginPhone: '',
   h5LoginCode: '',
-  h5LoginNickname: 'H5 花友',
+  h5LoginNickname: '',
+  wechatMiniProgramAppId: '',
+  wechatMiniProgramSecret: '',
   appLogLevels: ['log', 'warn', 'error', 'debug', 'verbose'] as LogLevel[],
   exposeInternalErrorDetails: true,
 } as const;
@@ -254,6 +260,14 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.H5_LOGIN_NICKNAME,
       SERVER_ENV_DEFAULTS.h5LoginNickname,
     ),
+    wechatMiniProgramAppId: normalizeString(
+      envSource.WECHAT_MINI_PROGRAM_APP_ID,
+      SERVER_ENV_DEFAULTS.wechatMiniProgramAppId,
+    ),
+    wechatMiniProgramSecret: normalizeString(
+      envSource.WECHAT_MINI_PROGRAM_SECRET,
+      SERVER_ENV_DEFAULTS.wechatMiniProgramSecret,
+    ),
     appLogLevels: normalizeLogLevels(
       envSource.APP_LOG_LEVELS,
       normalizeServerMode(process.env.NODE_ENV) === 'production'
@@ -301,6 +315,8 @@ export function validateServerEnv(
     H5_LOGIN_PHONE: parsedEnv.h5LoginPhone,
     H5_LOGIN_CODE: parsedEnv.h5LoginCode,
     H5_LOGIN_NICKNAME: parsedEnv.h5LoginNickname,
+    WECHAT_MINI_PROGRAM_APP_ID: parsedEnv.wechatMiniProgramAppId,
+    WECHAT_MINI_PROGRAM_SECRET: parsedEnv.wechatMiniProgramSecret,
     APP_LOG_LEVELS: parsedEnv.appLogLevels.join(','),
     EXPOSE_INTERNAL_ERROR_DETAILS: String(parsedEnv.exposeInternalErrorDetails),
   };

@@ -19,3 +19,5 @@ apps/server/env/.env*
 !apps/server/env/.env.production.example
 apps/server/.mysql
 apps/server/.runtime
+apps/server/var/backups
+apps/server/var/uploads
