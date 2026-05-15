@@ -129,11 +129,12 @@ export class AuthService {
     }
 
     if (!requestedVerificationCode) {
-      throw new UnauthorizedException('请先获取验证码，验证码 5 分钟内有效');
+      throw new UnauthorizedException('验证码不正确或已过期，请重新获取验证码后再试');
     }
 
     if (normalizedCode !== requestedVerificationCode) {
-      throw new UnauthorizedException('手机号或验证码不正确');
+      this.runtimeCacheService.delete(verificationCodeCacheKey);
+      throw new UnauthorizedException('验证码不正确或已过期，请重新获取验证码后再试');
     }
 
     this.runtimeCacheService.delete(verificationCodeCacheKey);

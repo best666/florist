@@ -69,30 +69,30 @@ const feedbackDraft = reactive({
 
 const runtimePlatform = computed(() => appStore.runtimePlatform ?? ClientPlatform.H5)
 const isH5Platform = computed(() => runtimePlatform.value === ClientPlatform.H5)
-const authTitle = computed(() => currentUser.value?.nickname ?? '当前使用本地花园模式')
+const authTitle = computed(() => currentUser.value?.nickname ?? '当前使用本地花园')
 const authSubtitle = computed(() => {
   if (!currentUser.value) {
     return isH5Platform.value
-      ? 'H5 支持手机号 + 验证码登录，登录后会切换到你的个人花园数据。'
-      : '小程序支持调用微信登录，登录后会切换到你的个人花园数据。'
+      ? '本地花园会把数据安全保存在当前设备，登录后再切换到你的个人花园。'
+      : '当前先使用本地花园记录，登录后会切换到你的个人花园数据。'
   }
 
   if (currentUser.value.loginType === UserLoginType.H5PhoneCode) {
-    return `${currentUser.value.phoneMasked ?? '已绑定手机号'} · H5 手机验证码登录`
+    return '已连接你的个人花园，昵称和头像会跟随当前账号保存。'
   }
 
   if (currentUser.value.loginType === UserLoginType.WechatMiniProgram) {
-    return '微信小程序登录中'
+    return '已连接你的微信花园资料，昵称和头像会跟随当前账号保存。'
   }
 
-  return '当前仍在本地模式中整理花园数据'
+  return '当前使用本地花园记录，数据仅保存在这台设备中。'
 })
 const authTagText = computed(() => {
   if (!isAuthenticated.value) {
-    return '本地模式'
+    return '本地花园'
   }
 
-  return currentUser.value?.loginType === UserLoginType.WechatMiniProgram ? '微信登录' : 'H5 已登录'
+  return currentUser.value?.loginType === UserLoginType.WechatMiniProgram ? '微信花园' : '已登录'
 })
 const authButtonText = computed(() => (isH5Platform.value ? '手机号登录' : '微信登录'))
 const authAvatarUrl = computed(() => currentUser.value?.avatarUrl ?? '')
@@ -556,9 +556,9 @@ async function handleWechatLogin(): Promise<void> {
 
 async function handleLogoutToLocalMode(): Promise<void> {
   const confirmed = await showConfirm({
-    title: '退出登录',
-    content: '退出后会回到当前设备的本地花园模式，但不会清空你刚才登录账号的数据。',
-    confirmText: '退出到本地模式',
+    title: '切换到本地花园',
+    content: '切换后会回到当前设备的本地花园继续记录，本次登录账号的数据会保留，下次登录还能继续使用。',
+    confirmText: '切换到本地花园',
   })
 
   if (!confirmed) {
@@ -567,7 +567,7 @@ async function handleLogoutToLocalMode(): Promise<void> {
 
   await authStore.logoutToLocalMode()
   refreshLocalSnapshots()
-  showGentleSuccess('已经切回本地花园模式。')
+  showGentleSuccess('已切换到本地花园。')
 }
 
 async function handleSubmitProfile(payload: { nickname: string, avatarUrl: string, profileSignature: string }): Promise<void> {
@@ -590,17 +590,17 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-[#FFF8F1] via-[#F9F5EC] to-[#FFFDF8]">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[220rpx]">
       <view class="hero-shell app-fade-up bg-linear-to-br from-[#f5d7df] via-[#fff5e7] to-[#def2e8]">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-white/80 text-slate-600">
               我的花园
             </view>
-            <view class="mt-3 text-title font-900 leading-tight text-app-ink">
+            <view class="mt-3 text-[50rpx] font-900 leading-[1.18] text-app-ink">
               把照护数据、提醒和备份，都安静收在这里
             </view>
-            <view class="mt-2 text-body text-app-muted">
+            <view class="mt-3 text-[28rpx] leading-7 text-app-muted">
               个人中心以本地加密数据为主，适合整理习惯、恢复误删、手动备份和查看最近的照护沉淀。
             </view>
           </view>
@@ -611,21 +611,33 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
         </view>
       </view>
 
-      <view class="card-soft app-fade-up rounded-[32rpx] bg-white">
+      <view class="card-soft app-fade-up rounded-[32rpx] bg-white px-5 py-5">
         <view class="flex items-center justify-between gap-3">
-          <view class="min-w-0 flex flex-1 items-center gap-3">
-            <view
-              class="h-[92rpx] w-[92rpx] overflow-hidden rounded-full bg-[#F7F1E7] shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
-              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="头像" />
+          <view class="min-w-0 flex flex-1 items-center gap-4">
+            <button v-if="isAuthenticated"
+              class="h-[104rpx] min-h-[104rpx] w-[104rpx] min-w-[104rpx] overflow-hidden rounded-full border-none bg-[#F7F1E7] p-0 shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]"
+              hover-class="opacity-92" @tap="openProfilePopup">
+              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="" />
+            </button>
+            <view v-else
+              class="h-[104rpx] w-[104rpx] overflow-hidden rounded-full bg-[#F7F1E7] shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
+              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="" />
             </view>
-            <view class="min-w-0 flex-1">
-              <text class="block text-base font-800 text-app-ink">
-                {{ authTitle }}
-              </text>
-              <text class="mt-1 block text-sm leading-6 text-app-muted">
+            <view class="min-w-0 flex-1 pt-1">
+              <view class="flex items-center gap-[6rpx]">
+                <text class="block max-w-[360rpx] truncate text-[34rpx] font-800 leading-tight text-app-ink">
+                  {{ authTitle }}
+                </text>
+                <button v-if="isAuthenticated"
+                  class="flex h-[38rpx] min-h-[38rpx] w-[38rpx] mx-0 min-w-[38rpx] items-center justify-center rounded-full border-none bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
+                  hover-class="opacity-92" @tap="openProfilePopup">
+                  ✎
+                </button>
+              </view>
+              <text class="mt-2 block text-[26rpx] leading-6 text-app-muted">
                 {{ authSubtitle }}
               </text>
-              <text v-if="authSignature" class="mt-1 block text-2xs leading-5 text-[#8a6e57]">
+              <text v-if="isAuthenticated && authSignature" class="mt-2 block text-[24rpx] leading-5 text-[#8C725B]">
                 {{ authSignature }}
               </text>
             </view>
@@ -634,19 +646,18 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
             size="md" />
         </view>
 
-        <view class="mt-4 grid gap-3">
-          <button class="btn-panel surface-soft bg-[#EAF6EF] text-[#2E8D76]" hover-class="opacity-92"
-            :loading="switchingSession" @tap="openLoginPopup">
+        <view class="mt-5 grid gap-3">
+          <button v-if="!isAuthenticated" class="btn-panel surface-soft min-h-[92rpx] bg-[#EAF6EF] text-[#2E8D76]"
+            hover-class="opacity-92" :loading="switchingSession" @tap="openLoginPopup">
             {{ authButtonText }}
           </button>
-          <button v-if="isAuthenticated" class="btn-panel surface-soft bg-[#EEF2FF] text-[#4D63B4]"
-            hover-class="opacity-92" :loading="isSavingProfile" @tap="openProfilePopup">
-            编辑用户名 / 头像 / 签名
-          </button>
-          <button v-if="isAuthenticated" class="btn-panel surface-soft bg-[#F9ECEB] text-[#AA5B58]"
-            hover-class="opacity-92" :loading="switchingSession" @tap="handleLogoutToLocalMode">
-            退出到本地模式
-          </button>
+          <view v-if="isAuthenticated" class="flex items-center justify-end">
+            <button
+              class="h-[64rpx] min-h-[64rpx] rounded-full border-none bg-transparent px-3 text-[24rpx] text-[#9A8D80]"
+              hover-class="opacity-80" :loading="switchingSession" @tap="handleLogoutToLocalMode">
+              暂时切回本地花园
+            </button>
+          </view>
         </view>
       </view>
 

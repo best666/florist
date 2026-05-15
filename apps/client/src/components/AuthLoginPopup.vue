@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
           </button>
         </view>
         <view class="rounded-[24rpx] bg-[#FBF7F0] px-4 py-4 text-sm leading-6 text-slate-500">
-          当前开发环境已配置一组可验证账号。需要先获取验证码，验证码会自动回填，且仅在最近一次请求后的 5 分钟内有效。
+          当前开发环境已配置一组可验证账号。需要先获取验证码，验证码会自动回填，且仅在最近一次请求后的 5 分钟内有效。验证码不正确或已过期时，需要重新获取后再登录。
         </view>
         <SubmitBtn text="立即登录" :loading="props.loading" variant="mint" size="md" @click="handleSubmitH5" />
       </view>

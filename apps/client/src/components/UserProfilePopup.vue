@@ -113,7 +113,7 @@ function handleSubmit(): void {
   const profileSignature = formState.profileSignature.trim()
 
   if (!nickname) {
-    showGentleToast('用户名不能为空。')
+    showGentleToast('昵称不能为空。')
     return
   }
 
@@ -136,43 +136,49 @@ function handleSubmit(): void {
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-xl font-800 text-slate-800">
-              编辑个人资料
+            <text class="block text-[38rpx] font-800 leading-tight text-slate-800">
+              编辑资料
             </text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500">
-              用户名、头像和个性签名会跟随当前登录账号保存。
+            <text class="mt-2 block text-[26rpx] leading-6 text-slate-500">
+              可以更新昵称、个性签名和头像，这些信息会跟随当前账号保存。
             </text>
           </view>
         </view>
       </view>
 
       <view class="flex flex-col gap-4">
-        <view class="flex items-center gap-4 rounded-[28rpx] bg-[#FBF6EE] px-4 py-4">
-          <view
-            class="h-[120rpx] w-[120rpx] overflow-hidden rounded-full bg-white shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
-            <AppImage class="h-full w-full" :src="formState.avatarUrl" mode="aspectFill" error-text="头像" />
+        <button class="flex items-center gap-4 rounded-[28rpx] border-none bg-[#FBF6EE] px-4 py-4 text-left"
+          hover-class="opacity-92" @tap="handleChooseAvatar">
+          <view class="relative h-[128rpx] w-[128rpx] shrink-0">
+            <view
+              class="h-full w-full overflow-hidden rounded-full bg-white shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
+              <AppImage class="h-full w-full" :src="formState.avatarUrl" mode="aspectFill" error-text="" />
+            </view>
+            <view v-if="choosingAvatar"
+              class="absolute inset-0 flex items-center justify-center rounded-full bg-black/18 backdrop-blur-[2rpx]">
+              <view class="h-7 w-7 rounded-full border-3 border-white/80 border-t-[#F59F54] animate-spin" />
+            </view>
+            <view
+              class="absolute bottom-[6rpx] left-1/2 max-w-[104rpx] -translate-x-1/2 rounded-full bg-[#E9A15A] px-3 py-[4rpx] text-center text-[18rpx] leading-none text-white">
+              替换头像
+            </view>
           </view>
           <view class="min-w-0 flex-1">
-            <text class="block text-sm font-700 text-slate-800">头像</text>
-            <text class="mt-1 block text-2xs leading-5 text-slate-500">会自动居中裁剪成头像比例，再压缩上传。</text>
+            <text class="block text-[24rpx] leading-5 text-slate-500">点击头像替换，会自动裁成合适比例再压缩上传。</text>
           </view>
-          <button class="btn-panel bg-[#EAF6EF] px-4 text-[#2E8D76]" hover-class="opacity-92" :loading="choosingAvatar"
-            @tap="handleChooseAvatar">
-            更换头像
-          </button>
-        </view>
-
-        <view class="rounded-[28rpx] bg-[#FBF6EE] px-4 py-4">
-          <text class="block text-sm font-700 text-slate-800">用户名</text>
-          <input v-model="formState.nickname"
-            class="mt-3 h-[92rpx] rounded-[24rpx] bg-white px-4 text-sm text-slate-700" :maxlength="40"
-            placeholder="给自己起一个名字" />
-        </view>
+        </button>
 
         <view class="rounded-[28rpx] bg-[#F6F7FB] px-4 py-4">
-          <text class="block text-sm font-700 text-slate-800">个性签名</text>
+          <text class="block text-[28rpx] font-700 text-slate-800">昵称</text>
+          <input v-model="formState.nickname"
+            class="mt-3 h-[96rpx] rounded-[24rpx] bg-white px-4 text-[28rpx] text-slate-700" :maxlength="40"
+            placeholder="给这片花园起一个称呼" />
+        </view>
+
+        <view class="rounded-[28rpx] bg-[#F7F3FA] px-4 py-4">
+          <text class="block text-[28rpx] font-700 text-slate-800">个性签名</text>
           <textarea v-model="formState.profileSignature"
-            class="field-textarea mt-3 min-h-[160rpx] rounded-[24rpx] bg-white px-4 text-sm leading-7 text-slate-700"
+            class="field-textarea mt-3 min-h-[148rpx] rounded-[24rpx] bg-white px-4 text-[27rpx] leading-7 text-slate-700"
             :maxlength="80" auto-height placeholder="写一句你想留给这片花园的话" />
         </view>
 
