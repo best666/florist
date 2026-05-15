@@ -7,6 +7,18 @@ export interface H5PhoneLoginPayload {
   nickname?: string
 }
 
+export interface H5PhoneCodePayload {
+  phoneNumber: string
+}
+
+export interface H5PhoneCodeResponse {
+  delivered: true
+  message: string
+  maskedPhoneNumber: string
+  cooldownSeconds: number
+  verificationCode?: string
+}
+
 export interface WechatMiniProgramLoginPayload {
   code: string
   nickname?: string
@@ -30,6 +42,13 @@ export function fetchAuthSession(userId?: string): Promise<IUserAuthSession> {
 export function loginWithH5PhoneCode(payload: H5PhoneLoginPayload): Promise<IUserAuthSession> {
   return http.post<IUserAuthSession, H5PhoneLoginPayload>('/auth/h5/phone/login', payload, {
     loadingText: '正在验证手机号',
+    skipErrorToast: true,
+  })
+}
+
+export function requestH5PhoneCode(payload: H5PhoneCodePayload): Promise<H5PhoneCodeResponse> {
+  return http.post<H5PhoneCodeResponse, H5PhoneCodePayload>('/auth/h5/phone/code', payload, {
+    loadingText: '正在发送验证码',
     skipErrorToast: true,
   })
 }
