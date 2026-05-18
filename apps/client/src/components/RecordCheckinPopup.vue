@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import type { IImageAsset } from '@florist/contracts'
 import { RecordActionType } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
-import { uploadPreparedImage } from '@/api'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
@@ -13,15 +11,12 @@ import {
   type RecordFormValues,
 } from '@/interfaces'
 import {
-  compressImageSafely,
   containsIllegalCharacters,
   isBlankString,
-  readImageAsDataUrl,
-  removeCachedImage,
-  revokeCompressedImageUrl,
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
 import { useAuthStore, useMemberStore } from '@/store'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
@@ -50,6 +45,7 @@ const formError = ref('')
 const isUploadingImages = ref(false)
 const authStore = useAuthStore()
 const memberStore = useMemberStore()
+const { chooseUploadedImageAssets } = usePreparedImageAssets()
 
 const modalClass = computed(() => (
   props.modelValue ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
@@ -99,15 +95,6 @@ function showFormError(message: string): void {
   showGentleToast(message)
 }
 
-function createImageAsset(imageUrl: string, compressedUrl?: string): IImageAsset {
-  return {
-    id: `record-image-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    url: imageUrl,
-    ...(compressedUrl ? { compressedUrl } : {}),
-    createdAt: new Date().toISOString(),
-  }
-}
-
 function validateForm(): boolean {
   if (isBlankString(formState.flowerId)) {
     showFormError('先选一盆植物，再轻轻记录这次照顾。')
@@ -153,39 +140,17 @@ async function handleChooseImages(): Promise<void> {
   isUploadingImages.value = true
 
   try {
-    const imageResult = await uni.chooseImage({
+    const uploadedImages = await chooseUploadedImageAssets({
+      assetPrefix: 'record-image',
       count: remainingCount,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
+      cropMode: 'card',
+      maxWidth: 1440,
+      quality: 82,
+      maxSizeInBytes: 1.8 * 1024 * 1024,
+      scope: 'record',
     })
 
-    const nextImages = [...formState.images]
-
-    for (const tempFilePath of imageResult.tempFilePaths) {
-      const compressedResult = await compressImageSafely(tempFilePath, {
-        maxSizeInBytes: 1.8 * 1024 * 1024,
-      })
-      const dataUrl = await readImageAsDataUrl(compressedResult.filePath)
-      const uploadedImage = await uploadPreparedImage({
-        dataUrl,
-        scope: 'record',
-        cropMode: 'card',
-        maxWidth: 1440,
-        quality: 82,
-      })
-
-      if (compressedResult.filePath !== tempFilePath) {
-        revokeCompressedImageUrl(compressedResult.filePath)
-      }
-
-      nextImages.push(
-        createImageAsset(
-          uploadedImage.url,
-        ),
-      )
-    }
-
-    formState.images = nextImages
+    formState.images = [...formState.images, ...uploadedImages]
   }
   catch {
     showFormError('这次配图没保存成功，换一张再试试。')
@@ -210,7 +175,7 @@ async function handleRemoveImage(imageId: string): Promise<void> {
   }
 
   formState.images = formState.images.filter(image => image.id !== imageId)
-  await removeCachedImage(targetImage.url)
+  await removePreparedImageAsset(targetImage)
 }
 
 function handleSubmit(): void {

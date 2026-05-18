@@ -53,13 +53,20 @@ function handleSelect(key: string): void {
       <view @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <view class="mb-5">
-          <text class="block text-lg font-800 text-app-ink dark:text-slate-100">
-            花园工具抽屉
-          </text>
-          <text class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">
-            把低频但重要的功能收进这里，首页只保留你最常操作的入口。
-          </text>
+        <view class="mb-5 flex items-start justify-between gap-3">
+          <view class="min-w-0 flex-1">
+            <text class="block text-lg font-800 text-app-ink dark:text-slate-100">
+              花园工具抽屉
+            </text>
+            <text class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">
+              把低频但重要的功能收进这里，首页只保留你最常操作的入口。
+            </text>
+          </view>
+          <button
+            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-slate-500 shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
+            hover-class="opacity-92" @tap="closeDrawer">
+            <text class="leading-none">×</text>
+          </button>
         </view>
       </view>
 

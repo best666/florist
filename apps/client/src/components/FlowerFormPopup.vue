@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { FlowerCategory } from '@florist/contracts'
-import type { IImageAsset } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
-import { uploadPreparedImage } from '@/api'
 import {
   FLOWER_CATEGORY_OPTIONS,
   FLOWER_DIFFICULTY_OPTIONS,
@@ -13,15 +11,12 @@ import {
 } from '@/interfaces'
 import { useAuthStore, useFlowerTaxonomyStore, useMemberStore } from '@/store'
 import {
-  compressImageSafely,
   containsIllegalCharacters,
   isBlankString,
-  readImageAsDataUrl,
-  removeCachedImage,
-  revokeCompressedImageUrl,
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -52,6 +47,7 @@ const isUploadingImages = ref(false)
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const authStore = useAuthStore()
 const memberStore = useMemberStore()
+const { chooseUploadedImageAssets } = usePreparedImageAssets()
 const customCategoryDraftLabel = ref('')
 const customCategoryDraftBaseValue = ref<FlowerCategory>(FlowerCategory.Herbaceous)
 const editingCustomCategoryId = ref('')
@@ -213,15 +209,6 @@ function validateForm(): boolean {
   return true
 }
 
-function createImageAsset(imageUrl: string, compressedUrl?: string): IImageAsset {
-  return {
-    id: `image-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    url: imageUrl,
-    ...(compressedUrl ? { compressedUrl } : {}),
-    createdAt: new Date().toISOString(),
-  }
-}
-
 async function handleChooseImages(): Promise<void> {
   if (!authStore.isAuthenticated) {
     showFormError('请先登录后再添加植物图片。')
@@ -243,39 +230,17 @@ async function handleChooseImages(): Promise<void> {
   isUploadingImages.value = true
 
   try {
-    const imageResult = await uni.chooseImage({
+    const uploadedImages = await chooseUploadedImageAssets({
+      assetPrefix: 'image',
       count: remainingCount,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
+      cropMode: 'card',
+      maxWidth: 1440,
+      quality: 82,
+      maxSizeInBytes: 1.8 * 1024 * 1024,
+      scope: 'flower',
     })
 
-    const nextImages = [...formState.images]
-
-    for (const tempFilePath of imageResult.tempFilePaths) {
-      const compressedResult = await compressImageSafely(tempFilePath, {
-        maxSizeInBytes: 1.8 * 1024 * 1024,
-      })
-      const dataUrl = await readImageAsDataUrl(compressedResult.filePath)
-      const uploadedImage = await uploadPreparedImage({
-        dataUrl,
-        scope: 'flower',
-        cropMode: 'card',
-        maxWidth: 1440,
-        quality: 82,
-      })
-
-      if (compressedResult.filePath !== tempFilePath) {
-        revokeCompressedImageUrl(compressedResult.filePath)
-      }
-
-      nextImages.push(
-        createImageAsset(
-          uploadedImage.url,
-        ),
-      )
-    }
-
-    formState.images = nextImages
+    formState.images = [...formState.images, ...uploadedImages]
   }
   catch {
     showFormError('图片处理失败，请换一张再试试')
@@ -300,7 +265,7 @@ async function handleRemoveImage(imageId: string): Promise<void> {
   }
 
   formState.images = formState.images.filter(image => image.id !== imageId)
-  await removeCachedImage(targetImage.url)
+  await removePreparedImageAsset(targetImage)
 }
 
 function handleSubmit(): void {
@@ -530,13 +495,18 @@ function cancelStatusEditor(): void {
   <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 backdrop-blur-[6rpx]" :class="modalClass"
     :style="maskMotionStyle" @tap="closePopup">
     <view
-      class="max-h-[90svh] w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
+      class="max-h-[90svh] relative  w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
       :class="panelClass" :style="panelMotionStyle" @tap.stop="() => { }">
-      <view class="mb-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
+      <button
+        class="absolute right-2 top-2 h-8 w-8 flex items-center justify-center rounded-full border-none bg-[#FFF5E9] text-lg text-[#C28652] shadow-[0_8rpx_18rpx_rgba(233,161,90,0.14)] dark:bg-slate-800 dark:text-[#F3C58E]"
+        hover-class="opacity-92" @tap="closePopup">
+        <text class="leading-none">×</text>
+      </button>
+      <view class="py-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
         <view class="flex items-start justify-between gap-3">
-          <view>
+          <view class="min-w-0 flex-1">
             <text class="block text-xl font-800 text-slate-800 dark:text-slate-100">
               {{ panelTitle }}
             </text>
@@ -544,8 +514,11 @@ function cancelStatusEditor(): void {
               表单会优先保存到本地加密缓存，断网时也能继续使用。
             </text>
           </view>
-          <TagLabel :text="props.mode === 'edit' ? '编辑中' : '新增中'" tone="blush" />
+          <view class="flex flex-col items-end gap-2">
+            <TagLabel :text="props.mode === 'edit' ? '编辑中' : '新增中'" tone="blush" />
+          </view>
         </view>
+
       </view>
 
       <scroll-view scroll-y class="max-h-[68vh] pr-1">
@@ -590,9 +563,9 @@ function cancelStatusEditor(): void {
               </view>
 
               <button v-if="formState.images.length < 6"
-                class="btn-base h-[180rpx] rounded-[24rpx] bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
+                class="btn-base h-[180rpx] aspect-1 rounded-[24rpx] bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
                 hover-class="opacity-92" @tap="handleChooseImages">
-                <view class="flex h-full flex-col items-center justify-center gap-2">
+                <view class="flex size-full flex-col items-center justify-center gap-2">
                   <text class="text-2xl font-500">+</text>
                   <text class="text-2xs">添加图片</text>
                 </view>
@@ -811,7 +784,7 @@ function cancelStatusEditor(): void {
         </view>
       </scroll-view>
 
-      <view class="mt-4 flex gap-3">
+      <view class="mt-4 absolute bottom-0 left-0 right-0 py-4 px-4 bg-white/88 flex gap-3">
         <button class="btn-pill-md flex-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
           hover-class="opacity-92" @tap="closePopup">
           先放一放

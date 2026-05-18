@@ -3,12 +3,13 @@ import { onLaunch, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
+import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { ClientPlatform } from '@/interfaces'
 import { useAppStore, useAuthStore } from '@/store'
 import { useFlowerStore } from '@/store'
 import { useMemberStore } from '@/store'
-import { showGentleSuccess, showGentleToast } from '@/utils'
+import { showGentleSuccess } from '@/utils'
 import { getRuntimePlatform } from '@/utils/platform'
 
 const appStore = useAppStore()
@@ -58,37 +59,11 @@ function openLoginPopup(): void {
   loginPopupVisible.value = true
 }
 
-async function handleH5Login(payload: { phoneNumber: string, verificationCode: string }): Promise<void> {
-  if (!/^1\d{10}$/.test(payload.phoneNumber)) {
-    showGentleToast('请输入正确的 11 位手机号。')
-    return
-  }
-
-  if (!payload.verificationCode) {
-    showGentleToast('请输入验证码。')
-    return
-  }
-
-  try {
-    const session = await authStore.loginByH5PhoneCode(payload)
+const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
+  onCloseLoginPopup: () => {
     loginPopupVisible.value = false
-    showGentleSuccess(session.isNewUser ? '登录成功，已经为你创建新的个人花园。' : '登录成功，已经切换到你的个人花园。')
-  }
-  catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '手机号登录暂时没有接稳。')
-  }
-}
-
-async function handleWechatLogin(): Promise<void> {
-  try {
-    const session = await authStore.loginByWechatMiniProgram()
-    loginPopupVisible.value = false
-    showGentleSuccess(session.isNewUser ? '微信登录成功，已经为你创建新的个人花园。' : '微信登录成功，已经切换到你的个人花园。')
-  }
-  catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '微信登录暂时没有接稳。')
-  }
-}
+  },
+})
 
 onLaunch(() => {
   void (async () => {

@@ -1,22 +1,21 @@
 <script setup lang="ts">
-import type { IImageAsset } from '@florist/contracts'
-import { UserLoginType } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
+import MineAuthCard from '@/components/MineAuthCard.vue'
+import MineFeedbackPanel from '@/components/MineFeedbackPanel.vue'
+import MineStatisticsGrid from '@/components/MineStatisticsGrid.vue'
 import UserProfilePopup from '@/components/UserProfilePopup.vue'
 import { updateCurrentUser } from '@/api'
+import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
-import { ClientPlatform, DEFAULT_LOCAL_REMINDER_CONFIG, type MineFeedbackItem, type MineStatisticsCard } from '@/interfaces'
+import { ClientPlatform, DEFAULT_LOCAL_REMINDER_CONFIG, type MineStatisticsCard } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useMemberStore, useRecordStore } from '@/store'
 import {
   buildLocalBackupPayload,
-  cacheImageForOffline,
   clearMineStorage,
   clearPlantDoctorStorage,
-  compressImageSafely,
-  createMineEntityId,
   decodeLocalBackup,
   encodeLocalBackup,
   formatDateTime,
@@ -51,60 +50,17 @@ const {
 
 const latestBackupString = ref('')
 const restoreBackupString = ref('')
-const feedbackHistory = ref<ReadonlyArray<MineFeedbackItem>>([])
+const feedbackCount = ref(0)
+const feedbackPanelRefreshToken = ref(0)
 const plantDoctorHistoryCount = ref(0)
 const isGeneratingBackup = ref(false)
 const isRestoringBackup = ref(false)
 const isClearingData = ref(false)
-const isChoosingFeedbackImages = ref(false)
-const isSubmittingFeedback = ref(false)
 const loginPopupVisible = ref(false)
 const profilePopupVisible = ref(false)
 const isSavingProfile = ref(false)
 
-const feedbackDraft = reactive({
-  content: '',
-  images: [] as IImageAsset[],
-})
-
 const runtimePlatform = computed(() => appStore.runtimePlatform ?? ClientPlatform.H5)
-const isH5Platform = computed(() => runtimePlatform.value === ClientPlatform.H5)
-const authTitle = computed(() => currentUser.value?.nickname ?? '当前使用本地花园')
-const authSubtitle = computed(() => {
-  if (!currentUser.value) {
-    return isH5Platform.value
-      ? '本地花园会把数据安全保存在当前设备，登录后再切换到你的个人花园。'
-      : '当前先使用本地花园记录，登录后会切换到你的个人花园数据。'
-  }
-
-  if (currentUser.value.loginType === UserLoginType.H5PhoneCode) {
-    return '已连接你的个人花园，昵称和头像会跟随当前账号保存。'
-  }
-
-  if (currentUser.value.loginType === UserLoginType.WechatMiniProgram) {
-    return '已连接你的微信花园资料，昵称和头像会跟随当前账号保存。'
-  }
-
-  return '当前使用本地花园记录，数据仅保存在这台设备中。'
-})
-const authTagText = computed(() => {
-  if (!isAuthenticated.value) {
-    return '本地花园'
-  }
-
-  return currentUser.value?.loginType === UserLoginType.WechatMiniProgram ? '微信花园' : '已登录'
-})
-const authButtonText = computed(() => (isH5Platform.value ? '手机号登录' : '微信登录'))
-const authAvatarUrl = computed(() => currentUser.value?.avatarUrl ?? '')
-const authSignature = computed(() => currentUser.value?.profileSignature?.trim() ?? '')
-
-onShow(async () => {
-  await memberStore.initializeMembership(true)
-  await flowerStore.initializeGarden()
-  await recordStore.initializeRecordCenter()
-  refreshLocalSnapshots()
-})
-
 const totalPlantCount = computed(() => activeFlowers.value.length + recycleBinFlowers.value.length)
 const survivalPlantCount = computed(() => activeFlowers.value.length)
 
@@ -214,12 +170,15 @@ const recycleBinSummary = computed(() => {
   return `当前有 ${recycleBinFlowers.value.length} 株植物在回收站，随时可以手动恢复。`
 })
 
+function bumpFeedbackRefreshToken(): void {
+  feedbackPanelRefreshToken.value += 1
+}
+
 function refreshLocalSnapshots(): void {
-  feedbackHistory.value = readMineFeedbackHistory()
-    .slice()
-    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+  feedbackCount.value = readMineFeedbackHistory().length
   plantDoctorHistoryCount.value = readPlantDoctorHistoryFromStorage().length
   weatherReminderState.reminderConfig = readReminderConfigFromStorage()
+  bumpFeedbackRefreshToken()
 }
 
 function copyText(value: string): Promise<void> {
@@ -240,6 +199,13 @@ function showConfirm(options: { title: string, content: string, confirmText?: st
   })
 }
 
+onShow(async () => {
+  await memberStore.initializeMembership(true)
+  await flowerStore.initializeGarden()
+  await recordStore.initializeRecordCenter()
+  refreshLocalSnapshots()
+})
+
 async function handleGenerateBackup(): Promise<void> {
   isGeneratingBackup.value = true
 
@@ -259,12 +225,11 @@ async function handleGenerateBackup(): Promise<void> {
       undoLogs: recentUndoLogs.value,
       reminderConfig: weatherReminderState.reminderConfig,
       plantDoctorHistory: readPlantDoctorHistoryFromStorage(),
-      mineFeedbacks: feedbackHistory.value,
+      mineFeedbacks: readMineFeedbackHistory(),
     })
 
     latestBackupString.value = encodeLocalBackup(backupPayload)
     await copyText(latestBackupString.value)
-
     showGentleSuccess('备份串已经复制好啦。')
   }
   catch (error) {
@@ -319,10 +284,7 @@ async function handleRestoreBackup(): Promise<void> {
     writeReminderConfigToStorage(parsedBackup.reminderConfig)
     writePlantDoctorHistoryToStorage(parsedBackup.plantDoctorHistory)
     writeMineFeedbackHistory(parsedBackup.mineFeedbacks)
-    feedbackDraft.content = ''
-    feedbackDraft.images = []
     refreshLocalSnapshots()
-
     showGentleSuccess('本地数据已经恢复好了。')
   }
   finally {
@@ -344,9 +306,16 @@ async function handleClearAllLocalData(): Promise<void> {
   isClearingData.value = true
 
   try {
+    const feedbackImages = readMineFeedbackHistory().flatMap(item => item.images)
+    await Promise.all(feedbackImages.map(async image => {
+      await removeCachedImage(image.url)
+
+      if (image.compressedUrl) {
+        await removeCachedImage(image.compressedUrl)
+      }
+    }))
     await flowerStore.clearLocalGarden()
     await recordStore.clearLocalRecords()
-    await Promise.all(feedbackDraft.images.map(async image => removeCachedImage(image.url)))
     clearPlantDoctorStorage()
     clearMineStorage()
     weatherReminderState.reminderConfig = { ...DEFAULT_LOCAL_REMINDER_CONFIG }
@@ -356,11 +325,9 @@ async function handleClearAllLocalData(): Promise<void> {
     })
     latestBackupString.value = ''
     restoreBackupString.value = ''
-    feedbackDraft.content = ''
-    feedbackDraft.images = []
-    feedbackHistory.value = []
+    feedbackCount.value = 0
     plantDoctorHistoryCount.value = 0
-
+    bumpFeedbackRefreshToken()
     showGentleSuccess('本地数据已经清理完成。')
   }
   finally {
@@ -406,85 +373,6 @@ async function handleRestoreLocationPermission(): Promise<void> {
   }
 }
 
-async function handleChooseFeedbackImages(): Promise<void> {
-  const remaining = 3 - feedbackDraft.images.length
-
-  if (remaining <= 0) {
-    showGentleToast('反馈图片先保留 3 张以内，会更好整理。')
-    return
-  }
-
-  isChoosingFeedbackImages.value = true
-
-  try {
-    const result = await uni.chooseImage({
-      count: remaining,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-    })
-
-    for (const filePath of result.tempFilePaths) {
-      const compressed = await compressImageSafely(filePath, {
-        maxSizeInBytes: 1024 * 1024,
-      })
-      const offlinePath = await cacheImageForOffline(compressed.filePath)
-
-      feedbackDraft.images.push({
-        id: createMineEntityId('feedback-image'),
-        url: offlinePath,
-        ...(compressed.filePath !== offlinePath ? { compressedUrl: compressed.filePath } : {}),
-        createdAt: new Date().toISOString(),
-      })
-    }
-  }
-  catch {
-    // 用户取消选择图片时不提示。
-  }
-  finally {
-    isChoosingFeedbackImages.value = false
-  }
-}
-
-async function handleRemoveFeedbackImage(imageId: string): Promise<void> {
-  const targetImage = feedbackDraft.images.find(image => image.id === imageId)
-
-  if (!targetImage) {
-    return
-  }
-
-  await removeCachedImage(targetImage.url)
-  feedbackDraft.images = feedbackDraft.images.filter(image => image.id !== imageId)
-}
-
-async function handleSubmitFeedback(): Promise<void> {
-  if (feedbackDraft.content.trim().length < 5) {
-    showGentleToast('反馈内容写满 5 个字，我们会更容易看懂你的想法。')
-    return
-  }
-
-  isSubmittingFeedback.value = true
-
-  try {
-    const nextFeedback: MineFeedbackItem = {
-      id: createMineEntityId('feedback'),
-      content: feedbackDraft.content.trim(),
-      images: feedbackDraft.images.map(image => ({ ...image })),
-      createdAt: new Date().toISOString(),
-    }
-
-    const nextHistory = [nextFeedback, ...feedbackHistory.value].slice(0, 10)
-    writeMineFeedbackHistory(nextHistory)
-    feedbackHistory.value = nextHistory
-    feedbackDraft.content = ''
-    feedbackDraft.images = []
-
-    showGentleSuccess('反馈草稿已经本地保存好啦。')
-  }
-  finally {
-    isSubmittingFeedback.value = false
-  }
-}
-
 async function handleRestoreFlower(flowerId: string): Promise<void> {
   const restored = await flowerStore.restoreFlowerFromRecycleBin(flowerId)
 
@@ -496,22 +384,6 @@ async function handleRestoreFlower(flowerId: string): Promise<void> {
   showGentleSuccess('植物已经回到花园啦。')
 }
 
-function handleOpenPage(url: string): void {
-  uni.navigateTo({ url })
-}
-
-function handleOpenMemberCenter(): void {
-  uni.navigateTo({
-    url: '/pages/member/index',
-  })
-}
-
-function handleOpenShop(): void {
-  uni.navigateTo({
-    url: '/pages/shop/index',
-  })
-}
-
 function openLoginPopup(): void {
   loginPopupVisible.value = true
 }
@@ -520,39 +392,14 @@ function openProfilePopup(): void {
   profilePopupVisible.value = true
 }
 
-async function handleH5Login(payload: { phoneNumber: string, verificationCode: string }): Promise<void> {
-  if (!/^1\d{10}$/.test(payload.phoneNumber)) {
-    showGentleToast('请输入正确的 11 位手机号。')
-    return
-  }
-
-  if (!payload.verificationCode) {
-    showGentleToast('请输入验证码。')
-    return
-  }
-
-  try {
-    const session = await authStore.loginByH5PhoneCode(payload)
+const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
+  onCloseLoginPopup: () => {
     loginPopupVisible.value = false
+  },
+  onLoginSuccess: async () => {
     refreshLocalSnapshots()
-    showGentleSuccess(session.isNewUser ? '登录成功，已经为你创建新的个人花园。' : '登录成功，已经切换到你的个人花园。')
-  }
-  catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '手机号登录暂时没有接稳。')
-  }
-}
-
-async function handleWechatLogin(): Promise<void> {
-  try {
-    const session = await authStore.loginByWechatMiniProgram()
-    loginPopupVisible.value = false
-    refreshLocalSnapshots()
-    showGentleSuccess(session.isNewUser ? '微信登录成功，已经为你创建新的个人花园。' : '微信登录成功，已经切换到你的个人花园。')
-  }
-  catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '微信登录暂时没有接稳。')
-  }
-}
+  },
+})
 
 async function handleLogoutToLocalMode(): Promise<void> {
   const confirmed = await showConfirm({
@@ -586,6 +433,26 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
     isSavingProfile.value = false
   }
 }
+
+function handleFeedbackCountChange(count: number): void {
+  feedbackCount.value = count
+}
+
+function handleOpenPage(url: string): void {
+  uni.navigateTo({ url })
+}
+
+function handleOpenMemberCenter(): void {
+  uni.navigateTo({
+    url: '/pages/member/index',
+  })
+}
+
+function handleOpenShop(): void {
+  uni.navigateTo({
+    url: '/pages/shop/index',
+  })
+}
 </script>
 
 <template>
@@ -611,55 +478,9 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
         </view>
       </view>
 
-      <view class="card-soft app-fade-up rounded-[32rpx] bg-white px-5 py-5">
-        <view class="flex items-center justify-between gap-3">
-          <view class="min-w-0 flex flex-1 items-center gap-4">
-            <button v-if="isAuthenticated"
-              class="h-[104rpx] min-h-[104rpx] w-[104rpx] min-w-[104rpx] overflow-hidden rounded-full border-none bg-[#F7F1E7] p-0 shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]"
-              hover-class="opacity-92" @tap="openProfilePopup">
-              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="" />
-            </button>
-            <view v-else
-              class="h-[104rpx] w-[104rpx] overflow-hidden rounded-full bg-[#F7F1E7] shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
-              <AppImage class="h-full w-full" :src="authAvatarUrl" mode="aspectFill" error-text="" />
-            </view>
-            <view class="min-w-0 flex-1 pt-1">
-              <view class="flex items-center gap-[6rpx]">
-                <text class="block max-w-[360rpx] truncate text-[34rpx] font-800 leading-tight text-app-ink">
-                  {{ authTitle }}
-                </text>
-                <button v-if="isAuthenticated"
-                  class="flex h-[38rpx] min-h-[38rpx] w-[38rpx] mx-0 min-w-[38rpx] items-center justify-center rounded-full border-none bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
-                  hover-class="opacity-92" @tap="openProfilePopup">
-                  ✎
-                </button>
-              </view>
-              <text class="mt-2 block text-[26rpx] leading-6 text-app-muted">
-                {{ authSubtitle }}
-              </text>
-              <text v-if="isAuthenticated && authSignature" class="mt-2 block text-[24rpx] leading-5 text-[#8C725B]">
-                {{ authSignature }}
-              </text>
-            </view>
-          </view>
-          <TagLabel :text="authTagText" :tone="isAuthenticated ? 'mint' : 'slate'" :icon="isAuthenticated ? '✓' : '○'"
-            size="md" />
-        </view>
-
-        <view class="mt-5 grid gap-3">
-          <button v-if="!isAuthenticated" class="btn-panel surface-soft min-h-[92rpx] bg-[#EAF6EF] text-[#2E8D76]"
-            hover-class="opacity-92" :loading="switchingSession" @tap="openLoginPopup">
-            {{ authButtonText }}
-          </button>
-          <view v-if="isAuthenticated" class="flex items-center justify-end">
-            <button
-              class="h-[64rpx] min-h-[64rpx] rounded-full border-none bg-transparent px-3 text-[24rpx] text-[#9A8D80]"
-              hover-class="opacity-80" :loading="switchingSession" @tap="handleLogoutToLocalMode">
-              暂时切回本地花园
-            </button>
-          </view>
-        </view>
-      </view>
+      <MineAuthCard :current-user="currentUser" :is-authenticated="isAuthenticated" :loading="switchingSession"
+        :runtime-platform="runtimePlatform" @login="openLoginPopup" @edit-profile="openProfilePopup"
+        @logout="handleLogoutToLocalMode" />
 
       <view class="card-soft app-fade-up rounded-[32rpx] bg-white">
         <view class="flex items-center justify-between gap-3">
@@ -691,21 +512,7 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
         </view>
       </view>
 
-      <view class="grid grid-cols-2 gap-3">
-        <view v-for="card in statisticsCards" :key="card.key"
-          class="surface-soft app-fade-up overflow-hidden rounded-[30rpx] p-4">
-          <view :class="`mb-3 h-[12rpx] rounded-full bg-linear-to-r ${card.accentClass}`" />
-          <text class="block text-xs tracking-[0.22em] text-app-muted/80">
-            {{ card.label }}
-          </text>
-          <text class="mt-2 block text-[42rpx] font-900 text-app-ink">
-            {{ card.value }}
-          </text>
-          <text class="mt-2 block text-2xs leading-5 text-app-muted">
-            {{ card.hint }}
-          </text>
-        </view>
-      </view>
+      <MineStatisticsGrid :cards="statisticsCards" />
 
       <CollapsibleSection title="扩展服务与沉淀" description="把商城和次级统计收进一层，个人中心先突出数据和设置。"
         :tag-text="`${plantDoctorHistoryCount} 条植物医生历史`" tag-tone="cream" tag-icon="✦">
@@ -819,45 +626,9 @@ async function handleSubmitProfile(payload: { nickname: string, avatarUrl: strin
         </view>
       </CollapsibleSection>
 
-      <CollapsibleSection title="意见反馈" description="反馈草稿和历史记录改为折叠展示，只在需要时展开编辑。"
-        :tag-text="`${feedbackHistory.length} 条已保存`" tag-tone="slate" tag-icon="✎">
-        <textarea v-model="feedbackDraft.content"
-          class="field-textarea mt-4 min-h-[180rpx] bg-[#F9F4EE] leading-7 text-slate-700" :maxlength="300" auto-height
-          placeholder="比如：某个页面交互不顺手、希望增加什么能力、或者哪一步让你有点卡住。" />
-
-        <view class="mt-4 grid grid-cols-3 gap-3">
-          <view v-for="image in feedbackDraft.images" :key="image.id"
-            class="relative overflow-hidden rounded-[24rpx] bg-[#F6F1E8]">
-            <AppImage class="h-[180rpx] w-full" :src="image.url" mode="aspectFill" error-text="反馈图片先休息一下" />
-            <button
-              class="btn-pill-sm absolute right-2 top-2 h-8 min-h-8 w-8 min-w-8 rounded-full bg-black/55 px-0 text-xs text-white"
-              hover-class="opacity-92" @tap="handleRemoveFeedbackImage(image.id)">
-              ×
-            </button>
-          </view>
-
-          <button v-if="feedbackDraft.images.length < 3"
-            class="btn-base h-[180rpx] rounded-[24rpx] bg-[#FBF5EC] text-sm font-700 text-slate-500"
-            hover-class="opacity-92" :loading="isChoosingFeedbackImages" @tap="handleChooseFeedbackImages">
-            + 添加图片
-          </button>
-        </view>
-
-        <button class="btn-panel mt-4 bg-linear-to-r from-[#F2C8D7] to-[#E8D39D] text-slate-700"
-          hover-class="opacity-92" :loading="isSubmittingFeedback" @tap="handleSubmitFeedback">
-          保存反馈草稿
-        </button>
-
-        <view v-if="feedbackHistory.length > 0" class="mt-4 flex flex-col gap-3">
-          <view v-for="item in feedbackHistory.slice(0, 3)" :key="item.id"
-            class="rounded-[24rpx] bg-[#F8F3EC] px-4 py-4">
-            <view class="flex items-center justify-between gap-3 text-2xs text-slate-400">
-              <text>{{ formatDateTime(item.createdAt, { pattern: 'YYYY-MM-DD HH:mm' }) }}</text>
-              <text>{{ item.images.length }} 张图片</text>
-            </view>
-            <text class="mt-2 block text-sm leading-6 text-slate-700">{{ item.content }}</text>
-          </view>
-        </view>
+      <CollapsibleSection title="意见反馈" description="反馈草稿和历史记录改为折叠展示，只在需要时展开编辑。" :tag-text="`${feedbackCount} 条已保存`"
+        tag-tone="slate" tag-icon="✎">
+        <MineFeedbackPanel :refresh-token="feedbackPanelRefreshToken" @count-change="handleFeedbackCountChange" />
       </CollapsibleSection>
 
       <CollapsibleSection title="回收站管理" :description="recycleBinSummary" :tag-text="`${recycleBinFlowers.length} 株待恢复`"

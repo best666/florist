@@ -76,6 +76,7 @@ declare global {
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
+  const removePreparedImageAsset: typeof import('../hooks/usePreparedImageAssets').removePreparedImageAsset
   const resolveComponent: typeof import('vue').resolveComponent
   const setActivePinia: typeof import('pinia').setActivePinia
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
@@ -90,6 +91,7 @@ declare global {
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
   const useAttrs: typeof import('vue').useAttrs
+  const useAuthSessionActions: typeof import('../hooks/useAuthSessionActions').useAuthSessionActions
   const useBottomSheetGesture: typeof import('../hooks/useBottomSheetGesture').useBottomSheetGesture
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
@@ -100,6 +102,7 @@ declare global {
   const useNetworkStatus: typeof import('../hooks/useNetworkStatus').useNetworkStatus
   const usePlantDoctorCenter: typeof import('../hooks/usePlantDoctorCenter').usePlantDoctorCenter
   const usePlatform: typeof import('../hooks/usePlatform').usePlatform
+  const usePreparedImageAssets: typeof import('../hooks/usePreparedImageAssets').usePreparedImageAssets
   const useSingleFlowerAiAdvice: typeof import('../hooks/useSingleFlowerAiAdvice').useSingleFlowerAiAdvice
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
@@ -190,6 +193,7 @@ declare module 'vue' {
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
+    readonly removePreparedImageAsset: UnwrapRef<typeof import('../hooks/usePreparedImageAssets')['removePreparedImageAsset']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>
@@ -204,6 +208,7 @@ declare module 'vue' {
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuthSessionActions: UnwrapRef<typeof import('../hooks/useAuthSessionActions')['useAuthSessionActions']>
     readonly useBottomSheetGesture: UnwrapRef<typeof import('../hooks/useBottomSheetGesture')['useBottomSheetGesture']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
@@ -214,6 +219,7 @@ declare module 'vue' {
     readonly useNetworkStatus: UnwrapRef<typeof import('../hooks/useNetworkStatus')['useNetworkStatus']>
     readonly usePlantDoctorCenter: UnwrapRef<typeof import('../hooks/usePlantDoctorCenter')['usePlantDoctorCenter']>
     readonly usePlatform: UnwrapRef<typeof import('../hooks/usePlatform')['usePlatform']>
+    readonly usePreparedImageAssets: UnwrapRef<typeof import('../hooks/usePreparedImageAssets')['usePreparedImageAssets']>
     readonly useSingleFlowerAiAdvice: UnwrapRef<typeof import('../hooks/useSingleFlowerAiAdvice')['useSingleFlowerAiAdvice']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>

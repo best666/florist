@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import type { IUser } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
-import { uploadPreparedImage } from '@/api'
 import {
-  compressImageSafely,
-  readImageAsDataUrl,
-  revokeCompressedImageUrl,
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import { usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
 import AppImage from './AppImage.vue'
 import SubmitBtn from './SubmitBtn.vue'
 
@@ -33,6 +30,7 @@ const formState = reactive({
   profileSignature: '',
 })
 const choosingAvatar = ref(false)
+const { chooseUploadedSingleImageUrl } = usePreparedImageAssets()
 
 const modalClass = computed(() => (props.modelValue ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'))
 const panelClass = computed(() => (props.modelValue ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-8 scale-[0.98] opacity-0'))
@@ -70,35 +68,21 @@ async function handleChooseAvatar(): Promise<void> {
   choosingAvatar.value = true
 
   try {
-    const imageResult = await uni.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-    })
-    const tempFilePath = imageResult.tempFilePaths[0]
-
-    if (!tempFilePath) {
-      return
-    }
-
-    const compressed = await compressImageSafely(tempFilePath, {
-      maxSizeInBytes: 1.2 * 1024 * 1024,
-      initialQuality: 0.88,
-    })
-    const dataUrl = await readImageAsDataUrl(compressed.filePath)
-    const uploaded = await uploadPreparedImage({
-      dataUrl,
-      scope: 'avatar',
+    const avatarUrl = await chooseUploadedSingleImageUrl({
+      assetPrefix: 'avatar',
       cropMode: 'square',
       maxWidth: 720,
       quality: 82,
+      maxSizeInBytes: 1.2 * 1024 * 1024,
+      initialQuality: 0.88,
+      scope: 'avatar',
     })
 
-    if (compressed.filePath !== tempFilePath) {
-      revokeCompressedImageUrl(compressed.filePath)
+    if (!avatarUrl) {
+      return
     }
 
-    formState.avatarUrl = uploaded.url
+    formState.avatarUrl = avatarUrl
   }
   catch (error) {
     showGentleToast(error instanceof Error ? error.message : '头像处理失败，请换一张图片再试。')

@@ -3,25 +3,27 @@ import type { IAiPlantDiagnosis, IAiTripCarePlan, IImageAsset } from '@florist/c
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
 import { fetchPlantDiagnosis, fetchTripCarePlan } from '@/api'
+import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { usePlantDoctorCenter } from '@/hooks/usePlantDoctorCenter'
-import { formatCityDisplayName, type CityOption, type LocalFlower, type PlantDoctorHistoryItem } from '@/interfaces'
-import { useFlowerStore, useFlowerTaxonomyStore } from '@/store'
+import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
+import { ClientPlatform, formatCityDisplayName, type CityOption, type LocalFlower, type PlantDoctorHistoryItem } from '@/interfaces'
+import { useAppStore, useAuthStore, useFlowerStore, useFlowerTaxonomyStore } from '@/store'
 import {
-  cacheImageForOffline,
-  compressImageSafely,
   formatDateTime,
   getFlowerDisplayName,
   readImageAsDataUrl,
-  removeCachedImage,
-  revokeCompressedImageUrl,
 } from '@/utils'
 
+const appStore = useAppStore()
+const authStore = useAuthStore()
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const { activeFlowers } = storeToRefs(flowerStore)
+const { isAuthenticated, switchingSession } = storeToRefs(authStore)
 const { isOffline } = useNetworkStatus()
 const {
   state: weatherState,
@@ -39,6 +41,10 @@ const {
   clearHistory,
   refreshQuota,
 } = usePlantDoctorCenter()
+const { chooseCachedImageAssets } = usePreparedImageAssets()
+const runtimePlatform = computed(() => appStore.runtimePlatform ?? ClientPlatform.H5)
+const loginPopupVisible = ref(false)
+const hasPromptedLoginOnShow = ref(false)
 
 const selectedFlowerId = ref('')
 const selectedImage = ref<IImageAsset | null>(null)
@@ -49,13 +55,28 @@ const isGeneratingTripPlan = ref(false)
 const travelDays = ref(3)
 const pageMessage = ref('')
 
-function createImageAsset(imageUrl: string, compressedUrl?: string): IImageAsset {
-  return {
-    id: `doctor-image-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    url: imageUrl,
-    ...(compressedUrl ? { compressedUrl } : {}),
-    createdAt: new Date().toISOString(),
+const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
+  onCloseLoginPopup: () => {
+    loginPopupVisible.value = false
+  },
+  onLoginSuccess: async () => {
+    await flowerStore.initializeGarden({ force: true })
+    refreshQuota()
+  },
+})
+
+function requireLogin(actionLabel: string): boolean {
+  if (isAuthenticated.value) {
+    return true
   }
+
+  pageMessage.value = `${actionLabel}需要先登录。登录后会自动切换到你的个人花园数据。`
+  loginPopupVisible.value = true
+  return false
+}
+
+function handleOpenLoginEntry(): void {
+  requireLogin('使用植物医生能力')
 }
 
 const selectedFlower = computed<LocalFlower | null>(() => {
@@ -91,6 +112,18 @@ onLoad((query) => {
 })
 
 onShow(async () => {
+  if (!isAuthenticated.value) {
+    pageMessage.value = '植物医生会结合你的花园档案生成建议，先登录后再继续会更准确。'
+
+    if (!hasPromptedLoginOnShow.value) {
+      loginPopupVisible.value = true
+      hasPromptedLoginOnShow.value = true
+    }
+
+    return
+  }
+
+  hasPromptedLoginOnShow.value = false
   await flowerStore.initializeGarden()
   refreshQuota()
 
@@ -116,45 +149,33 @@ async function cleanupSelectedImage(): Promise<void> {
   }
 
   selectedImage.value = null
-  await removeCachedImage(image.url)
-
-  if (image.compressedUrl && image.compressedUrl !== image.url) {
-    revokeCompressedImageUrl(image.compressedUrl)
-  }
+  await removePreparedImageAsset(image)
 }
 
 async function handleChooseImage(): Promise<void> {
-  try {
-    const imageResult = await uni.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-    })
-    const tempFilePath = imageResult.tempFilePaths[0]
+  if (!requireLogin('上传识别图片')) {
+    return
+  }
 
-    if (!tempFilePath) {
+  try {
+    const imageAssets = await chooseCachedImageAssets({
+      assetPrefix: 'doctor-image',
+      count: 1,
+      initialQuality: 0.9,
+      maxSizeInBytes: 1.5 * 1024 * 1024,
+      minQuality: 0.5,
+    })
+    const nextImage = imageAssets[0]
+
+    if (!nextImage) {
       pageMessage.value = '这次没有拿到可用图片，换一张再试试。'
       return
     }
 
     await cleanupSelectedImage()
 
-    const compressedResult = await compressImageSafely(tempFilePath, {
-      maxSizeInBytes: 1.5 * 1024 * 1024,
-      initialQuality: 0.9,
-      minQuality: 0.5,
-    })
-    const cachedImagePath = await cacheImageForOffline(compressedResult.filePath)
-
-    if (compressedResult.filePath !== cachedImagePath) {
-      revokeCompressedImageUrl(compressedResult.filePath)
-    }
-
-    selectedImage.value = createImageAsset(
-      cachedImagePath,
-      compressedResult.filePath !== cachedImagePath ? compressedResult.filePath : undefined,
-    )
-    pageMessage.value = compressedResult.degraded
+    selectedImage.value = nextImage
+    pageMessage.value = nextImage.compressedUrl
       ? '图片已经帮你压小并尽量保住清晰度啦，可以直接开始识别。'
       : '图片已经准备好，可以开始识别啦。'
   }
@@ -175,6 +196,10 @@ function handlePreviewSelectedImage(): void {
 }
 
 async function handleDiagnose(): Promise<void> {
+  if (!requireLogin('开始病虫害识别')) {
+    return
+  }
+
   if (!selectedImage.value) {
     pageMessage.value = '先拍一张叶片、虫点或病斑更清楚的图片，我再帮你细看。'
     return
@@ -235,6 +260,10 @@ async function handleDiagnose(): Promise<void> {
 }
 
 async function handleGenerateTripPlan(): Promise<void> {
+  if (!requireLogin('生成出差托管方案')) {
+    return
+  }
+
   if (!selectedFlower.value) {
     pageMessage.value = '先选一盆植物，我才能按它的状态来安排出差照顾方案。'
     return
@@ -292,6 +321,10 @@ function handleCitySearchInput(event: { detail: { value: string } }): void {
 }
 
 function handleOpenMemberBenefits(): void {
+  if (!requireLogin('查看会员权益')) {
+    return
+  }
+
   uni.navigateTo({
     url: '/pages/member/index',
   })
@@ -333,6 +366,23 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view v-if="pageMessage"
         class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">
         {{ pageMessage }}
+      </view>
+
+      <view v-if="!isAuthenticated" class="card-soft rounded-[32rpx] border border-[#EADBC8] bg-[#FFF9F2] dark:border-slate-700 dark:bg-slate-900">
+        <view class="flex items-start justify-between gap-3">
+          <view>
+            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">先登录后使用植物医生</text>
+            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+              小程序默认使用微信登录，H5 默认使用手机号验证码登录，登录后会自动关联你的个人花园数据。
+            </text>
+          </view>
+          <TagLabel :text="runtimePlatform === ClientPlatform.MpWeixin ? '微信登录' : '手机号登录'" tone="mint" />
+        </view>
+
+        <view class="mt-4">
+          <SubmitBtn :text="runtimePlatform === ClientPlatform.MpWeixin ? '使用微信登录继续' : '手机号登录继续'" variant="mint"
+            @click="handleOpenLoginEntry" />
+        </view>
       </view>
 
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
@@ -492,9 +542,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-            }}</text>
+          }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-            }}</text>
+          }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">
@@ -621,5 +671,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
       </view>
     </view>
+
+    <AuthLoginPopup v-model="loginPopupVisible" :platform="runtimePlatform" :loading="switchingSession"
+      @submit-h5="handleH5Login" @login-wechat="handleWechatLogin" />
   </view>
 </template>
