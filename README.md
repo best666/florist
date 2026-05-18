@@ -156,6 +156,77 @@ pnpm typecheck
 - build：构建整个 workspace
 - typecheck：检查整个 workspace 的类型
 
+## Docker 部署与 GitHub Actions
+
+当前仓库已经补齐了面向生产环境的 Docker + GitHub Actions 基础链路，覆盖以下文件：
+
+- `.github/workflows/ci.yml`：PR 与 main 分支推送时执行安装、类型检查、后端构建、前端 H5 构建
+- `.github/workflows/cd.yml`：main 分支推送或手动触发时构建并推送 GHCR 镜像，再通过 SSH 到目标机器执行 Docker Compose 部署
+- `apps/server/Dockerfile`：后端 NestJS 生产镜像，容器启动时自动执行 Prisma migrate deploy
+- `apps/client/Dockerfile`：前端 H5 静态资源镜像，使用 Nginx 对 `/api`、`/uploads`、`/admin` 反代到后端容器
+- `deploy/docker-compose.prod.yml`：生产环境单机 Compose 编排
+- `deploy/.env.example`：生产部署变量模板
+
+### 部署拓扑
+
+默认采用单机三容器：
+
+- client：Nginx 提供 H5 静态资源
+- server：NestJS API 服务
+- mysql：MySQL 8.4 数据库
+
+前端生产构建时会把 API 基址设为 `/api`，再由 client 容器反代到 server 容器，所以不需要把后端真实地址写进前端代码。
+
+### 首次部署
+
+1. 在目标服务器安装 Docker 和 Docker Compose Plugin。
+2. 创建部署目录，例如 `/opt/florist`。
+3. 把 `deploy/.env.example` 复制成 `deploy/.env`，并填写真实生产值。
+4. 把 `SERVER_IMAGE` 与 `CLIENT_IMAGE` 改成你的 GHCR 镜像地址，例如 `ghcr.io/<github-user>/florist-server`。
+5. 手动执行一次：
+
+```bash
+cd /opt/florist/deploy
+docker login ghcr.io
+cp .env.example .env
+sh redeploy.sh
+```
+
+### GitHub Secrets
+
+要让 `.github/workflows/cd.yml` 自动发布，需要在仓库 Secrets 中配置：
+
+- `SSH_HOST`：部署服务器地址
+- `SSH_PORT`：SSH 端口，默认 22
+- `SSH_USER`：SSH 用户名
+- `SSH_PRIVATE_KEY`：用于登录服务器的私钥
+- `DEPLOY_PATH`：服务器上的部署根目录，例如 `/opt/florist`
+- `GHCR_DEPLOY_USERNAME`：服务器拉取 GHCR 镜像所用账号
+- `GHCR_DEPLOY_TOKEN`：服务器拉取 GHCR 镜像所用 token，至少需要 `read:packages`
+
+说明：
+
+- 构建镜像时，GitHub Actions 使用内置 `GITHUB_TOKEN` 推送镜像到 GHCR
+- 服务器拉取镜像时，使用 `GHCR_DEPLOY_USERNAME` 和 `GHCR_DEPLOY_TOKEN`
+- 服务器上的 `deploy/.env` 不会由工作流覆盖，敏感配置保留在服务器本地
+
+### 默认发布流程
+
+1. 提交代码到 PR，`ci.yml` 执行类型检查和构建校验。
+2. 合并到 `main` 后，`cd.yml` 自动构建两份镜像：
+	- `ghcr.io/<owner>/florist-server:latest`
+	- `ghcr.io/<owner>/florist-client:latest`
+3. 同时额外推送一份以 commit SHA 命名的不可变镜像标签。
+4. 工作流通过 SSH 登录服务器，执行 `deploy/redeploy.sh`，使用新的 `IMAGE_TAG` 拉起容器。
+
+### 生产注意点
+
+- 当前 Compose 默认把 H5 站点映射到宿主机 `80` 端口，可通过 `CLIENT_HTTP_PORT` 调整。
+- 后端容器未直接暴露端口，外部请求默认统一经由前端 Nginx 进入。
+- 上传目录和备份目录已经在 Compose 中挂到独立 volume，容器重建不会丢失。
+- 后端启动时会自动执行 `prisma migrate deploy`，因此生产数据库需要提前备份并保证迁移文件受控。
+- 如果 GHCR 镜像保持私有，服务器必须先完成 `docker login ghcr.io` 或依赖工作流中的自动登录步骤。
+
 ## 推荐开发流程
 
 ### 日常后端联调

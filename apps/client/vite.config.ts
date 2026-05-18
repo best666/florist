@@ -24,6 +24,16 @@ interface BackendRuntimeInfo {
   origin?: string
 }
 
+function resolveClientEnvOverrides(envSource: NodeJS.ProcessEnv): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(envSource)
+      .filter((entry): entry is [string, string] => (
+        entry[0].startsWith('VITE_') && typeof entry[1] === 'string'
+      ))
+      .map(([key, value]) => [key, value]),
+  )
+}
+
 function resolveDevBackendTarget(defaultTarget: string): string {
   try {
     const runtimeContent = fs.readFileSync(SERVER_RUNTIME_FILE, 'utf8')
@@ -115,6 +125,7 @@ export default defineConfig(({ mode, command }) => {
   const env = resolveClientEnv({
     MODE: mode,
     ...loadEnv(mode, path.resolve(process.cwd(), 'env')),
+    ...resolveClientEnvOverrides(process.env),
   })
   const isProduction = env.mode === 'production'
   const enableCodeInspector = command === 'serve' && !isProduction
