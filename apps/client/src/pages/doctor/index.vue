@@ -368,7 +368,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
         {{ pageMessage }}
       </view>
 
-      <view v-if="!isAuthenticated" class="card-soft rounded-[32rpx] border border-[#EADBC8] bg-[#FFF9F2] dark:border-slate-700 dark:bg-slate-900">
+      <view v-if="!isAuthenticated"
+        class="card-soft rounded-[32rpx] border border-[#EADBC8] bg-[#FFF9F2] dark:border-slate-700 dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
             <text class="block text-base font-800 text-slate-800 dark:text-slate-100">先登录后使用植物医生</text>
@@ -542,9 +543,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view
           class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
           <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
-          }}</text>
+            }}</text>
           <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
-          }}</text>
+            }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">

@@ -14,6 +14,7 @@ export function useSingleFlowerAiAdvice() {
     disabled: false,
   })
 
+  // 递增 token 实现竞态取消：新请求到来时旧请求的结果被自动丢弃
   let requestToken = 0
 
   async function executeRequest(context: SingleFlowerAiAdviceContext): Promise<void> {

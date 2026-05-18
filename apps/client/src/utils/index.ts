@@ -1,6 +1,7 @@
 export * from './auth-session'
 export * from './control'
 export * from './crypto'
+export * from './entity'
 export * from './env'
 export * from './feedback'
 export * from './flower'

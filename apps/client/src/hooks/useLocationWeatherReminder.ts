@@ -92,6 +92,7 @@ function buildWeatherTips(weather: NonNullable<UseLocationWeatherReminderState['
   return tips
 }
 
+// 免打扰窗口支持跨天（如 22:00-08:00），start > end 时按"当天开始→次日结束"处理
 function isWithinQuietHours(config: LocalReminderConfig, currentDate = new Date()): boolean {
   const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes()
   const startMinutes = config.quietHours.startHour * 60 + config.quietHours.startMinute
@@ -105,6 +106,7 @@ function isWithinQuietHours(config: LocalReminderConfig, currentDate = new Date(
     return currentMinutes >= startMinutes && currentMinutes < endMinutes
   }
 
+  // 跨天窗口：例如 22:00 → 08:00，当前时间 >= 22:00 或 < 08:00 都在窗口内
   return currentMinutes >= startMinutes || currentMinutes < endMinutes
 }
 

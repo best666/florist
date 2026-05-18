@@ -12,6 +12,11 @@
     "db:server:status": "pnpm --filter @florist/server prisma:migrate:status",
     "db:server:deploy": "pnpm --filter @florist/server prisma:migrate:deploy",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
   }
 }

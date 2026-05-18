@@ -22,6 +22,8 @@ export interface FlowerCustomOption<TBaseValue extends string> {
 
 export interface FlowerCustomSelectionMeta {
   readonly customCategoryId?: string
+  readonly customPlacementId?: string
+  readonly customCareDifficultyId?: string
   readonly customCareStatusId?: string
 }
 
@@ -31,7 +33,9 @@ export interface FlowerFormValues {
   category: FlowerCategory
   customCategoryId: string | undefined
   placement: FlowerPlacement
+  customPlacementId: string | undefined
   careDifficulty: FlowerCareDifficulty
+  customCareDifficultyId: string | undefined
   careStatus: FlowerHealthStatus
   customCareStatusId: string | undefined
   note: string
@@ -155,7 +159,9 @@ export function createDefaultFlowerFormValues(): FlowerFormValues {
     category: FlowerCategory.Herbaceous,
     customCategoryId: undefined,
     placement: FlowerPlacement.IndoorBalcony,
+    customPlacementId: undefined,
     careDifficulty: FlowerCareDifficulty.Easy,
+    customCareDifficultyId: undefined,
     careStatus: 'healthy',
     customCareStatusId: undefined,
     note: '',

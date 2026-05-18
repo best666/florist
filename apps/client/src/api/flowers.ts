@@ -2,7 +2,10 @@ import type { IFlower } from '@florist/contracts'
 import { http } from '@/utils/request'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
 
-type FlowerServerPayload = Omit<FlowerFormValues, 'customCategoryId' | 'customCareStatusId'>
+type FlowerServerPayload = Omit<
+  FlowerFormValues,
+  'customCategoryId' | 'customPlacementId' | 'customCareDifficultyId' | 'customCareStatusId'
+>
 
 export interface FlowerCenterResponse {
   flowers: LocalFlower[]

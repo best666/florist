@@ -95,6 +95,7 @@ declare global {
   const useBottomSheetGesture: typeof import('../hooks/useBottomSheetGesture').useBottomSheetGesture
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
+  const useCustomOptionEditor: typeof import('../hooks/useCustomOptionEditor').useCustomOptionEditor
   const useEncryptedStorage: typeof import('../hooks/useEncryptedStorage').useEncryptedStorage
   const useId: typeof import('vue').useId
   const useLocationWeatherReminder: typeof import('../hooks/useLocationWeatherReminder').useLocationWeatherReminder
@@ -116,6 +117,9 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { CustomOptionEditorConfig } from '../hooks/useCustomOptionEditor'
+  import('../hooks/useCustomOptionEditor')
 }
 
 // for vue template auto import
@@ -212,6 +216,7 @@ declare module 'vue' {
     readonly useBottomSheetGesture: UnwrapRef<typeof import('../hooks/useBottomSheetGesture')['useBottomSheetGesture']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useCustomOptionEditor: UnwrapRef<typeof import('../hooks/useCustomOptionEditor')['useCustomOptionEditor']>
     readonly useEncryptedStorage: UnwrapRef<typeof import('../hooks/useEncryptedStorage')['useEncryptedStorage']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLocationWeatherReminder: UnwrapRef<typeof import('../hooks/useLocationWeatherReminder')['useLocationWeatherReminder']>

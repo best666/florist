@@ -1,5 +1,5 @@
 import type { IUser, IUserAuthSession } from '@florist/contracts'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import { fetchAuthSession, loginWithH5PhoneCode, loginWithWechatMiniProgram } from '@/api'
 import {
   clearAuthSessionFromStorage,
@@ -27,9 +27,9 @@ export const useAuthStore = defineStore('auth', {
     sessionInitialized: false,
   }),
   getters: {
-    isAuthenticated: state => Boolean(state.session?.sessionUserId),
-    currentUser: state => state.session?.user ?? null as IUser | null,
-    currentUserId: state => state.session?.sessionUserId ?? null as string | null,
+    isAuthenticated: (state) => Boolean(state.session?.sessionUserId),
+    currentUser: (state) => state.session?.user ?? (null as IUser | null),
+    currentUserId: (state) => state.session?.sessionUserId ?? (null as string | null),
   },
   actions: {
     applySession(session: IUserAuthSession): void {
@@ -73,11 +73,9 @@ export const useAuthStore = defineStore('auth', {
         try {
           const session = await fetchAuthSession(storedSession.sessionUserId)
           this.applySession(session)
-        }
-        catch {
+        } catch {
           this.clearSession()
-        }
-        finally {
+        } finally {
           this.initializingSession = false
           this.sessionInitialized = true
         }
@@ -85,8 +83,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         await initializeSessionRequest
-      }
-      finally {
+      } finally {
         initializeSessionRequest = null
       }
     },
@@ -101,7 +98,11 @@ export const useAuthStore = defineStore('auth', {
       await recordStore.initializeRecordCenter({ force: true })
     },
 
-    async loginByH5PhoneCode(payload: { phoneNumber: string, verificationCode: string, nickname?: string }): Promise<IUserAuthSession> {
+    async loginByH5PhoneCode(payload: {
+      phoneNumber: string
+      verificationCode: string
+      nickname?: string
+    }): Promise<IUserAuthSession> {
       this.switchingSession = true
 
       try {
@@ -109,8 +110,7 @@ export const useAuthStore = defineStore('auth', {
         this.applySession(session)
         await this.refreshGardenContext()
         return session
-      }
-      finally {
+      } finally {
         this.switchingSession = false
       }
     },
@@ -123,7 +123,7 @@ export const useAuthStore = defineStore('auth', {
           // #ifdef MP-WEIXIN
           uni.login({
             provider: 'weixin',
-            success: result => resolve(result.code),
+            success: (result) => resolve(result.code),
             fail: () => reject(new Error('微信登录没有成功返回 code')),
           })
           // #endif
@@ -137,8 +137,7 @@ export const useAuthStore = defineStore('auth', {
         this.applySession(session)
         await this.refreshGardenContext()
         return session
-      }
-      finally {
+      } finally {
         this.switchingSession = false
       }
     },
@@ -149,10 +148,13 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.clearSession()
         await this.refreshGardenContext()
-      }
-      finally {
+      } finally {
         this.switchingSession = false
       }
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot))
+}
