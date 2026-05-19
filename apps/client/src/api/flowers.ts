@@ -27,6 +27,7 @@ function buildFlowerServerPayload(payload: FlowerFormValues): FlowerServerPayloa
     placement: payload.placement,
     careDifficulty: payload.careDifficulty,
     careStatus: payload.careStatus,
+    coverImageId: payload.coverImageId,
     note: payload.note,
     images: payload.images,
     lastWateredAt: payload.lastWateredAt,

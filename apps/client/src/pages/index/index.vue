@@ -5,6 +5,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { fetchGardenAiCareAdvice } from '@/api'
+import CarePromptDrawer from '@/components/CarePromptDrawer.vue'
+import FlowerDetailPopup from '@/components/FlowerDetailPopup.vue'
 import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
 import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
@@ -14,22 +16,14 @@ import { useSingleFlowerAiAdvice } from '@/hooks/useSingleFlowerAiAdvice'
 import {
   FLOWER_CATEGORY_OPTIONS,
   FLOWER_PLACEMENT_OPTIONS,
-  type FlowerCardCareItem,
   type FlowerFilterState,
   type FlowerFormValues,
   type LocalFlower,
   type TimelineItem,
-  createCurrentFlowerCareTime,
   createDefaultFlowerFormValues,
 } from '@/interfaces'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
-import {
-  formatDateTime,
-  getFlowerDisplayName,
-  getTimeAgo,
-  showGentleSuccess,
-  showGentleToast,
-} from '@/utils'
+import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
@@ -59,6 +53,10 @@ const loadingAiAdvice = ref(false)
 const aiAdviceMessage = ref('')
 const selectedAdviceFlowerId = ref<string | null>(null)
 const isQuickDrawerVisible = ref(false)
+const isFilterExpanded = ref(false)
+const isCarePromptVisible = ref(false)
+const selectedDetailFlower = ref<LocalFlower | null>(null)
+const isDetailPopupVisible = ref(false)
 
 const {
   state: singleFlowerAiState,
@@ -102,8 +100,7 @@ watch(
 
     if (isOffline.value) {
       aiAdvice.value = null
-      aiAdviceMessage.value =
-        '当前是离线模式，AI 建议先暂停一下，先按天气和盆土状态照顾花园也很稳。'
+      aiAdviceMessage.value = '当前是离线模式，AI 建议先暂停一下，先按天气和盆土状态照顾花园也很稳。'
       return
     }
 
@@ -119,9 +116,7 @@ watch(
     } catch (error) {
       aiAdvice.value = null
       aiAdviceMessage.value =
-        error instanceof Error
-          ? error.message
-          : 'AI 建议刚刚没有接上，先用天气卡片安排今天的照顾节奏。'
+        error instanceof Error ? error.message : 'AI 建议刚刚没有接上，先用天气卡片安排今天的照顾节奏。'
     } finally {
       loadingAiAdvice.value = false
     }
@@ -150,14 +145,14 @@ const formInitialValue = computed<FlowerFormValues>(() => {
     placement: targetFlower.placement,
     customPlacementId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customPlacementId,
     careDifficulty: targetFlower.careDifficulty,
-    customCareDifficultyId:
-      flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareDifficultyId,
+    customCareDifficultyId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareDifficultyId,
     careStatus: targetFlower.careStatus,
     customCareStatusId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareStatusId,
+    coverImageId: targetFlower.coverImageId,
     note: targetFlower.note ?? '',
     images: [...targetFlower.images],
-    lastWateredAt: targetFlower.lastWateredAt ?? createCurrentFlowerCareTime(),
-    lastFertilizedAt: targetFlower.lastFertilizedAt ?? createCurrentFlowerCareTime(),
+    lastWateredAt: targetFlower.lastWateredAt ?? '',
+    lastFertilizedAt: targetFlower.lastFertilizedAt ?? '',
   }
 })
 
@@ -177,11 +172,14 @@ const filteredFlowers = computed(() =>
       return false
     }
 
-    if (
-      filterState.careStatus !== 'all' &&
-      flowerTaxonomyStore.resolveFlowerCareStatusFilterKey(flower) !== filterState.careStatus
-    ) {
-      return false
+    if (filterState.careStatus !== 'all') {
+      if (
+        filterState.careStatus === 'needs-attention'
+          ? flower.careStatus !== 'watering-needed' && flower.careStatus !== 'fertilizing-needed'
+          : flowerTaxonomyStore.resolveFlowerCareStatusFilterKey(flower) !== filterState.careStatus
+      ) {
+        return false
+      }
     }
 
     return true
@@ -190,9 +188,7 @@ const filteredFlowers = computed(() =>
 
 const selectedAdviceFlower = computed<LocalFlower | null>(() => {
   if (selectedAdviceFlowerId.value) {
-    const targetFlower = activeFlowers.value.find(
-      (flower) => flower.id === selectedAdviceFlowerId.value,
-    )
+    const targetFlower = activeFlowers.value.find((flower) => flower.id === selectedAdviceFlowerId.value)
 
     if (targetFlower) {
       return targetFlower
@@ -227,7 +223,18 @@ watch(
   },
 )
 
-const flowerGridClass = computed(() => (viewportWidth.value >= 680 ? 'grid-cols-2' : 'grid-cols-1'))
+const flowerGridClass = computed(() => {
+  if (viewportWidth.value >= 768) return 'grid-cols-3'
+  if (viewportWidth.value >= 480) return 'grid-cols-2'
+  return 'grid-cols-2'
+})
+
+const attentionCount = computed(
+  () =>
+    activeFlowers.value.filter(
+      (flower) => flower.careStatus === 'watering-needed' || flower.careStatus === 'fertilizing-needed',
+    ).length,
+)
 
 const summaryCards = computed(() => [
   {
@@ -243,10 +250,10 @@ const summaryCards = computed(() => [
     accentClass: 'from-[#F8CADB] to-[#FFF0D8]',
   },
   {
-    key: 'trash',
-    label: '回收站',
-    value: String(recycleBinFlowers.value.length),
-    accentClass: 'from-[#FFF0C7] to-[#FCE7D7]',
+    key: 'attention',
+    label: '需注意',
+    value: String(attentionCount.value),
+    accentClass: 'from-[#FFD7B8] to-[#FFE8D6]',
   },
 ])
 
@@ -296,21 +303,68 @@ const recycleTimelineItems = computed<ReadonlyArray<TimelineItem>>(() =>
   })),
 )
 
-function buildFlowerCardItems(flower: LocalFlower): ReadonlyArray<FlowerCardCareItem> {
-  return [
-    {
-      label: '位置',
-      value: flowerTaxonomyStore.resolveFlowerPlacementLabel(flower),
-    },
-    {
-      label: '难度',
-      value: flowerTaxonomyStore.resolveFlowerCareDifficultyLabel(flower),
-    },
-    {
-      label: '浇水',
-      value: flower.lastWateredAt ? getTimeAgo(flower.lastWateredAt) : '待记录',
-    },
-  ]
+function getFlowerCoverImage(flower: LocalFlower): string {
+  if (flower.coverImageId) {
+    const found = flower.images.find((img) => img.id === flower.coverImageId)
+    if (found) return found.url
+  }
+  return flower.images[0]?.url ?? ''
+}
+
+const carePromptActions = computed(() => [
+  {
+    key: 'record',
+    label: '去打卡养护',
+    description: '记录一次浇水、施肥或其他照护动作，保持养护节奏。',
+    icon: '✓',
+    accentClass: 'from-[#92E5D5] to-[#BCEFE6] text-slate-700',
+  },
+  {
+    key: 'add',
+    label: '新增植株',
+    description: '添加一盆新植物，设置养护信息和状态标签。',
+    icon: '+',
+    accentClass: 'from-[#FFD7B8] to-[#FFF1D6] text-slate-700',
+  },
+  {
+    key: 'album',
+    label: '查看成长相册',
+    description: '浏览植株的成长记录和照片，回顾养护时光。',
+    icon: '▣',
+    accentClass: 'from-[#CFE5FF] to-[#EDF5FF] text-slate-700',
+  },
+])
+
+function handleSummaryCardTap(cardKey: string): void {
+  if (cardKey === 'attention') {
+    if (attentionCount.value > 0) {
+      filterState.careStatus = 'needs-attention'
+      isFilterExpanded.value = true
+      uni.pageScrollTo({ selector: '#flower-grid', duration: 300 })
+    } else {
+      isCarePromptVisible.value = true
+    }
+  } else if (cardKey === 'all') {
+    filterState.careStatus = 'all'
+    filterState.category = 'all'
+    filterState.placement = 'all'
+    isFilterExpanded.value = true
+    uni.pageScrollTo({ selector: '#flower-grid', duration: 300 })
+  } else if (cardKey === 'healthy') {
+    filterState.careStatus = 'healthy'
+    isFilterExpanded.value = true
+    uni.pageScrollTo({ selector: '#flower-grid', duration: 300 })
+  }
+}
+
+function handleCarePromptSelect(key: string): void {
+  if (key === 'add') {
+    handleOpenCreate()
+  } else if (key === 'record') {
+    handleOpenRecord()
+  } else if (key === 'album') {
+    handleOpenGrowthAlbum()
+  }
 }
 
 function handleOpenCreate(): void {
@@ -320,6 +374,7 @@ function handleOpenCreate(): void {
 }
 
 function handleEditFlower(flower: LocalFlower): void {
+  isDetailPopupVisible.value = false
   formMode.value = 'edit'
   editingFlowerId.value = flower.id
   isFormVisible.value = true
@@ -340,37 +395,14 @@ function handlePreviewFlower(flower: LocalFlower): void {
 }
 
 function handleDeleteFlower(flower: LocalFlower): void {
+  isDetailPopupVisible.value = false
   deletingFlower.value = flower
 }
 
-function handleCardAction(flower: LocalFlower, actionKey: string): void {
-  if (actionKey === 'preview') {
-    handlePreviewFlower(flower)
-    return
-  }
-
-  if (actionKey === 'album') {
-    uni.navigateTo({
-      url: `/pages/album/index?flowerId=${flower.id}`,
-    })
-    return
-  }
-
-  if (actionKey === 'ai-advice') {
-    selectedAdviceFlowerId.value = flower.id
-    return
-  }
-
-  if (actionKey === 'record') {
-    uni.navigateTo({
-      url: `/pages/record/index?flowerId=${flower.id}`,
-    })
-    return
-  }
-
-  if (actionKey === 'delete') {
-    handleDeleteFlower(flower)
-  }
+function handleDetailNavigate(flower: LocalFlower, page: string): void {
+  uni.navigateTo({
+    url: `/pages/${page}/index?flowerId=${flower.id}`,
+  })
 }
 
 function handleCloseForm(): void {
@@ -384,9 +416,7 @@ async function handleSubmitFlower(values: FlowerFormValues): Promise<void> {
     await flowerStore.upsertFlower(values, editingFlowerId.value ?? undefined)
     isFormVisible.value = false
     editingFlowerId.value = null
-    showGentleSuccess(
-      formMode.value === 'edit' ? '植株档案已经更新好啦。' : '新的植物档案已经安稳住进花园。',
-    )
+    showGentleSuccess(formMode.value === 'edit' ? '档案已更新' : '新植株已住进花园')
   } finally {
     isSaving.value = false
   }
@@ -546,9 +576,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       >
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view
-              class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100"
-            >
+            <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
               {{ isOffline ? '离线小花园模式' : '在线加密缓存模式' }}
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
@@ -600,6 +628,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           v-for="card in summaryCards"
           :key="card.key"
           class="surface-soft app-fade-up px-4 py-4 dark:bg-slate-900"
+          hover-class="opacity-92"
+          @tap="handleSummaryCardTap(card.key)"
         >
           <view
             class="h-2 w-14 rounded-full bg-linear-to-r"
@@ -645,6 +675,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         :tag-text="`${filteredFlowers.length} 株`"
         tag-tone="blush"
         tag-icon="⌕"
+        :expanded="isFilterExpanded"
+        @update:expanded="isFilterExpanded = $event"
       >
         <view class="flex items-center justify-between gap-3">
           <view class="text-sm leading-6 text-app-muted dark:text-slate-300">
@@ -763,32 +795,20 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       </CollapsibleSection>
 
       <view
+        id="flower-grid"
         v-if="filteredFlowers.length > 0"
-        class="grid gap-4"
+        class="grid gap-3"
         :class="flowerGridClass"
       >
         <FlowerCard
           v-for="flower in filteredFlowers"
           :key="flower.id"
-          :title="flower.name"
-          :subtitle="`${flowerTaxonomyStore.resolveFlowerCategoryLabel(flower)} · ${flowerTaxonomyStore.resolveFlowerPlacementLabel(flower)}`"
-          :image-src="flower.images[0]?.url ?? ''"
+          :name="getFlowerDisplayName(flower)"
+          :nickname="flowerTaxonomyStore.resolveFlowerCategoryLabel(flower)"
+          :image-src="getFlowerCoverImage(flower)"
           :status="flower.careStatus"
           :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower)"
-          :care-items="buildFlowerCardItems(flower)"
-          :quick-actions="[
-            { key: 'album', label: '成长相册' },
-            {
-              key: 'ai-advice',
-              label: selectedAdviceFlower?.id === flower.id ? '正在查看建议' : 'AI建议',
-            },
-            { key: 'record', label: '去打卡' },
-            { key: 'preview', label: '预览图片', disabled: flower.images.length === 0 },
-            { key: 'delete', label: '移入回收站' },
-          ]"
-          primary-action-text="编辑植株"
-          @action="handleCardAction(flower, $event)"
-          @primary="handleEditFlower(flower)"
+          @tap="selectedDetailFlower = flower; isDetailPopupVisible = true"
         />
       </view>
 
@@ -861,6 +881,24 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         @update:model-value="deletingFlower = null"
         @cancel="deletingFlower = null"
         @confirm="handleConfirmDelete"
+      />
+
+      <FlowerDetailPopup
+        v-model="isDetailPopupVisible"
+        :flower="selectedDetailFlower"
+        @edit="handleEditFlower"
+        @record="handleDetailNavigate($event, 'record')"
+        @album="handleDetailNavigate($event, 'album')"
+        @preview="handlePreviewFlower"
+        @delete="handleDeleteFlower"
+      />
+
+      <CarePromptDrawer
+        v-model="isCarePromptVisible"
+        title="所有植株状态都很好"
+        description="当前没有需要特别关注的植株，可以先记录养护动作，或者添加新的小植物。"
+        :actions="carePromptActions"
+        @select="handleCarePromptSelect"
       />
 
       <HomeQuickDrawer

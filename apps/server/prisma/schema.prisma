@@ -38,6 +38,7 @@ model Flower {
   placement        String        @db.VarChar(32)
   careDifficulty   String        @db.VarChar(32)
   careStatus       String        @db.VarChar(32)
+  coverImageId     String?       @db.VarChar(64)
   purchasedAt      DateTime?     @db.DateTime(3)
   priceInCents     Int?
   note             String?       @db.VarChar(300)

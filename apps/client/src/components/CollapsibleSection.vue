@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useEncryptedStorage } from '@/hooks/useEncryptedStorage'
 
 interface CollapsibleSectionProps {
   title: string
   description?: string
   defaultExpanded?: boolean
+  expanded?: boolean
   tagText?: string
   tagTone?: 'mint' | 'blush' | 'cream' | 'slate'
   tagIcon?: string
@@ -21,6 +22,10 @@ const props = withDefaults(defineProps<CollapsibleSectionProps>(), {
   persistKey: '',
 })
 
+const emit = defineEmits<{
+  'update:expanded': [value: boolean]
+}>()
+
 function resolveCurrentRoute(): string {
   const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
   const currentPage = pages[pages.length - 1]
@@ -32,11 +37,22 @@ const collapseStateStorage = useEncryptedStorage<boolean>(
   props.persistKey || `collapse:${resolveCurrentRoute()}:${props.title}`,
 )
 
-const expanded = ref(collapseStateStorage.getValue() ?? props.defaultExpanded)
+const internalExpanded = ref(collapseStateStorage.getValue() ?? props.defaultExpanded)
+
+watch(
+  () => props.expanded,
+  (val) => {
+    if (val !== undefined) {
+      internalExpanded.value = val
+    }
+  },
+  { immediate: true },
+)
 
 function handleToggle(): void {
-  expanded.value = !expanded.value
-  collapseStateStorage.setValue(expanded.value)
+  internalExpanded.value = !internalExpanded.value
+  collapseStateStorage.setValue(internalExpanded.value)
+  emit('update:expanded', internalExpanded.value)
 }
 </script>
 
@@ -47,22 +63,36 @@ function handleToggle(): void {
         <text class="block text-base font-800 text-app-ink dark:text-slate-100">
           {{ props.title }}
         </text>
-        <text v-if="props.description" class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
+        <text
+          v-if="props.description"
+          class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300"
+        >
           {{ props.description }}
         </text>
       </view>
 
       <view class="flex items-center gap-2">
         <slot name="header-extra" />
-        <TagLabel v-if="props.tagText" :text="props.tagText" :tone="props.tagTone" :icon="props.tagIcon" />
-        <button class="btn-pill-sm surface-soft bg-white/78 px-4 text-app-muted dark:bg-slate-800 dark:text-slate-200"
-          hover-class="opacity-92" @tap="handleToggle">
-          {{ expanded ? '收起' : '展开' }}
+        <TagLabel
+          v-if="props.tagText"
+          :text="props.tagText"
+          :tone="props.tagTone"
+          :icon="props.tagIcon"
+        />
+        <button
+          class="btn-pill-sm surface-soft bg-white/78 px-4 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+          hover-class="opacity-92"
+          @tap="handleToggle"
+        >
+          {{ internalExpanded ? '收起' : '展开' }}
         </button>
       </view>
     </view>
 
-    <view v-if="expanded" class="mt-4 app-fade-up">
+    <view
+      v-if="internalExpanded"
+      class="mt-4 app-fade-up"
+    >
       <slot />
     </view>
   </view>

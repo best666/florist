@@ -51,6 +51,10 @@ export class UpsertFlowerDto {
 
   @IsOptional()
   @IsString()
+  public coverImageId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(300)
   public note?: string;
 

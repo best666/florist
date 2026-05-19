@@ -38,6 +38,7 @@ export interface FlowerFormValues {
   customCareDifficultyId: string | undefined
   careStatus: FlowerHealthStatus
   customCareStatusId: string | undefined
+  coverImageId: string | undefined
   note: string
   images: IImageAsset[]
   lastWateredAt: string
@@ -52,6 +53,7 @@ export interface LocalFlower {
   readonly placement: FlowerPlacement
   readonly careDifficulty: FlowerCareDifficulty
   readonly careStatus: FlowerHealthStatus
+  readonly coverImageId?: string
   readonly note?: string
   readonly images: ReadonlyArray<IImageAsset>
   readonly lastWateredAt?: IsoDateTimeString
@@ -151,8 +153,6 @@ export function createCurrentFlowerCareTime(): string {
 }
 
 export function createDefaultFlowerFormValues(): FlowerFormValues {
-  const currentCareTime = createCurrentFlowerCareTime()
-
   return {
     name: '',
     nickname: '',
@@ -164,9 +164,10 @@ export function createDefaultFlowerFormValues(): FlowerFormValues {
     customCareDifficultyId: undefined,
     careStatus: 'healthy',
     customCareStatusId: undefined,
+    coverImageId: undefined,
     note: '',
     images: [],
-    lastWateredAt: currentCareTime,
-    lastFertilizedAt: currentCareTime,
+    lastWateredAt: '',
+    lastFertilizedAt: '',
   }
 }

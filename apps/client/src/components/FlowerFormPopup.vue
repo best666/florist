@@ -185,15 +185,11 @@ const careStatusOptionsWithCreate = computed(() => [
   { label: '+自定义', value: CUSTOM_STATUS_TRIGGER_VALUE },
 ])
 const selectedCategoryOptionValue = computed(() => formState.customCategoryId ?? formState.category)
-const selectedPlacementOptionValue = computed(
-  () => formState.customPlacementId ?? formState.placement,
-)
+const selectedPlacementOptionValue = computed(() => formState.customPlacementId ?? formState.placement)
 const selectedDifficultyOptionValue = computed(
   () => formState.customCareDifficultyId ?? formState.careDifficulty,
 )
-const selectedCareStatusOptionValue = computed(
-  () => formState.customCareStatusId ?? formState.careStatus,
-)
+const selectedCareStatusOptionValue = computed(() => formState.customCareStatusId ?? formState.careStatus)
 
 const modalClass = computed(() =>
   props.modelValue ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
@@ -218,6 +214,7 @@ function assignFormValue(nextValue: FlowerFormValues): void {
   formState.customCareDifficultyId = nextValue.customCareDifficultyId
   formState.careStatus = nextValue.careStatus
   formState.customCareStatusId = nextValue.customCareStatusId
+  formState.coverImageId = nextValue.coverImageId
   formState.note = nextValue.note
   formState.images = [...nextValue.images]
   formState.lastWateredAt = nextValue.lastWateredAt
@@ -357,6 +354,10 @@ async function handleRemoveImage(imageId: string): Promise<void> {
     return
   }
 
+  if (formState.coverImageId === imageId) {
+    formState.coverImageId = undefined
+  }
+
   formState.images = formState.images.filter((image) => image.id !== imageId)
   await removePreparedImageAsset(targetImage)
 }
@@ -380,9 +381,7 @@ function handleSubmit(): void {
     ...nextPayload,
     ...(formState.customCategoryId ? { customCategoryId: formState.customCategoryId } : {}),
     ...(formState.customPlacementId ? { customPlacementId: formState.customPlacementId } : {}),
-    ...(formState.customCareDifficultyId
-      ? { customCareDifficultyId: formState.customCareDifficultyId }
-      : {}),
+    ...(formState.customCareDifficultyId ? { customCareDifficultyId: formState.customCareDifficultyId } : {}),
     ...(formState.customCareStatusId ? { customCareStatusId: formState.customCareStatusId } : {}),
   })
 }
@@ -651,6 +650,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                 v-for="image in formState.images"
                 :key="image.id"
                 class="relative overflow-hidden rounded-[24rpx] bg-white dark:bg-slate-900"
+                :class="formState.coverImageId === image.id ? 'ring-2 ring-[#92E5D5]' : ''"
               >
                 <AppImage
                   :src="image.url"
@@ -659,13 +659,29 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   error-text="这张图片先休息一下"
                   @tap="handlePreviewImage(image.url)"
                 />
-                <button
-                  class="btn-pill-sm absolute right-2 top-2 h-7 min-h-7 w-7 min-w-7 rounded-full bg-slate-900/45 px-0 text-xs text-white"
-                  hover-class="opacity-90"
-                  @tap.stop="handleRemoveImage(image.id)"
+                <view
+                  v-if="formState.coverImageId === image.id"
+                  class="absolute left-2 top-2 rounded-full bg-[#92E5D5] px-1.5 py-0.5 text-2xs font-700 text-slate-700"
                 >
-                  ×
-                </button>
+                  封面
+                </view>
+                <view class="absolute right-1 top-1 flex flex-col gap-1">
+                  <button
+                    v-if="formState.coverImageId !== image.id"
+                    class="btn-pill-sm h-6 min-h-6 rounded-full bg-slate-900/50 px-1.5 text-2xs text-white"
+                    hover-class="opacity-90"
+                    @tap.stop="formState.coverImageId = image.id"
+                  >
+                    封面
+                  </button>
+                  <button
+                    class="btn-pill-sm h-6 min-h-6 w-6 min-w-6 rounded-full bg-slate-900/45 px-0 text-xs text-white"
+                    hover-class="opacity-90"
+                    @tap.stop="handleRemoveImage(image.id)"
+                  >
+                    ×
+                  </button>
+                </view>
               </view>
 
               <button
@@ -715,12 +731,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500"
-                      >当前自定义品类</text
-                    >
-                    <text
-                      class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100"
-                    >
+                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义品类</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
                       {{ selectedCustomCategory.label }}
                     </text>
                   </view>
@@ -859,12 +871,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500"
-                      >当前自定义位置</text
-                    >
-                    <text
-                      class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100"
-                    >
+                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义位置</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
                       {{ selectedCustomPlacement.label }}
                     </text>
                   </view>
@@ -1003,12 +1011,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500"
-                      >当前自定义难度</text
-                    >
-                    <text
-                      class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100"
-                    >
+                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义难度</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
                       {{ selectedCustomDifficulty.label }}
                     </text>
                   </view>
@@ -1147,12 +1151,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500"
-                      >当前自定义状态</text
-                    >
-                    <text
-                      class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100"
-                    >
+                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义状态</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
                       {{ selectedCustomStatus.label }}
                     </text>
                   </view>
@@ -1268,42 +1268,42 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
             <text class="text-sm font-700 text-slate-700 dark:text-slate-100">养护信息</text>
             <view class="mt-3 flex flex-col gap-3">
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500"
-                  >最近浇水日期</text
-                >
+                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近浇水日期</text>
                 <picker
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastWateredAt)"
                   @change="handleWateredDateChange"
                 >
                   <view
-                    class="field-input-md flex items-center justify-between dark:bg-slate-900 dark:text-slate-100"
+                    class="field-input-md w-auto flex items-center justify-between gap-2 overflow-hidden dark:bg-slate-900 dark:text-slate-100"
                   >
-                    <text :class="hasExplicitDate(formState.lastWateredAt) ? '' : 'text-slate-400'">
+                    <text
+                      class="min-w-0 truncate"
+                      :class="hasExplicitDate(formState.lastWateredAt) ? '' : 'text-slate-400'"
+                    >
                       {{ resolvePickerDateText(formState.lastWateredAt) }}
                     </text>
-                    <text class="text-xs text-slate-400">选择</text>
+                    <text class="shrink-0 text-xs text-slate-400">选择</text>
                   </view>
                 </picker>
               </view>
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500"
-                  >最近施肥日期</text
-                >
+                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近施肥日期</text>
                 <picker
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastFertilizedAt)"
                   @change="handleFertilizedDateChange"
                 >
                   <view
-                    class="field-input-md flex items-center justify-between dark:bg-slate-900 dark:text-slate-100"
+                    class="field-input-md w-auto flex items-center justify-between gap-2 overflow-hidden dark:bg-slate-900 dark:text-slate-100"
                   >
                     <text
+                      class="min-w-0 truncate"
                       :class="hasExplicitDate(formState.lastFertilizedAt) ? '' : 'text-slate-400'"
                     >
                       {{ resolvePickerDateText(formState.lastFertilizedAt) }}
                     </text>
-                    <text class="text-xs text-slate-400">选择</text>
+                    <text class="shrink-0 text-xs text-slate-400">选择</text>
                   </view>
                 </picker>
               </view>

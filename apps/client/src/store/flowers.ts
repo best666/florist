@@ -48,6 +48,7 @@ function buildFlowerEntity(values: FlowerFormValues, existingFlower?: LocalFlowe
     careDifficulty: values.careDifficulty,
     careStatus: values.careStatus,
     ...(note ? { note } : {}),
+    ...(values.coverImageId ? { coverImageId: values.coverImageId } : {}),
     images: cloneImages(values.images),
     ...(lastWateredAt ? { lastWateredAt } : {}),
     ...(lastFertilizedAt ? { lastFertilizedAt } : {}),

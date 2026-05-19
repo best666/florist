@@ -35,6 +35,8 @@ export interface IFlower {
   readonly priceInCents?: PriceInCents
   /** 补充备注。 */
   readonly note?: string
+  /** 封面图片 ID，指向 images 中的一张图片。未设置时取首张。 */
+  readonly coverImageId?: string
   /** 植株图片列表。 */
   readonly images: ReadonlyArray<IImageAsset>
   /** 最近浇水时间。 */
