@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  florist-ai-agent:
+    build: .
+    container_name: florist-ai-agent
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - MYSQL_HOST=${MYSQL_HOST:-host.docker.internal}
+      - MYSQL_PORT=${MYSQL_PORT:-3307}
+      - MYSQL_USER=${MYSQL_USER:-florist}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-florist123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-florist}
+      - SQLITE_PATH=/app/data/florist_agent.db
+      - CHROMA_PERSIST_DIR=/app/data/chroma
+      - API_KEY=${API_KEY:-florist-agent-api-key-change-me}
+      - ADMIN_KEY=${ADMIN_KEY:-florist-admin-key-change-me}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Optional: ChromaDB server (for production use, instead of embedded mode)
+  # chromadb:
+  #   image: chromadb/chroma:latest
+  #   container_name: florist-chromadb
+  #   ports:
+  #     - "8001:8000"
+  #   volumes:
+  #     - ./data/chroma:/chroma/chroma
+  #   environment:
+  #     - IS_PERSISTENT=TRUE
+  #   restart: unless-stopped
