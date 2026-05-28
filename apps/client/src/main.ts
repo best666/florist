@@ -3,7 +3,7 @@ import App from './App.vue'
 import { registerGlobalComponents } from './components'
 import store from './store'
 import { initializeRequestClient } from './utils/request'
-import 'virtual:uno.css'
+import './styles/global.css'
 
 export function createApp() {
   initializeRequestClient()

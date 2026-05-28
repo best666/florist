@@ -7,6 +7,9 @@ import MineAuthCard from '@/components/MineAuthCard.vue'
 import MineFeedbackPanel from '@/components/MineFeedbackPanel.vue'
 import MineStatisticsGrid from '@/components/MineStatisticsGrid.vue'
 import UserProfilePopup from '@/components/UserProfilePopup.vue'
+import ActionHintButton from '@/components/ActionHintButton.vue'
+import AppBottomNav from '@/components/AppBottomNav.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import { updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -457,7 +460,7 @@ function handleOpenShop(): void {
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-[#FFF8F1] via-[#F9F5EC] to-[#FFFDF8]">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[220rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[140rpx]">
       <view class="hero-shell app-fade-up bg-linear-to-br from-[#f5d7df] via-[#fff5e7] to-[#def2e8]">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">

@@ -25,11 +25,24 @@ export interface ThemeSkinDefinition {
   readonly memberOnly: boolean
   readonly variables: {
     readonly mint: string
+    readonly sage: string
     readonly blush: string
     readonly cream: string
+    readonly gold: string
     readonly ivory: string
+    readonly surface: string
+    readonly ink: string
+    readonly muted: string
     readonly radiusCard: string
+    readonly radiusPanel: string
+    readonly radiusControl: string
+    readonly radiusPill: string
+    readonly spacePageX: string
+    readonly spacePageY: string
+    readonly spaceCard: string
     readonly shadowSoft: string
+    readonly shadowLift: string
+    readonly shadowHero: string
   }
 }
 

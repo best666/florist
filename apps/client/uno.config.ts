@@ -1,5 +1,5 @@
 import type { Preset } from 'unocss'
-import { presetUni } from '@uni-helper/unocss-preset-uni'
+import { presetApplet, presetRemRpx } from 'unocss-applet'
 import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
 import {
   defineConfig,
@@ -9,9 +9,8 @@ import {
 
 export default defineConfig({
   presets: [
-    presetUni({
-      attributify: false,
-    }),
+    presetApplet({}) as Preset,
+    presetRemRpx({}) as Preset,
     presetIcons(),
     presetLegacyCompat({
       commaStyleColorFunction: true,
@@ -22,7 +21,7 @@ export default defineConfig({
   preflights: [
     {
       getCSS: () => `
-        :root {
+        page {
           --color-mint: #8ad8c5;
           --color-sage: #6ea891;
           --color-blush: #f2c8d7;
@@ -80,9 +79,7 @@ export default defineConfig({
           }
         }
 
-        html,
-        body,
-        #app {
+        page {
           min-height: 100%;
           background:
             radial-gradient(circle at top left, rgba(242, 200, 215, 0.22), transparent 34%),
@@ -92,18 +89,23 @@ export default defineConfig({
           -webkit-text-size-adjust: 100%;
           text-size-adjust: 100%;
           overscroll-behavior: none;
-        }
-
-        body {
           margin: 0;
           scrollbar-width: none;
           -ms-overflow-style: none;
           touch-action: manipulation;
         }
 
-        body::-webkit-scrollbar {
+        page::-webkit-scrollbar {
           width: 0;
           height: 0;
+        }
+
+        html,
+        body,
+        #app {
+          min-height: 100%;
+          background: inherit;
+          color: inherit;
         }
 
         button,
@@ -159,11 +161,11 @@ export default defineConfig({
     },
   ],
   shortcuts: {
-    'page-shell': 'min-h-screen bg-app-ivory px-[var(--space-page-x)] py-[var(--space-page-y)] text-[var(--color-ink)]',
-    'card-soft': 'rounded-[var(--radius-card)] border border-white/70 bg-white/88 p-[var(--space-card)] shadow-[var(--shadow-soft)] backdrop-blur-[18rpx]',
-    'hero-shell': 'overflow-hidden rounded-[var(--radius-panel)] px-5 py-5 shadow-[var(--shadow-hero)]',
-    'badge-soft': 'inline-flex items-center rounded-[var(--radius-pill)] border border-white/60 px-3 py-1.5 text-2xs font-700 tracking-[0.04em]',
-    'surface-soft': 'rounded-[var(--radius-control)] border border-white/70 bg-white/76 shadow-[0_12rpx_28rpx_rgba(148,163,184,0.1)]',
+    'page-shell': 'min-h-screen bg-app-ivory px-[24rpx] py-[24rpx] text-[var(--color-ink)]',
+    'card-soft': 'rounded-[28rpx] border border-white/70 bg-white/88 p-[24rpx] shadow-[0_18rpx_44rpx_rgba(148,163,184,0.14)] backdrop-blur-[18rpx]',
+    'hero-shell': 'overflow-hidden rounded-[36rpx] px-5 py-5 shadow-[0_20rpx_56rpx_rgba(210,191,160,0.24)]',
+    'badge-soft': 'inline-flex items-center rounded-[999px] border border-white/60 px-3 py-1.5 text-2xs font-700 tracking-[0.04em]',
+    'surface-soft': 'rounded-[24rpx] border border-white/70 bg-white/76 shadow-[0_12rpx_28rpx_rgba(148,163,184,0.1)]',
     'info-soft': 'rounded-[28rpx] border border-white/72 px-4 py-4 text-sm leading-6 shadow-[0_12rpx_28rpx_rgba(148,163,184,0.1)]',
     'btn-base': 'flex items-center justify-center text-center align-middle whitespace-nowrap border-none leading-none transition-all duration-180 active:translate-y-[2rpx] active:scale-[0.985]',
     'btn-pill-sm': 'btn-base h-[72rpx] min-h-[72rpx] rounded-full px-4 text-2xs font-700',
@@ -191,7 +193,7 @@ export default defineConfig({
       'app-muted': 'var(--color-muted)',
     },
     boxShadow: {
-      soft: 'var(--shadow-soft)',
+      soft: '0 18rpx 44rpx rgba(148, 163, 184, 0.14)',
     },
     fontSize: {
       '2xs': ['20rpx', '28rpx'],

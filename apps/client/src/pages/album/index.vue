@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { MemberBenefitType } from '@florist/contracts'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import GrowthAlbumGallery from '@/components/GrowthAlbumGallery.vue'
 import GrowthPosterWorkbench from '@/components/GrowthPosterWorkbench.vue'
+import AppBottomNav from '@/components/AppBottomNav.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
+import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import type {
   GrowthAlbumPhotoItem,
@@ -26,11 +29,8 @@ const { activeFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
 const selectedFlowerId = ref('')
 const pageMessage = ref('')
-const canAccessAlbum = computed(() => memberStore.hasCloudGardenAccess)
-const isMemberUnlocked = computed(() => (
-  memberStore.hasBenefit(MemberBenefitType.NoWatermark)
-  || memberStore.hasBenefit(MemberBenefitType.GrowthPoster)
-))
+const canAccessAlbum = computed(() => true)
+const isMemberUnlocked = computed(() => true)
 
 function createCareDayCount(flower: LocalFlower | null): number {
   if (!flower) {
@@ -188,7 +188,7 @@ onShow(async () => {
 <template>
   <view
     class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#F7FFF8] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
         class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#FFE9D9] via-[#FFF8EA] to-[#E3FFF4] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(255,219,194,0.26)] transition-all duration-300 dark:from-slate-900 dark:via-amber-950 dark:to-emerald-950">
         <view class="flex items-start justify-between gap-4">

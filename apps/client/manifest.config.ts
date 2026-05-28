@@ -48,6 +48,12 @@ export default defineManifestConfig({
     },
     usingComponents: true,
     mergeVirtualHostAttributes: true,
+    permission: {
+      'scope.userLocation': {
+        desc: '获取你所在城市的天气信息，为你的植物提供更精准的养护建议',
+      },
+    },
+    requiredPrivateInfos: ['getLocation'],
   },
   uniStatistics: {
     enable: false,

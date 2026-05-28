@@ -3,6 +3,10 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import RecordCheckinPopup from '@/components/RecordCheckinPopup.vue'
+import AppBottomNav from '@/components/AppBottomNav.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
+import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
@@ -178,7 +182,7 @@ async function handleUndoLatestRecord(): Promise<void> {
 
 <template>
   <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
         class="hero-shell app-fade-up bg-linear-to-br from-[#f5ccdb] via-[#fff6e7] to-[#dff7ee] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
         <view class="flex items-start justify-between gap-4">

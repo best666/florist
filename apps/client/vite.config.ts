@@ -172,7 +172,7 @@ export default defineConfig(({ mode, command }) => {
         dts: 'src/interfaces/uni-pages.d.ts',
       }),
       Uni(),
-      UnoCSS(),
+      UnoCSS({ mode: 'per-module' }),
       AutoImport({
         imports: ['vue', 'pinia', 'uni-app'],
         dts: 'src/interfaces/auto-import.d.ts',

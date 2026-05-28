@@ -37,7 +37,10 @@ const globalComponents = {
 
 export function registerGlobalComponents(app: App): void {
   Object.entries(globalComponents).forEach(([name, component]) => {
+    // #ifndef MP-WEIXIN
+    // 小程序通过 easycom 自动解析组件，不需要全局注册
     app.component(name, component)
+    // #endif
   })
 }
 

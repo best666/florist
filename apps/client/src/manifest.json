@@ -1,5 +1,5 @@
 {
-  "name": "养花人开发版",
+  "name": "养花人",
   "appid": "__UNI__FLORIST",
   "description": "养花人花卉养护小程序",
   "versionName": "0.1.0",
@@ -43,7 +43,15 @@
     "optimization": {
       "subPackages": true
     },
-    "mergeVirtualHostAttributes": true
+    "mergeVirtualHostAttributes": true,
+    "permission": {
+      "scope.userLocation": {
+        "desc": "获取你所在城市的天气信息，为你的植物提供更精准的养护建议"
+      }
+    },
+    "requiredPrivateInfos": [
+      "getLocation"
+    ]
   },
   "mp-alipay": {
     "usingComponents": true

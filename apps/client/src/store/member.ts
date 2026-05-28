@@ -64,17 +64,10 @@ export const useMemberStore = defineStore('member', {
     packagePlans: () => MEMBER_PACKAGE_PLANS,
     currentTheme: (state) => resolveThemeSkin(state.memberCache.themeSkinId),
     themeStyleVariables: (state) => buildThemeStyleVariables(state.memberCache.themeSkinId),
-    isMemberActive: (state) =>
-      syncExpiredMemberCache(state.memberCache).status === MemberStatus.Active,
-    hasCloudGardenAccess(): boolean {
-      return hasMemberBenefit(this.memberCache, MemberBenefitType.CloudBackup)
-    },
-    hasAdFree(): boolean {
-      return hasMemberBenefit(this.memberCache, MemberBenefitType.AdFree)
-    },
-    hasCloudBackup(): boolean {
-      return hasMemberBenefit(this.memberCache, MemberBenefitType.CloudBackup)
-    },
+    isMemberActive: () => true,
+    hasCloudGardenAccess: () => true,
+    hasAdFree: () => true,
+    hasCloudBackup: () => true,
     currentStatusLabel(): string {
       const cache = syncExpiredMemberCache(this.memberCache)
 
@@ -224,24 +217,19 @@ export const useMemberStore = defineStore('member', {
       }
     },
 
-    hasBenefit(benefit: MemberBenefitType): boolean {
+    hasBenefit(_benefit: MemberBenefitType): boolean {
       this.syncMembershipStatus()
-      return hasMemberBenefit(this.memberCache, benefit)
+      return true
     },
 
-    canUseBenefit(benefit: MemberBenefitType, message: string) {
+    canUseBenefit(_benefit: MemberBenefitType, _message: string) {
       this.syncMembershipStatus()
-      return guardMemberBenefit(this.memberCache, benefit, message)
+      return { allowed: true, requiredBenefit: _benefit, message: '' }
     },
 
     setTheme(themeSkinId: ThemeSkinId): boolean {
       this.syncMembershipStatus()
       const theme = resolveThemeSkin(themeSkinId)
-
-      if (theme.memberOnly && !this.hasBenefit(MemberBenefitType.AllThemes)) {
-        this.latestMessage = '这套皮肤是会员专属，开通后可解锁全部主题。'
-        return false
-      }
 
       this.memberCache = {
         ...this.memberCache,

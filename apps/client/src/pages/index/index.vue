@@ -5,11 +5,18 @@ import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import { fetchGardenAiCareAdvice } from '@/api'
+import AppBottomNav from '@/components/AppBottomNav.vue'
 import CarePromptDrawer from '@/components/CarePromptDrawer.vue'
+import CollapsibleSection from '@/components/CollapsibleSection.vue'
+import ConfirmPopup from '@/components/ConfirmPopup.vue'
+import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import FlowerCard from '@/components/FlowerCard.vue'
 import FlowerDetailPopup from '@/components/FlowerDetailPopup.vue'
 import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
+import HomeQuickDrawer from '@/components/HomeQuickDrawer.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
 import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
+import TimeLine from '@/components/TimeLine.vue'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { useSingleFlowerAiAdvice } from '@/hooks/useSingleFlowerAiAdvice'
@@ -570,7 +577,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
   <view
     class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100"
   >
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[220rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
         class="hero-shell app-fade-up bg-linear-to-br from-[#8edcca] via-[#ecfbf2] to-[#fff1d5] dark:from-slate-900 dark:via-emerald-950 dark:to-amber-950"
       >
