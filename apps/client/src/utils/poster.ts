@@ -87,7 +87,7 @@ export function resolvePosterFileName(flowerName: string): string {
 }
 
 export function buildPosterWatermarkText(flowerName: string): string {
-  return `养花人 · ${flowerName} 成长相册`
+  return `植愈日记 · ${flowerName} 成长相册`
 }
 
 export function resolvePosterImageSource(image: { url: string, compressedUrl?: string }): string {

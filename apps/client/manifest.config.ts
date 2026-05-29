@@ -15,7 +15,7 @@ function resolveMode(): string {
 }
 
 const env = loadEnv(resolveMode(), path.resolve(process.cwd(), 'env'))
-const appTitle = env.VITE_APP_TITLE ?? '养花人'
+const appTitle = env.VITE_APP_TITLE ?? '植愈日记'
 const appId = env.VITE_UNI_APPID ?? '__UNI__FLORIST'
 const appBase = env.VITE_APP_PUBLIC_BASE ?? '/'
 const weixinAppId = env.VITE_WX_APPID ?? 'wx0000000000000000'
@@ -23,7 +23,7 @@ const weixinAppId = env.VITE_WX_APPID ?? 'wx0000000000000000'
 export default defineManifestConfig({
   name: appTitle,
   appid: appId,
-  description: '养花人花卉养护小程序',
+  description: '植愈日记 — 养花人云端花园',
   versionName: '0.1.0',
   versionCode: '1',
   transformPx: false,

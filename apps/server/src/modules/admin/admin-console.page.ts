@@ -3,7 +3,7 @@ export const ADMIN_CONSOLE_HTML = String.raw`<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>养花人管理后台</title>
+    <title>植愈日记 管理后台</title>
     <style>
       :root {
         color-scheme: light;
@@ -231,7 +231,7 @@ export const ADMIN_CONSOLE_HTML = String.raw`<!doctype html>
         document.getElementById('app').innerHTML = '\
           <div class="login-wrap">\
             <form class="login-card" id="login-form">\
-              <div class="title">养花人管理后台</div>\
+              <div class="title">植愈日记管理后台</div>\
               <div class="subtitle">轻量管理面板，统一查看用户、反馈、配置与 AI 流量。</div>\
               <div class="form-row">\
                 <label>管理员账号</label>\
@@ -281,7 +281,7 @@ export const ADMIN_CONSOLE_HTML = String.raw`<!doctype html>
           <div class="shell">\
             <section class="topbar">\
               <div>\
-                <div class="title">养花人管理后台</div>\
+                <div class="title">植愈日记管理后台</div>\
                 <div class="subtitle">当前管理员：' + escapeHtml(state.session?.username || 'admin') + '，会话截止：' + escapeHtml(state.session?.expiresAt || '-') + '</div>\
               </div>\
               <div class="actions">\

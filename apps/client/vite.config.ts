@@ -109,6 +109,23 @@ function forwardProxyRequest(
   request.pipe(proxyRequest)
 }
 
+function copySwPlugin(): Plugin {
+  return {
+    name: 'florist-copy-sw',
+    apply: 'build',
+    writeBundle(_options, bundle) {
+      const swSource = path.resolve(process.cwd(), 'public/sw.js')
+      const swDest = path.resolve(process.cwd(), 'dist/build/h5/sw.js')
+      try {
+        fs.copyFileSync(swSource, swDest)
+      }
+      catch {
+        // sw.js 复制失败不阻塞构建
+      }
+    },
+  }
+}
+
 function resolveVueRouterEntryPlugin() {
   return {
     name: 'florist-resolve-vue-router-entry',
@@ -167,6 +184,7 @@ export default defineConfig(({ mode, command }) => {
       ...(env.proxyEnabled ? [createDevApiProxyPlugin(env.proxyPrefix, env.serverBaseUrl)] : []),
       ...(enableCodeInspector ? [codeInspectorPlugin({ bundler: 'vite' })] : []),
       resolveVueRouterEntryPlugin(),
+      copySwPlugin(),
       UniManifest(),
       UniPages({
         dts: 'src/interfaces/uni-pages.d.ts',

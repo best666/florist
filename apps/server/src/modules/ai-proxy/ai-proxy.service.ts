@@ -385,7 +385,7 @@ function stripJsonCodeFence(content: string): string {
 
 function buildCareAdvicePrompt(payload: RequestCareAdviceDto): string {
   return [
-    '你是养花人应用的植物养护助手。',
+    '你是植愈日记应用的植物养护助手。',
     '请结合天气与多株植物状态，返回更适合新手理解的中文建议。',
     '输出必须是纯 JSON，字段必须严格匹配 IAiAdvice。',
     '文案要温柔、简洁、可执行，warningTips 保持 3 条。',
@@ -395,7 +395,7 @@ function buildCareAdvicePrompt(payload: RequestCareAdviceDto): string {
 
 function buildSinglePlantPrompt(payload: RequestSinglePlantCareAdviceDto): string {
   return [
-    '你是养花人应用的单株植物养护助手。',
+    '你是植愈日记应用的单株植物养护助手。',
     '请只输出纯 JSON，字段严格匹配 IPlantAiAdvice。',
     'summary、focusActions、forbiddenActions 要具体，适合直接展示给新手。',
     `输入数据: ${JSON.stringify(payload)}`,

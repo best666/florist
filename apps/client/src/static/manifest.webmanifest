@@ -1,0 +1,29 @@
+{
+  "name": "植愈日记 - 养花人云端花园",
+  "short_name": "植愈日记",
+  "description": "把每一次照顾都轻轻记下，让花园慢慢长大",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFF9F3",
+  "theme_color": "#7EC8B8",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "utilities"],
+  "prefer_related_applications": false
+}

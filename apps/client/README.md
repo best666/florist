@@ -1,4 +1,4 @@
-# 养花人 · 前端
+# 植愈日记 · 前端
 
 基于 **UniApp + Vue 3 + TypeScript + Pinia + UnoCSS** 的跨端花卉养护应用前端，目标平台为 H5 和微信小程序。
 

@@ -2,7 +2,7 @@ import { defineUniPages } from '@uni-helper/vite-plugin-uni-pages'
 
 export default defineUniPages({
   globalStyle: {
-    navigationBarTitleText: '养花人',
+    navigationBarTitleText: '植愈日记',
     navigationBarTextStyle: 'black',
     styleIsolation: 'apply-shared',
   },

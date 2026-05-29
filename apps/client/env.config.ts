@@ -31,7 +31,7 @@ export interface ClientEnvConfig {
 }
 
 export const CLIENT_ENV_DEFAULTS = {
-  appTitle: '养花人',
+  appTitle: '植愈日记',
   appPort: 9000,
   appPublicBase: '/',
   serverBaseUrl: 'http://localhost:3000',
