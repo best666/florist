@@ -14,6 +14,7 @@ import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/uti
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { useCustomOptionEditor } from '@/hooks/useCustomOptionEditor'
 import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
+import AppImage from './AppImage.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -565,7 +566,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
     @tap="closePopup"
   >
     <view
-      class="relative max-h-[90svh] w-full max-w-[100vw] overflow-x-hidden rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
+      class="relative max-h-[90svh] w-full max-w-[100vw] overflow-x-hidden rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
       :class="panelClass"
       :style="panelMotionStyle"
       @tap.stop="() => {}"
@@ -587,10 +588,10 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
         <view class="flex items-start justify-between gap-3">
           <view class="min-w-0 flex-1">
-            <text class="block text-xl font-800 text-slate-800 dark:text-slate-100">
+            <text class="block text-xl font-800 text-app-ink dark:text-slate-100">
               {{ panelTitle }}
             </text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               表单会优先保存到本地加密缓存，断网时也能继续使用。
             </text>
           </view>
@@ -616,10 +617,10 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-slate-700 dark:text-slate-100">基础信息</text>
+            <text class="text-sm font-700 text-app-ink dark:text-slate-100">基础信息</text>
             <view class="mt-3 flex flex-col gap-3">
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">植株名称</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">植株名称</text>
                 <input
                   v-model="formState.name"
                   :maxlength="20"
@@ -628,7 +629,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                 />
               </view>
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">昵称</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">昵称</text>
                 <input
                   v-model="formState.nickname"
                   :maxlength="20"
@@ -640,8 +641,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-slate-700 dark:text-slate-100">图片相册</text>
-            <text class="mt-1 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+            <text class="text-sm font-700 text-app-ink dark:text-slate-100">图片相册</text>
+            <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
               多图上传、预览、删除都会即时落本地缓存，适合离线记录。
             </text>
 
@@ -649,7 +650,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
               <view
                 v-for="image in formState.images"
                 :key="image.id"
-                class="relative overflow-hidden rounded-[24rpx] bg-white dark:bg-slate-900"
+                class="relative overflow-hidden rounded-[24rpx] bg-[var(--color-surface)] dark:bg-slate-900"
                 :class="formState.coverImageId === image.id ? 'ring-2 ring-[#92E5D5]' : ''"
               >
                 <AppImage
@@ -661,7 +662,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                 />
                 <view
                   v-if="formState.coverImageId === image.id"
-                  class="absolute left-2 top-2 rounded-full bg-[#92E5D5] px-1.5 py-0.5 text-2xs font-700 text-slate-700"
+                  class="absolute left-2 top-2 rounded-full bg-[#92E5D5] px-1.5 py-0.5 text-2xs font-700 text-app-ink"
                 >
                   封面
                 </view>
@@ -686,7 +687,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
               <button
                 v-if="formState.images.length < 6"
-                class="btn-base h-[180rpx] aspect-1 rounded-[24rpx] bg-white px-0 text-slate-500 dark:bg-slate-900 dark:text-slate-200"
+                class="btn-base h-[180rpx] aspect-1 rounded-[24rpx] bg-[var(--color-surface)] px-0 text-app-muted dark:bg-slate-900 dark:text-slate-200"
                 hover-class="opacity-92"
                 @tap="handleChooseImages"
               >
@@ -699,11 +700,11 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-slate-700 dark:text-slate-100">分类与状态</text>
+            <text class="text-sm font-700 text-app-ink dark:text-slate-100">分类与状态</text>
 
             <view class="mt-3 flex flex-col gap-4">
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">品类</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">品类</text>
                 <scroll-view
                   scroll-x
                   class="w-full max-w-full overflow-hidden whitespace-nowrap"
@@ -715,8 +716,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                       class="btn-chip"
                       :class="
                         selectedCategoryOptionValue === option.value
-                          ? 'bg-app-mint text-slate-700'
-                          : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+                          ? 'bg-app-mint text-app-ink'
+                          : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
                       "
                       hover-class="opacity-92"
                       @tap="handleSelectCategory(option.value)"
@@ -728,16 +729,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="selectedCustomCategory"
-                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义品类</text>
-                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">当前自定义品类</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                       {{ selectedCustomCategory.label }}
                     </text>
                   </view>
                   <button
-                    class="btn-pill-sm bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+                    class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-800 dark:text-slate-200"
                     hover-class="opacity-92"
                     @tap="handleEditCustomCategory(selectedCustomCategory.id)"
                   >
@@ -754,9 +755,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="isCategoryEditorVisible"
-                  class="surface-soft mt-3 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="surface-soft mt-3 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
-                  <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                  <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                     {{ editingCustomCategoryId ? '编辑自定义品类' : '新增自定义品类' }}
                   </text>
                   <input
@@ -769,12 +770,12 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                     v-if="editingCustomCategoryId && selectedCustomCategoryIndex >= 0"
                     class="mt-3 rounded-[18rpx] bg-app-ivory/70 p-3 dark:bg-slate-800"
                   >
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                       排序位置：第 {{ selectedCustomCategoryIndex + 1 }} 位
                     </text>
                     <view class="mt-2 flex flex-wrap gap-2">
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveCategoryUp ? 'opacity-45' : ''"
                         :disabled="!canMoveCategoryUp"
                         hover-class="opacity-92"
@@ -783,7 +784,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         置顶
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveCategoryUp ? 'opacity-45' : ''"
                         :disabled="!canMoveCategoryUp"
                         hover-class="opacity-92"
@@ -792,7 +793,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         前移
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveCategoryDown ? 'opacity-45' : ''"
                         :disabled="!canMoveCategoryDown"
                         hover-class="opacity-92"
@@ -813,8 +814,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         class="btn-chip"
                         :class="
                           customCategoryDraftBaseValue === option.value
-                            ? 'bg-app-cream text-slate-700'
-                            : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                            ? 'bg-app-cream text-app-ink'
+                            : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
                         "
                         hover-class="opacity-92"
                         @tap="customCategoryDraftBaseValue = option.value"
@@ -825,14 +826,14 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   </scroll-view>
                   <view class="mt-3 flex gap-2">
                     <button
-                      class="btn-pill-sm flex-1 bg-app-mint text-slate-700"
+                      class="btn-pill-sm flex-1 bg-app-mint text-app-ink"
                       hover-class="opacity-92"
                       @tap="handleSaveCustomCategory"
                     >
                       {{ editingCustomCategoryId ? '保存分类' : '保存为自定义' }}
                     </button>
                     <button
-                      class="btn-pill-sm flex-1 bg-slate-100 text-slate-600"
+                      class="btn-pill-sm flex-1 bg-slate-100 text-app-muted"
                       hover-class="opacity-92"
                       @tap="cancelCategoryEditor"
                     >
@@ -843,7 +844,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
               </view>
 
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">位置</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">位置</text>
                 <scroll-view
                   scroll-x
                   class="w-full max-w-full overflow-hidden whitespace-nowrap"
@@ -855,8 +856,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                       class="btn-chip"
                       :class="
                         selectedPlacementOptionValue === option.value
-                          ? 'bg-app-blush text-slate-700'
-                          : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+                          ? 'bg-app-blush text-app-ink'
+                          : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
                       "
                       hover-class="opacity-92"
                       @tap="handleSelectPlacement(option.value)"
@@ -868,16 +869,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="selectedCustomPlacement"
-                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义位置</text>
-                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">当前自定义位置</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                       {{ selectedCustomPlacement.label }}
                     </text>
                   </view>
                   <button
-                    class="btn-pill-sm bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+                    class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-800 dark:text-slate-200"
                     hover-class="opacity-92"
                     @tap="handleEditCustomPlacement(selectedCustomPlacement.id)"
                   >
@@ -894,9 +895,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="isPlacementEditorVisible"
-                  class="surface-soft mt-3 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="surface-soft mt-3 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
-                  <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                  <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                     {{ editingCustomPlacementId ? '编辑自定义位置' : '新增自定义位置' }}
                   </text>
                   <input
@@ -909,12 +910,12 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                     v-if="editingCustomPlacementId && selectedCustomPlacementIndex >= 0"
                     class="mt-3 rounded-[18rpx] bg-app-ivory/70 p-3 dark:bg-slate-800"
                   >
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                       排序位置：第 {{ selectedCustomPlacementIndex + 1 }} 位
                     </text>
                     <view class="mt-2 flex flex-wrap gap-2">
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMovePlacementUp ? 'opacity-45' : ''"
                         :disabled="!canMovePlacementUp"
                         hover-class="opacity-92"
@@ -923,7 +924,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         置顶
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMovePlacementUp ? 'opacity-45' : ''"
                         :disabled="!canMovePlacementUp"
                         hover-class="opacity-92"
@@ -932,7 +933,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         前移
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMovePlacementDown ? 'opacity-45' : ''"
                         :disabled="!canMovePlacementDown"
                         hover-class="opacity-92"
@@ -953,8 +954,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         class="btn-chip"
                         :class="
                           customPlacementDraftBaseValue === option.value
-                            ? 'bg-app-blush text-slate-700'
-                            : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                            ? 'bg-app-blush text-app-ink'
+                            : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
                         "
                         hover-class="opacity-92"
                         @tap="customPlacementDraftBaseValue = option.value"
@@ -965,14 +966,14 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   </scroll-view>
                   <view class="mt-3 flex gap-2">
                     <button
-                      class="btn-pill-sm flex-1 bg-app-blush text-slate-700"
+                      class="btn-pill-sm flex-1 bg-app-blush text-app-ink"
                       hover-class="opacity-92"
                       @tap="handleSaveCustomPlacement"
                     >
                       {{ editingCustomPlacementId ? '保存位置' : '保存为自定义' }}
                     </button>
                     <button
-                      class="btn-pill-sm flex-1 bg-slate-100 text-slate-600"
+                      class="btn-pill-sm flex-1 bg-slate-100 text-app-muted"
                       hover-class="opacity-92"
                       @tap="cancelPlacementEditor"
                     >
@@ -983,7 +984,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
               </view>
 
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">养护难度</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">养护难度</text>
                 <scroll-view
                   scroll-x
                   class="w-full max-w-full overflow-hidden whitespace-nowrap"
@@ -995,8 +996,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                       class="btn-chip"
                       :class="
                         selectedDifficultyOptionValue === option.value
-                          ? 'bg-app-cream text-slate-700'
-                          : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+                          ? 'bg-app-cream text-app-ink'
+                          : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
                       "
                       hover-class="opacity-92"
                       @tap="handleSelectDifficulty(option.value)"
@@ -1008,16 +1009,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="selectedCustomDifficulty"
-                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义难度</text>
-                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">当前自定义难度</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                       {{ selectedCustomDifficulty.label }}
                     </text>
                   </view>
                   <button
-                    class="btn-pill-sm bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+                    class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-800 dark:text-slate-200"
                     hover-class="opacity-92"
                     @tap="handleEditCustomDifficulty(selectedCustomDifficulty.id)"
                   >
@@ -1034,9 +1035,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="isDifficultyEditorVisible"
-                  class="surface-soft mt-3 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="surface-soft mt-3 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
-                  <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                  <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                     {{ editingCustomDifficultyId ? '编辑自定义难度' : '新增自定义难度' }}
                   </text>
                   <input
@@ -1049,12 +1050,12 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                     v-if="editingCustomDifficultyId && selectedCustomDifficultyIndex >= 0"
                     class="mt-3 rounded-[18rpx] bg-app-ivory/70 p-3 dark:bg-slate-800"
                   >
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                       排序位置：第 {{ selectedCustomDifficultyIndex + 1 }} 位
                     </text>
                     <view class="mt-2 flex flex-wrap gap-2">
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveDifficultyUp ? 'opacity-45' : ''"
                         :disabled="!canMoveDifficultyUp"
                         hover-class="opacity-92"
@@ -1063,7 +1064,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         置顶
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveDifficultyUp ? 'opacity-45' : ''"
                         :disabled="!canMoveDifficultyUp"
                         hover-class="opacity-92"
@@ -1072,7 +1073,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         前移
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveDifficultyDown ? 'opacity-45' : ''"
                         :disabled="!canMoveDifficultyDown"
                         hover-class="opacity-92"
@@ -1093,8 +1094,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         class="btn-chip"
                         :class="
                           customDifficultyDraftBaseValue === option.value
-                            ? 'bg-app-cream text-slate-700'
-                            : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                            ? 'bg-app-cream text-app-ink'
+                            : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
                         "
                         hover-class="opacity-92"
                         @tap="customDifficultyDraftBaseValue = option.value"
@@ -1105,14 +1106,14 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   </scroll-view>
                   <view class="mt-3 flex gap-2">
                     <button
-                      class="btn-pill-sm flex-1 bg-app-cream text-slate-700"
+                      class="btn-pill-sm flex-1 bg-app-cream text-app-ink"
                       hover-class="opacity-92"
                       @tap="handleSaveCustomDifficulty"
                     >
                       {{ editingCustomDifficultyId ? '保存难度' : '保存为自定义' }}
                     </button>
                     <button
-                      class="btn-pill-sm flex-1 bg-slate-100 text-slate-600"
+                      class="btn-pill-sm flex-1 bg-slate-100 text-app-muted"
                       hover-class="opacity-92"
                       @tap="cancelDifficultyEditor"
                     >
@@ -1123,7 +1124,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
               </view>
 
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">当前状态</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">当前状态</text>
                 <scroll-view
                   scroll-x
                   class="w-full max-w-full overflow-hidden whitespace-nowrap"
@@ -1136,7 +1137,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                       :class="
                         selectedCareStatusOptionValue === option.value
                           ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900'
-                          : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+                          : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
                       "
                       hover-class="opacity-92"
                       @tap="handleSelectCareStatus(option.value)"
@@ -1148,16 +1149,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="selectedCustomStatus"
-                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="mt-3 flex items-center gap-2 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
                   <view class="min-w-0 flex-1">
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">当前自定义状态</text>
-                    <text class="mt-1 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">当前自定义状态</text>
+                    <text class="mt-1 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                       {{ selectedCustomStatus.label }}
                     </text>
                   </view>
                   <button
-                    class="btn-pill-sm bg-white text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+                    class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-800 dark:text-slate-200"
                     hover-class="opacity-92"
                     @tap="handleEditCustomStatus(selectedCustomStatus.id)"
                   >
@@ -1174,9 +1175,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
 
                 <view
                   v-if="isStatusEditorVisible"
-                  class="surface-soft mt-3 rounded-[22rpx] bg-white/76 p-3 dark:bg-slate-900"
+                  class="surface-soft mt-3 rounded-[22rpx] bg-[var(--color-surface)]/76 p-3 dark:bg-slate-900"
                 >
-                  <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                  <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                     {{ editingCustomStatusId ? '编辑自定义状态' : '新增自定义状态' }}
                   </text>
                   <input
@@ -1189,12 +1190,12 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                     v-if="editingCustomStatusId && selectedCustomStatusIndex >= 0"
                     class="mt-3 rounded-[18rpx] bg-app-ivory/70 p-3 dark:bg-slate-800"
                   >
-                    <text class="block text-2xs text-slate-400 dark:text-slate-500">
+                    <text class="block text-2xs text-app-muted/70 dark:text-app-muted">
                       排序位置：第 {{ selectedCustomStatusIndex + 1 }} 位
                     </text>
                     <view class="mt-2 flex flex-wrap gap-2">
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveStatusUp ? 'opacity-45' : ''"
                         :disabled="!canMoveStatusUp"
                         hover-class="opacity-92"
@@ -1203,7 +1204,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         置顶
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveStatusUp ? 'opacity-45' : ''"
                         :disabled="!canMoveStatusUp"
                         hover-class="opacity-92"
@@ -1212,7 +1213,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         前移
                       </button>
                       <button
-                        class="btn-pill-sm bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        class="btn-pill-sm bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200"
                         :class="!canMoveStatusDown ? 'opacity-45' : ''"
                         :disabled="!canMoveStatusDown"
                         hover-class="opacity-92"
@@ -1233,8 +1234,8 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                         class="btn-chip"
                         :class="
                           customStatusDraftBaseValue === option.value
-                            ? 'bg-app-blush text-slate-700'
-                            : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                            ? 'bg-app-blush text-app-ink'
+                            : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
                         "
                         hover-class="opacity-92"
                         @tap="customStatusDraftBaseValue = option.value"
@@ -1245,14 +1246,14 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   </scroll-view>
                   <view class="mt-3 flex gap-2">
                     <button
-                      class="btn-pill-sm flex-1 bg-app-blush text-slate-700"
+                      class="btn-pill-sm flex-1 bg-app-blush text-app-ink"
                       hover-class="opacity-92"
                       @tap="handleSaveCustomStatus"
                     >
                       {{ editingCustomStatusId ? '保存状态' : '保存为自定义' }}
                     </button>
                     <button
-                      class="btn-pill-sm flex-1 bg-slate-100 text-slate-600"
+                      class="btn-pill-sm flex-1 bg-slate-100 text-app-muted"
                       hover-class="opacity-92"
                       @tap="cancelStatusEditor"
                     >
@@ -1265,10 +1266,10 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-slate-700 dark:text-slate-100">养护信息</text>
+            <text class="text-sm font-700 text-app-ink dark:text-slate-100">养护信息</text>
             <view class="mt-3 flex flex-col gap-3">
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近浇水日期</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">最近浇水日期</text>
                 <picker
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastWateredAt)"
@@ -1279,16 +1280,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   >
                     <text
                       class="min-w-0 truncate"
-                      :class="hasExplicitDate(formState.lastWateredAt) ? '' : 'text-slate-400'"
+                      :class="hasExplicitDate(formState.lastWateredAt) ? '' : 'text-app-muted/70'"
                     >
                       {{ resolvePickerDateText(formState.lastWateredAt) }}
                     </text>
-                    <text class="shrink-0 text-xs text-slate-400">选择</text>
+                    <text class="shrink-0 text-xs text-app-muted/70">选择</text>
                   </view>
                 </picker>
               </view>
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">最近施肥日期</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">最近施肥日期</text>
                 <picker
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastFertilizedAt)"
@@ -1299,16 +1300,16 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   >
                     <text
                       class="min-w-0 truncate"
-                      :class="hasExplicitDate(formState.lastFertilizedAt) ? '' : 'text-slate-400'"
+                      :class="hasExplicitDate(formState.lastFertilizedAt) ? '' : 'text-app-muted/70'"
                     >
                       {{ resolvePickerDateText(formState.lastFertilizedAt) }}
                     </text>
-                    <text class="shrink-0 text-xs text-slate-400">选择</text>
+                    <text class="shrink-0 text-xs text-app-muted/70">选择</text>
                   </view>
                 </picker>
               </view>
               <view>
-                <text class="mb-2 block text-2xs text-slate-400 dark:text-slate-500">备注</text>
+                <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">备注</text>
                 <textarea
                   v-model="formState.note"
                   :maxlength="120"
@@ -1322,9 +1323,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
         </view>
       </scroll-view>
 
-      <view class="mt-4 absolute bottom-0 left-0 right-0 py-4 px-4 bg-white/88 flex gap-3">
+      <view class="mt-4 absolute bottom-0 left-0 right-0 py-4 px-4 bg-[var(--color-surface)]/88 flex gap-3">
         <button
-          class="btn-pill-md flex-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          class="btn-pill-md flex-1 bg-slate-100 text-app-muted dark:bg-slate-800 dark:text-slate-200"
           hover-class="opacity-92"
           @tap="closePopup"
         >

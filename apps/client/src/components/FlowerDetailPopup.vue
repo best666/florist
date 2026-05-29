@@ -4,6 +4,7 @@ import type { LocalFlower } from '@/interfaces'
 import { getFlowerDisplayName, getTimeAgo } from '@/utils'
 import { useFlowerTaxonomyStore } from '@/store'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import AppImage from './AppImage.vue'
 import TagLabel from './TagLabel.vue'
 
 interface FlowerDetailPopupProps {
@@ -60,7 +61,7 @@ const coverImage = computed(() => {
     @tap="closePopup"
   >
     <view
-      class="relative max-h-[90svh] w-full max-w-[100vw] overflow-x-hidden rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
+      class="relative max-h-[90svh] w-full max-w-[100vw] overflow-x-hidden rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
       :class="panelClass"
       :style="panelMotionStyle"
       @tap.stop="() => {}"
@@ -115,29 +116,29 @@ const coverImage = computed(() => {
 
           <!-- 基础信息 -->
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-2xs text-slate-400 dark:text-slate-500">基础信息</text>
+            <text class="text-2xs text-app-muted/70 dark:text-app-muted">基础信息</text>
             <view class="mt-2 grid grid-cols-2 gap-2">
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">品类</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">品类</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCategoryLabel(props.flower) }}
                 </text>
               </view>
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">位置</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">位置</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerPlacementLabel(props.flower) }}
                 </text>
               </view>
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">难度</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">难度</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCareDifficultyLabel(props.flower) }}
                 </text>
               </view>
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">状态</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">状态</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCareStatusLabel(props.flower) }}
                 </text>
               </view>
@@ -146,17 +147,17 @@ const coverImage = computed(() => {
 
           <!-- 养护信息 -->
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-2xs text-slate-400 dark:text-slate-500">养护记录</text>
+            <text class="text-2xs text-app-muted/70 dark:text-app-muted">养护记录</text>
             <view class="mt-2 grid grid-cols-2 gap-2">
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">最近浇水</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近浇水</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ props.flower.lastWateredAt ? getTimeAgo(props.flower.lastWateredAt) : '待记录' }}
                 </text>
               </view>
               <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
-                <text class="block text-2xs text-slate-400 dark:text-slate-500">最近施肥</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-slate-700 dark:text-slate-100">
+                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近施肥</text>
+                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ props.flower.lastFertilizedAt ? getTimeAgo(props.flower.lastFertilizedAt) : '待记录' }}
                 </text>
               </view>
@@ -165,8 +166,8 @@ const coverImage = computed(() => {
               v-if="props.flower.note"
               class="surface-soft mt-2 rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
             >
-              <text class="block text-2xs text-slate-400 dark:text-slate-500">备注</text>
-              <text class="mt-0.5 block text-sm leading-5 text-slate-600 dark:text-slate-300">
+              <text class="block text-2xs text-app-muted/70 dark:text-app-muted">备注</text>
+              <text class="mt-0.5 block text-sm leading-5 text-app-muted dark:text-slate-300">
                 {{ props.flower.note }}
               </text>
             </view>
@@ -175,28 +176,28 @@ const coverImage = computed(() => {
           <!-- 操作按钮 -->
           <view class="flex flex-wrap gap-2">
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-white/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('edit', props.flower)"
             >
               编辑档案
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-white/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('record', props.flower)"
             >
               去打卡
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-white/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('album', props.flower)"
             >
               成长相册
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-white/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               :class="props.flower.images.length === 0 ? 'opacity-50 shadow-none' : ''"
               :disabled="props.flower.images.length === 0"
               hover-class="opacity-92"
@@ -205,7 +206,7 @@ const coverImage = computed(() => {
               预览图片
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-white/78 px-4 text-2xs font-700 text-rose-500 dark:bg-slate-800"
+              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-rose-500 dark:bg-slate-800"
               hover-class="opacity-92"
               @tap="emit('delete', props.flower)"
             >

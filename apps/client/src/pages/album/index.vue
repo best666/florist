@@ -7,6 +7,7 @@ import GrowthPosterWorkbench from '@/components/GrowthPosterWorkbench.vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import type {
@@ -15,11 +16,14 @@ import type {
   TimelineItem,
 } from '@/interfaces'
 import { getRecordActionLabel } from '@/interfaces'
+import { usePageTheme } from '@/hooks/usePageTheme'
 import {
   formatDateTime,
   getFlowerDisplayName,
   getTimeAgo,
 } from '@/utils'
+
+const themeClass = usePageTheme()
 
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
@@ -187,24 +191,24 @@ onShow(async () => {
 
 <template>
   <view
-    class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#F7FFF8] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+    class="page-shell safe-pb bg-linear-to-b from-[var(--color-ivory)] via-[var(--color-cream)] to-[var(--color-ivory)]" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
-        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#FFE9D9] via-[#FFF8EA] to-[#E3FFF4] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(255,219,194,0.26)] transition-all duration-300 dark:from-slate-900 dark:via-amber-950 dark:to-emerald-950">
+        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)] transition-all duration-300">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
+            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
               成长相册 + 海报生成保存
             </view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-slate-800 dark:text-slate-50">
+            <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
               把它从第一张照片到现在的模样，轻轻串成一条成长线
             </view>
-            <view class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-200">
+            <view class="mt-2 text-sm leading-6 text-app-muted dark:text-slate-200">
               自动汇总单植株照片、标出养护关键节点，并把最近的变化拼成一张柔和海报。
             </view>
           </view>
           <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
             📸
           </view>
         </view>
@@ -218,8 +222,8 @@ onShow(async () => {
       <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">选择植物</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">选择植物</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               相册会自动按时间汇总这盆植物的档案照片和打卡配图。
             </text>
           </view>
@@ -230,7 +234,7 @@ onShow(async () => {
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex gap-2 pb-1">
             <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip transition-all duration-300"
-              :class="selectedFlower?.id === flower.id ? 'bg-app-mint text-slate-700 shadow-[0_10rpx_24rpx_rgba(134,214,193,0.18)]' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
+              :class="selectedFlower?.id === flower.id ? 'bg-app-mint text-app-ink shadow-[0_10rpx_24rpx_rgba(134,214,193,0.18)]' : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="handleOpenGrowthAlbum(flower.id)">
               {{ getFlowerDisplayName(flower) }}
             </button>

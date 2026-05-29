@@ -39,10 +39,10 @@ const props = withDefaults(defineProps<TagLabelProps>(), {
 })
 
 const toneClassMap: Record<SoftTone, string> = {
-  mint: 'bg-[#e9f8f3] text-[#377864] dark:bg-emerald-500/18 dark:text-emerald-200',
-  blush: 'bg-[#fcecf3] text-[#925972] dark:bg-rose-500/18 dark:text-rose-200',
-  cream: 'bg-[#fff4df] text-[#9b7242] dark:bg-amber-500/16 dark:text-amber-100',
-  slate: 'bg-[#eef1f4] text-[#5d6875] dark:bg-slate-700/55 dark:text-slate-100',
+  mint: 'bg-[var(--color-mint)]/20 text-[var(--color-sage)] dark:bg-emerald-500/18 dark:text-emerald-200',
+  blush: 'bg-[var(--color-blush)]/20 text-[var(--color-ink)] dark:bg-rose-500/18 dark:text-rose-200',
+  cream: 'bg-[var(--color-cream)]/40 text-[var(--color-gold)] dark:bg-amber-500/16 dark:text-amber-100',
+  slate: 'bg-[var(--color-muted)]/15 text-[var(--color-ink)] dark:bg-slate-700/55 dark:text-slate-100',
 }
 
 const statusMetaMap: Record<Exclude<TagLabelStatus, 'custom'>, { text: string, tone: SoftTone }> = {
@@ -96,7 +96,7 @@ const sizeClass = computed(() => (
 <template>
   <view :class="['badge-soft whitespace-nowrap shadow-[0_8rpx_18rpx_rgba(148,163,184,0.08)]', sizeClass, badgeClass]">
     <view v-if="hasLeadingIcon"
-      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white/65 text-[20rpx] leading-none">
+      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[var(--color-surface)]/65 text-[20rpx] leading-none">
       {{ props.icon }}
     </view>
     <view v-else-if="props.showDot" class="h-1.5 w-1.5 rounded-full bg-current opacity-70" />

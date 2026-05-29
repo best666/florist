@@ -65,7 +65,7 @@ function handleAction(): void {
   <view
     class="card-soft app-fade-up flex flex-col items-center justify-center gap-4 rounded-[32rpx] px-6 py-8 text-center dark:bg-slate-900 dark:text-slate-100">
     <view
-      class="app-float-soft flex h-22 w-22 items-center justify-center rounded-full bg-linear-to-br from-app-cream via-white to-[#ffe9d3] text-4xl shadow-[0_14rpx_32rpx_rgba(248,200,220,0.24)] dark:from-slate-800 dark:to-slate-700">
+      class="app-float-soft flex h-22 w-22 items-center justify-center rounded-full bg-linear-to-br from-app-cream via-app-surface to-[var(--color-blush)]/20 text-4xl shadow-[0_14rpx_32rpx_rgba(248,200,220,0.18)] dark:from-slate-800 dark:to-slate-700">
       {{ resolvedMeta.emoji }}
     </view>
     <view class="flex flex-col gap-2">

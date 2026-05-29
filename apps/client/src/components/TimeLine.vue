@@ -19,10 +19,10 @@ const props = withDefaults(defineProps<TimeLineProps>(), {
 })
 
 const toneDotClassMap: Record<SoftTone, string> = {
-  mint: 'bg-[#caeee2] text-[#356f5d] dark:bg-emerald-300 dark:text-emerald-900',
-  blush: 'bg-[#f6d8e5] text-[#8e5e73] dark:bg-rose-300 dark:text-rose-900',
-  cream: 'bg-[#fbe3b7] text-[#8f6c37] dark:bg-amber-200 dark:text-amber-900',
-  slate: 'bg-[#dfe6ec] text-[#5b6874] dark:bg-slate-300 dark:text-slate-900',
+  mint: 'bg-[var(--color-mint)]/30 text-[var(--color-sage)] dark:bg-emerald-300 dark:text-emerald-900',
+  blush: 'bg-[var(--color-blush)]/30 text-[var(--color-ink)] dark:bg-rose-300 dark:text-rose-900',
+  cream: 'bg-[var(--color-cream)]/50 text-[var(--color-gold)] dark:bg-amber-200 dark:text-amber-900',
+  slate: 'bg-[var(--color-muted)]/20 text-[var(--color-ink)] dark:bg-slate-300 dark:text-slate-900',
 }
 
 const normalizedItems = computed(() => props.items)
@@ -35,7 +35,7 @@ function resolveDotClass(item: TimelineItem): string {
 <template>
   <view class="flex flex-col gap-3 rounded-[30rpx] dark:bg-slate-900">
     <view v-if="normalizedItems.length === 0"
-      class="surface-soft py-4 text-center text-sm text-app-muted dark:text-slate-500">
+      class="surface-soft py-4 text-center text-sm text-app-muted dark:text-app-muted">
       {{ props.emptyText }}
     </view>
 
@@ -51,13 +51,13 @@ function resolveDotClass(item: TimelineItem): string {
       </view>
 
       <view class="flex-1 pb-4">
-        <view class="surface-soft rounded-[24rpx] bg-white/74 p-4 dark:bg-slate-800/90">
+        <view class="surface-soft rounded-[24rpx] bg-[var(--color-surface)]/74 p-4 dark:bg-slate-800/90">
           <view class="flex flex-wrap items-start justify-between gap-2">
             <view class="flex flex-col gap-1">
               <text class="text-sm font-800 text-app-ink dark:text-slate-100">
                 {{ item.title }}
               </text>
-              <text class="text-2xs text-app-muted/80 dark:text-slate-500">
+              <text class="text-2xs text-app-muted/80 dark:text-app-muted">
                 {{ item.timestamp }}
               </text>
             </view>

@@ -84,7 +84,7 @@ function handleTap(): void {
   <button
     class="relative overflow-hidden bg-linear-to-r font-800 tracking-[0.02em] text-app-ink shadow-[var(--shadow-lift)]"
     :class="buttonClass" :disabled="isInactive" hover-class="opacity-95" @tap="handleTap">
-    <view class="pointer-events-none absolute inset-y-0 right-[-20%] w-[38%] rotate-12 bg-white/26 blur-[8rpx]" />
+    <view class="pointer-events-none absolute inset-y-0 right-[-20%] w-[38%] rotate-12 bg-[var(--color-surface)]/26 blur-[8rpx]" />
     <view class="relative z-1 flex items-center justify-center gap-2 whitespace-nowrap leading-none">
       <view v-if="props.loading"
         class="h-4 w-4 animate-spin rounded-full border-2 border-app-ink/20 border-t-app-ink" />

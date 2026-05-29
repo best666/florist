@@ -66,7 +66,7 @@ function handleError(): void {
       <view class="h-8 w-8 rounded-full border-3 border-[#CFEADD] border-t-[#7BC4AE] animate-spin" />
     </view>
     <view v-else-if="failed && props.errorText"
-      class="absolute inset-x-0 bottom-0 bg-linear-to-t from-white/92 to-transparent px-3 pb-3 pt-8 text-center text-2xs text-slate-500">
+      class="absolute inset-x-0 bottom-0 bg-linear-to-t from-white/92 to-transparent px-3 pb-3 pt-8 text-center text-2xs text-app-muted">
       {{ props.errorText }}
     </view>
   </view>

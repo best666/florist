@@ -16,6 +16,7 @@ import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
 import HomeQuickDrawer from '@/components/HomeQuickDrawer.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
 import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
+import SubmitBtn from '@/components/SubmitBtn.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
@@ -30,7 +31,10 @@ import {
   createDefaultFlowerFormValues,
 } from '@/interfaces'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
+import { usePageTheme } from '@/hooks/usePageTheme'
 import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
+
+const themeClass = usePageTheme()
 
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
@@ -324,21 +328,21 @@ const carePromptActions = computed(() => [
     label: '去打卡养护',
     description: '记录一次浇水、施肥或其他照护动作，保持养护节奏。',
     icon: '✓',
-    accentClass: 'from-[#92E5D5] to-[#BCEFE6] text-slate-700',
+    accentClass: 'from-[#92E5D5] to-[#BCEFE6] text-app-ink',
   },
   {
     key: 'add',
     label: '新增植株',
     description: '添加一盆新植物，设置养护信息和状态标签。',
     icon: '+',
-    accentClass: 'from-[#FFD7B8] to-[#FFF1D6] text-slate-700',
+    accentClass: 'from-[#FFD7B8] to-[#FFF1D6] text-app-ink',
   },
   {
     key: 'album',
     label: '查看成长相册',
     description: '浏览植株的成长记录和照片，回顾养护时光。',
     icon: '▣',
-    accentClass: 'from-[#CFE5FF] to-[#EDF5FF] text-slate-700',
+    accentClass: 'from-[#CFE5FF] to-[#EDF5FF] text-app-ink',
   },
 ])
 
@@ -575,15 +579,15 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
 
 <template>
   <view
-    class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100"
+    class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100" :class="themeClass"
   >
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
-        class="hero-shell app-fade-up bg-linear-to-br from-[#8edcca] via-[#ecfbf2] to-[#fff1d5] dark:from-slate-900 dark:via-emerald-950 dark:to-amber-950"
+        class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-mint)] via-[var(--color-cream)] to-[var(--color-gold)]"
       >
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
+            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
               {{ isOffline ? '离线小花园模式' : '在线加密缓存模式' }}
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
@@ -595,7 +599,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           </view>
 
           <view
-            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8"
+            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8"
           >
             🌷
           </view>
@@ -642,7 +646,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
             class="h-2 w-14 rounded-full bg-linear-to-r"
             :class="card.accentClass"
           />
-          <text class="mt-3 block text-2xs tracking-[0.08em] text-app-muted/80 dark:text-slate-500">
+          <text class="mt-3 block text-2xs tracking-[0.08em] text-app-muted/80 dark:text-app-muted">
             {{ card.label }}
           </text>
           <text class="mt-1 block text-xl font-800 text-app-ink dark:text-slate-100">
@@ -678,7 +682,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       </CollapsibleSection>
       <CollapsibleSection
         title="筛选植物卡片"
-        description="筛选作为整理工具，不再常驻抢占首页主视觉。"
         :tag-text="`${filteredFlowers.length} 株`"
         tag-tone="blush"
         tag-icon="⌕"
@@ -690,7 +693,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
             按品类、位置和养护状态快速整理植物卡片。
           </view>
           <button
-            class="btn-chip surface-soft bg-white/74 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+            class="btn-chip surface-soft bg-[var(--color-surface)]/74 text-app-muted dark:bg-slate-800 dark:text-slate-200"
             hover-class="opacity-92"
             @tap="resetFilters"
           >
@@ -707,8 +710,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               class="btn-chip-wide"
               :class="
                 filterState.category === 'all'
-                  ? 'bg-app-mint text-slate-700'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  ? 'bg-app-mint text-app-ink'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.category = 'all'"
@@ -721,8 +724,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               class="btn-chip"
               :class="
                 filterState.category === option.value
-                  ? 'bg-app-mint text-slate-700'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  ? 'bg-app-mint text-app-ink'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.category = option.value"
@@ -741,8 +744,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               class="btn-chip-wide"
               :class="
                 filterState.placement === 'all'
-                  ? 'bg-app-blush text-slate-700'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  ? 'bg-app-blush text-app-ink'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.placement = 'all'"
@@ -755,8 +758,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               class="btn-chip"
               :class="
                 filterState.placement === option.value
-                  ? 'bg-app-blush text-slate-700'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  ? 'bg-app-blush text-app-ink'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.placement = option.value"
@@ -776,7 +779,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               :class="
                 filterState.careStatus === 'all'
                   ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.careStatus = 'all'"
@@ -790,7 +793,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               :class="
                 filterState.careStatus === option.value
                   ? 'bg-slate-700 text-white dark:bg-slate-100 dark:text-slate-900'
-                  : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'
+                  : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
               @tap="filterState.careStatus = option.value"
@@ -815,7 +818,12 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           :image-src="getFlowerCoverImage(flower)"
           :status="flower.careStatus"
           :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower)"
-          @tap="selectedDetailFlower = flower; isDetailPopupVisible = true"
+          @tap="
+            () => {
+              selectedDetailFlower = flower
+              isDetailPopupVisible = true
+            }
+          "
         />
       </view>
 
@@ -834,7 +842,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
 
       <CollapsibleSection
         title="单株 AI 建议"
-        description="专属建议不再直接铺满首页，按需展开查看。"
         :tag-text="selectedAdviceFlower ? getFlowerDisplayName(selectedAdviceFlower) : '未选择'"
         tag-tone="cream"
         tag-icon="✦"
@@ -856,7 +863,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
 
       <CollapsibleSection
         title="回收站倒计时"
-        description="删除后的内容先温柔保留，避免首页长期展示低频信息。"
         :tag-text="`${recycleBinFlowers.length} 条待清理`"
         tag-tone="slate"
         tag-icon="↺"

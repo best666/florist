@@ -129,7 +129,10 @@ function getFallbackCity(): CityOption | null {
   return DEFAULT_CITY_OPTIONS[0] ?? null
 }
 
-export function useLocationWeatherReminder() {
+// 模块级共享状态，确保所有调用方拿到同一份数据
+let sharedInstance: ReturnType<typeof createWeatherReminderInstance> | null = null
+
+function createWeatherReminderInstance() {
   const cityStorage = useEncryptedStorage<CityOption>(CITY_CACHE_KEY)
   const weatherStorage = useEncryptedStorage<LocationWeatherCache>(WEATHER_CACHE_KEY)
   const reminderStorage = useEncryptedStorage<LocalReminderConfig>(REMINDER_CACHE_KEY)
@@ -448,4 +451,11 @@ export function useLocationWeatherReminder() {
     startReminderPolling,
     stopReminderPolling,
   }
+}
+
+export function useLocationWeatherReminder() {
+  if (!sharedInstance) {
+    sharedInstance = createWeatherReminderInstance()
+  }
+  return sharedInstance
 }

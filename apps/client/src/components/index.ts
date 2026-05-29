@@ -7,9 +7,14 @@ import ConfirmPopup from './ConfirmPopup.vue'
 import EmptyEmpty from './EmptyEmpty.vue'
 import FlowerCard from './FlowerCard.vue'
 import FlowerFormPopup from './FlowerFormPopup.vue'
-import GlobalAdBanner from './GlobalAdBanner.vue'
 import HomeWeatherReminderPanel from './HomeWeatherReminderPanel.vue'
 import HomeQuickDrawer from './HomeQuickDrawer.vue'
+import MineAboutLinks from './MineAboutLinks.vue'
+import MineBackupPanel from './MineBackupPanel.vue'
+import MineExtensionPanel from './MineExtensionPanel.vue'
+import MinePermissionsPanel from './MinePermissionsPanel.vue'
+import MineRecycleBinPanel from './MineRecycleBinPanel.vue'
+import MineThemeSelector from './MineThemeSelector.vue'
 import RecordCheckinPopup from './RecordCheckinPopup.vue'
 import SingleFlowerAiAdvicePanel from './SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from './SubmitBtn.vue'
@@ -25,9 +30,14 @@ const globalComponents = {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
-  GlobalAdBanner,
   HomeWeatherReminderPanel,
   HomeQuickDrawer,
+  MineAboutLinks,
+  MineBackupPanel,
+  MineExtensionPanel,
+  MinePermissionsPanel,
+  MineRecycleBinPanel,
+  MineThemeSelector,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,
@@ -53,9 +63,14 @@ export {
   EmptyEmpty,
   FlowerCard,
   FlowerFormPopup,
-  GlobalAdBanner,
   HomeWeatherReminderPanel,
   HomeQuickDrawer,
+  MineAboutLinks,
+  MineBackupPanel,
+  MineExtensionPanel,
+  MinePermissionsPanel,
+  MineRecycleBinPanel,
+  MineThemeSelector,
   RecordCheckinPopup,
   SingleFlowerAiAdvicePanel,
   SubmitBtn,

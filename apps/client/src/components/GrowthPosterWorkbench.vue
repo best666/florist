@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { GrowthAlbumPhotoItem, GrowthPosterTemplateDefinition, GrowthPosterTemplateId, LocalFlower } from '@/interfaces'
+import type {
+  GrowthAlbumPhotoItem,
+  GrowthPosterTemplateDefinition,
+  GrowthPosterTemplateId,
+  LocalFlower,
+} from '@/interfaces'
 import {
   buildPosterWatermarkText,
   compressImageSafely,
@@ -14,6 +19,10 @@ import {
   revokeCompressedImageUrl,
   savePosterImageToAlbum,
 } from '@/utils'
+import TagLabel from './TagLabel.vue'
+import SubmitBtn from './SubmitBtn.vue'
+import AppImage from './AppImage.vue'
+import CollapsibleSection from './CollapsibleSection.vue'
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 type CanvasContext2D = UniApp.CanvasContext
@@ -38,12 +47,12 @@ const pageMessage = ref('')
 const freeTemplates = computed(() => FREE_GROWTH_POSTER_TEMPLATES)
 const memberTemplates = computed(() => MEMBER_GROWTH_POSTER_TEMPLATES)
 const selectedTemplate = computed(() => resolveGrowthPosterTemplate(selectedTemplateId.value))
-const posterSourceImagePaths = computed<ReadonlyArray<string>>(() => (
+const posterSourceImagePaths = computed<ReadonlyArray<string>>(() =>
   [...props.albumItems]
     .reverse()
     .slice(0, 4)
-    .map(item => resolvePosterImageSource(item.image))
-))
+    .map((item) => resolvePosterImageSource(item.image)),
+)
 
 function splitTextByLength(text: string, maxChars: number): string[] {
   const normalizedText = text.trim()
@@ -67,17 +76,20 @@ function getCanvasContext(): CanvasContext2D {
 
 async function canvasToTempFilePath(width: number, height: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    uni.canvasToTempFilePath({
-      canvasId,
-      width,
-      height,
-      destWidth: width,
-      destHeight: height,
-      fileType: 'png',
-      quality: props.isMemberUnlocked ? 1 : 0.88,
-      success: result => resolve(result.tempFilePath),
-      fail: () => reject(new Error('海报导出失败，请稍后再试。')),
-    }, componentInstance?.proxy)
+    uni.canvasToTempFilePath(
+      {
+        canvasId,
+        width,
+        height,
+        destWidth: width,
+        destHeight: height,
+        fileType: 'png',
+        quality: props.isMemberUnlocked ? 1 : 0.88,
+        success: (result) => resolve(result.tempFilePath),
+        fail: () => reject(new Error('海报导出失败，请稍后再试。')),
+      },
+      componentInstance?.proxy,
+    )
   })
 }
 
@@ -178,8 +190,7 @@ function drawPosterLayout(
   if (imageCount === 1) {
     drawRoundRect(context, imageLeft, imageTop, imageWidth, singleImageHeight, 34, '#F6F0EA')
     context.drawImage(imagePaths[0]!, imageLeft, imageTop, imageWidth, singleImageHeight)
-  }
-  else {
+  } else {
     const gap = 20
     const cardWidth = (imageWidth - gap) / 2
     const cardHeight = imageCount <= 2 ? 320 : 280
@@ -195,10 +206,28 @@ function drawPosterLayout(
   }
 
   drawRoundRect(context, 96, height - 284, width - 192, 130, 28, '#FFF8F0')
-  drawWrappedText(context, '把每一次浇水、长叶和悄悄恢复精神的时刻，都温柔地留在今天。', 122, height - 226, 32, 20, '#53616B', 18)
+  drawWrappedText(
+    context,
+    '把每一次浇水、长叶和悄悄恢复精神的时刻，都温柔地留在今天。',
+    122,
+    height - 226,
+    32,
+    20,
+    '#53616B',
+    18,
+  )
 
   if (!props.isMemberUnlocked) {
-    drawWrappedText(context, buildPosterWatermarkText(flowerName), width - 350, height - 68, 24, 20, '#A9A2A0', 16)
+    drawWrappedText(
+      context,
+      buildPosterWatermarkText(flowerName),
+      width - 350,
+      height - 68,
+      24,
+      20,
+      '#A9A2A0',
+      16,
+    )
   }
 }
 
@@ -274,13 +303,10 @@ async function generatePoster(): Promise<void> {
     pageMessage.value = props.isMemberUnlocked
       ? '高清海报已经准备好了，可以直接保存。'
       : '海报已经生成好啦，免费版会带轻水印并做普通清晰度导出。'
-  }
-  catch (error) {
-    pageMessage.value = error instanceof Error
-      ? error.message
-      : '海报这次没有顺利拼出来，换几张清晰一点的图片再试试。'
-  }
-  finally {
+  } catch (error) {
+    pageMessage.value =
+      error instanceof Error ? error.message : '海报这次没有顺利拼出来，换几张清晰一点的图片再试试。'
+  } finally {
     isGeneratingPoster.value = false
   }
 }
@@ -302,13 +328,9 @@ async function handleSavePoster(): Promise<void> {
       resolvePosterFileName(getFlowerDisplayName(props.selectedFlower)),
     )
     pageMessage.value = savedMessage
-  }
-  catch (error) {
-    pageMessage.value = error instanceof Error
-      ? error.message
-      : '保存海报时出了点小岔子，稍后再试试。'
-  }
-  finally {
+  } catch (error) {
+    pageMessage.value = error instanceof Error ? error.message : '保存海报时出了点小岔子，稍后再试试。'
+  } finally {
     isSavingPoster.value = false
   }
 }
@@ -333,48 +355,82 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <view v-if="pageMessage"
-    class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">
+  <view
+    v-if="pageMessage"
+    class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100"
+  >
     {{ pageMessage }}
   </view>
 
-  <CollapsibleSection title="海报模板" description="模板选择收起后，相册主线会更清楚。" :tag-text="selectedTemplate.name" tag-tone="cream"
-    tag-icon="★">
+  <CollapsibleSection
+    title="海报模板"
+    description="模板选择收起后，相册主线会更清楚。"
+    :tag-text="selectedTemplate.name"
+    tag-tone="cream"
+    tag-icon="★"
+  >
     <template #header-extra>
-      <button class="h-9 rounded-full border-none bg-app-blush px-4 text-2xs font-700 text-slate-700"
-        hover-class="opacity-92" @tap="handleOpenMemberPosterBenefits">
+      <button
+        class="h-9 rounded-full flex items-center justify-center border-none bg-app-blush px-4 text-2xs font-700 text-app-ink"
+        hover-class="opacity-92"
+        @tap="handleOpenMemberPosterBenefits"
+      >
         会员权益
       </button>
     </template>
     <view class="mt-4 grid gap-3">
       <view class="grid gap-3 md:grid-cols-2">
-        <view v-for="template in freeTemplates" :key="template.id"
+        <view
+          v-for="template in freeTemplates"
+          :key="template.id"
           class="rounded-[28rpx] px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.1)] transition-all duration-300"
-          :class="selectedTemplate.id === template.id ? 'ring-2 ring-[#86D6C1] bg-white dark:bg-slate-800' : 'bg-app-ivory/90 dark:bg-slate-800'"
-          @tap="handleSelectTemplate(template.id)">
+          :class="
+            selectedTemplate.id === template.id
+              ? 'ring-2 ring-[#86D6C1] bg-[var(--color-surface)] dark:bg-slate-800'
+              : 'bg-app-ivory/90 dark:bg-slate-800'
+          "
+          @tap="handleSelectTemplate(template.id)"
+        >
           <view class="flex items-start justify-between gap-3">
             <view>
-              <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
-              <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                }}</text>
+              <text class="block text-sm font-800 text-app-ink dark:text-slate-100">{{ template.name }}</text>
+              <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">{{
+                template.subtitle
+              }}</text>
             </view>
-            <TagLabel :text="template.badgeText" tone="mint" icon="✓" />
+            <TagLabel
+              :text="template.badgeText"
+              tone="mint"
+              icon="✓"
+            />
           </view>
         </view>
       </view>
 
       <view class="grid gap-3 md:grid-cols-2">
-        <view v-for="template in memberTemplates" :key="template.id"
+        <view
+          v-for="template in memberTemplates"
+          :key="template.id"
           class="rounded-[28rpx] px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.1)] transition-all duration-300"
-          :class="selectedTemplate.id === template.id ? 'ring-2 ring-[#E88AB5] bg-white dark:bg-slate-800' : 'bg-app-ivory/90 dark:bg-slate-800'"
-          @tap="handleSelectTemplate(template.id)">
+          :class="
+            selectedTemplate.id === template.id
+              ? 'ring-2 ring-[#E88AB5] bg-[var(--color-surface)] dark:bg-slate-800'
+              : 'bg-app-ivory/90 dark:bg-slate-800'
+          "
+          @tap="handleSelectTemplate(template.id)"
+        >
           <view class="flex items-start justify-between gap-3">
             <view>
-              <text class="block text-sm font-800 text-slate-800 dark:text-slate-100">{{ template.name }}</text>
-              <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">{{ template.subtitle
-                }}</text>
+              <text class="block text-sm font-800 text-app-ink dark:text-slate-100">{{ template.name }}</text>
+              <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">{{
+                template.subtitle
+              }}</text>
             </view>
-            <TagLabel :text="template.badgeText" tone="cream" icon="★" />
+            <TagLabel
+              :text="template.badgeText"
+              tone="cream"
+              icon="★"
+            />
           </view>
         </view>
       </view>
@@ -384,34 +440,59 @@ onBeforeUnmount(() => {
   <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
     <view class="flex items-start justify-between gap-3">
       <view>
-        <text class="block text-base font-800 text-slate-800 dark:text-slate-100">海报预览</text>
-        <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+        <text class="block text-base font-800 text-app-ink dark:text-slate-100">海报预览</text>
+        <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
           海报会自动拼接最近图片，并排入植株名称和养护天数。
         </text>
       </view>
-      <TagLabel :text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'" :tone="isMemberUnlocked ? 'mint' : 'slate'"
-        :icon="isMemberUnlocked ? '✓' : '△'" size="md" />
+      <TagLabel
+        :text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'"
+        :tone="isMemberUnlocked ? 'mint' : 'slate'"
+        :icon="isMemberUnlocked ? '✓' : '△'"
+        size="md"
+      />
     </view>
 
-    <view v-if="posterImagePath"
-      class="mt-4 rounded-[32rpx] bg-linear-to-b from-[#FFF8F2] to-[#F5FFF9] p-4 dark:from-slate-800 dark:to-slate-900">
+    <view
+      v-if="posterImagePath"
+      class="mt-4 rounded-[32rpx] bg-linear-to-b from-[#FFF8F2] to-[#F5FFF9] p-4 dark:from-slate-800 dark:to-slate-900"
+    >
       <AppImage
-        class="mx-auto w-full max-w-[560rpx] rounded-[28rpx] bg-white object-cover shadow-[0_16rpx_40rpx_rgba(148,163,184,0.16)] dark:bg-slate-900"
-        :src="posterImagePath" mode="widthFix" error-text="海报预览正在整理" />
+        class="mx-auto w-full max-w-[560rpx] rounded-[28rpx] bg-[var(--color-surface)] object-cover shadow-[0_16rpx_40rpx_rgba(148,163,184,0.16)] dark:bg-slate-900"
+        :src="posterImagePath"
+        mode="widthFix"
+        error-text="海报预览正在整理"
+      />
     </view>
-    <view v-else
-      class="mt-4 rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-app-ivory/70 px-4 py-8 text-center text-sm leading-6 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+    <view
+      v-else
+      class="mt-4 rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-app-ivory/70 px-4 py-8 text-center text-sm leading-6 text-app-muted dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+    >
       生成后会在这里看到海报预览。
     </view>
 
     <view class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-      <SubmitBtn text="生成成长海报" loading-text="海报生成中..." :loading="isGeneratingPoster" :disabled="albumItems.length === 0"
-        @click="generatePoster" />
-      <SubmitBtn text="保存到本地相册" loading-text="保存中..." variant="blush" :loading="isSavingPoster"
-        :disabled="albumItems.length === 0" @click="handleSavePoster" />
+      <SubmitBtn
+        text="生成成长海报"
+        loading-text="海报生成中..."
+        :loading="isGeneratingPoster"
+        :disabled="albumItems.length === 0"
+        @click="generatePoster"
+      />
+      <SubmitBtn
+        text="保存到本地相册"
+        loading-text="保存中..."
+        variant="blush"
+        :loading="isSavingPoster"
+        :disabled="albumItems.length === 0"
+        @click="handleSavePoster"
+      />
     </view>
   </view>
 
-  <canvas canvas-id="growthPosterCanvas" id="growthPosterCanvas"
-    class="pointer-events-none fixed left-[-9999px] top-[-9999px] h-[720px] w-[480px] opacity-0" />
+  <canvas
+    canvas-id="growthPosterCanvas"
+    id="growthPosterCanvas"
+    class="pointer-events-none fixed left-[-9999px] top-[-9999px] h-[720px] w-[480px] opacity-0"
+  />
 </template>

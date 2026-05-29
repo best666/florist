@@ -140,49 +140,49 @@ onBeforeUnmount(() => {
   <view class="fixed inset-0 z-70 flex items-end justify-center bg-slate-900/34 px-5 pb-8 pt-10 backdrop-blur-[6rpx]"
     :class="props.modelValue ? 'pointer-events-auto' : 'pointer-events-none'" :style="maskMotionStyle"
     @tap="handleMaskTap">
-    <view class="w-full max-w-[720rpx] rounded-[36rpx] bg-white px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
+    <view class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
       :style="panelMotionStyle" @tap.stop="() => { }">
       <view @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
         <view class="mb-5 flex flex-col gap-2 text-center">
-          <text class="text-lg font-700 text-slate-800">
+          <text class="text-lg font-700 text-app-ink">
             {{ isH5 ? '手机号验证登录' : '微信小程序登录' }}
           </text>
-          <text class="text-sm leading-6 text-slate-500">
+          <text class="text-sm leading-6 text-app-muted">
             {{ isH5 ? 'H5 采用手机号 + 验证码登录，本次登录会把后续请求切换到你的个人花园。' : '小程序会直接调用微信登录能力，成功后自动切换到你的个人花园。' }}
           </text>
         </view>
       </view>
 
       <view v-if="isH5" class="flex flex-col gap-3">
-        <input v-model="h5Form.phoneNumber" class="h-[92rpx] rounded-[24rpx] bg-[#F8F4EC] px-4 text-sm text-slate-700"
+        <input v-model="h5Form.phoneNumber" class="h-[92rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink"
           type="number" :maxlength="11" placeholder="请输入手机号" />
         <view class="flex items-stretch gap-3">
           <input v-model="h5Form.verificationCode"
-            class="h-[92rpx] min-w-0 flex-1 rounded-[24rpx] bg-[#F4F7FF] px-4 text-sm text-slate-700" type="number"
+            class="h-[92rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink" type="number"
             :maxlength="12" placeholder="请输入验证码" />
           <button
             class="btn-base h-[92rpx] min-h-[92rpx] min-w-[220rpx] flex-none justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
-            :class="canRequestVerificationCode ? 'bg-[#EAF6EF] text-[#2E8D76]' : 'bg-slate-100 text-slate-400'"
+            :class="canRequestVerificationCode ? 'bg-[var(--color-mint)]/20 text-[var(--color-sage)]' : 'bg-slate-100 text-app-muted/70'"
             :disabled="!canRequestVerificationCode" hover-class="opacity-92" @tap="handleRequestH5Code">
             <text class="text-center leading-none">{{ requestingCode ? '发送中...' : verificationCodeButtonText }}</text>
           </button>
         </view>
-        <view class="rounded-[24rpx] bg-[#FBF7F0] px-4 py-4 text-sm leading-6 text-slate-500">
+        <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-4 text-sm leading-6 text-app-muted">
           当前开发环境已配置一组可验证账号。需要先获取验证码，验证码会自动回填，且仅在最近一次请求后的 5 分钟内有效。验证码不正确或已过期时，需要重新获取后再登录。
         </view>
         <SubmitBtn text="立即登录" :loading="props.loading" variant="mint" size="md" @click="handleSubmitH5" />
       </view>
 
       <view v-else class="flex flex-col gap-3">
-        <view class="rounded-[24rpx] bg-[#F5F8EE] px-4 py-4 text-sm leading-6 text-slate-500">
+        <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-4 text-sm leading-6 text-app-muted">
           点击下方按钮后会调用微信登录，获取到临时 code 再交给当前后端完成用户识别。
         </view>
         <SubmitBtn text="使用微信登录" :loading="props.loading" variant="mint" size="md" @click="handleWechatLogin" />
       </view>
 
-      <button class="btn-pill-md mt-3 bg-slate-100 text-slate-600" hover-class="opacity-92" @tap="closePopup">
+      <button class="btn-pill-md mt-3 bg-slate-100 text-app-muted" hover-class="opacity-92" @tap="closePopup">
         先看看
       </button>
     </view>

@@ -49,7 +49,7 @@ function handleSelect(key: string): void {
     @tap="close"
   >
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-white px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
+      class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
       :style="panelMotionStyle"
       @tap.stop="() => {}"
     >
@@ -71,7 +71,7 @@ function handleSelect(key: string): void {
             </text>
           </view>
           <button
-            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-slate-500 shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
+            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-app-muted shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
             hover-class="opacity-92"
             @tap="close"
           >
@@ -94,14 +94,14 @@ function handleSelect(key: string): void {
               {{ action.icon }}
             </view>
             <view class="min-w-0 flex-1">
-              <text class="block text-sm font-700 text-slate-800 dark:text-slate-100">
+              <text class="block text-sm font-700 text-app-ink dark:text-slate-100">
                 {{ action.label }}
               </text>
-              <text class="mt-0.5 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+              <text class="mt-0.5 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
                 {{ action.description }}
               </text>
             </view>
-            <text class="text-lg text-slate-300 dark:text-slate-600">›</text>
+            <text class="text-lg text-slate-300 dark:text-app-muted">›</text>
           </button>
         </view>
       </view>

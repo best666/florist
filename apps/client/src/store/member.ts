@@ -19,6 +19,7 @@ import {
   readAuthUserIdFromStorage,
   resolveThemeSkin,
   syncExpiredMemberCache,
+  syncNativeThemeColors,
 } from '@/utils'
 
 export interface MemberStoreState {
@@ -236,7 +237,8 @@ export const useMemberStore = defineStore('member', {
         themeSkinId,
         updatedAt: new Date().toISOString(),
       }
-      this.latestMessage = `主题已切换为“${theme.label}”。`
+      this.latestMessage = `主题已切换为”${theme.label}”。`
+      syncNativeThemeColors(themeSkinId)
       return true
     },
   },

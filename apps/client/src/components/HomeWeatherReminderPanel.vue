@@ -142,10 +142,10 @@ function emitReminderText(event: { detail: { value: string } }): void {
     <!-- Header: City + Weather tag + Update time -->
     <view class="flex items-start justify-between gap-3">
       <view class="min-w-0 flex-1">
-        <text class="block text-base font-800 leading-6 text-slate-800 dark:text-slate-100">
+        <text class="block text-base font-800 leading-6 text-app-ink dark:text-slate-100">
           {{ cityDisplayName }}
         </text>
-        <text class="mt-0.5 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+        <text class="mt-0.5 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
           {{ weatherUpdateText }}
         </text>
       </view>
@@ -158,13 +158,13 @@ function emitReminderText(event: { detail: { value: string } }): void {
     <!-- Location actions -->
     <view class="mt-3 flex items-center gap-2">
       <button
-        class="btn-pill-sm flex-none gap-1.5 px-3 text-2xs text-slate-700 bg-app-mint"
+        class="btn-pill-sm flex-none gap-1.5 px-3 text-2xs text-app-ink bg-app-mint"
         :class="props.state.loadingLocation ? 'opacity-60' : ''"
         hover-class="opacity-92"
         @tap="emit('locate')"
       >
         <view
-          class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700"
+          class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)]/70 text-[20rpx] text-app-ink"
         >
           ⌖
         </view>
@@ -172,12 +172,12 @@ function emitReminderText(event: { detail: { value: string } }): void {
       </button>
       <button
         v-if="props.state.locationDenied"
-        class="btn-pill-sm flex-none gap-1.5 px-3 text-2xs text-slate-700 bg-app-blush"
+        class="btn-pill-sm flex-none gap-1.5 px-3 text-2xs text-app-ink bg-app-blush"
         hover-class="opacity-92"
         @tap="emit('open-permission')"
       >
         <view
-          class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700"
+          class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)]/70 text-[20rpx] text-app-ink"
         >
           ⚙
         </view>
@@ -207,10 +207,10 @@ function emitReminderText(event: { detail: { value: string } }): void {
           class="h-2 w-12 rounded-full bg-linear-to-r"
           :class="metric.accentClass"
         />
-        <text class="mt-3 block text-2xs text-slate-400 dark:text-slate-500">
+        <text class="mt-3 block text-2xs text-app-muted/70 dark:text-app-muted">
           {{ metric.label }}
         </text>
-        <text class="mt-1 block text-lg font-800 text-slate-800 dark:text-slate-100">
+        <text class="mt-1 block text-lg font-800 text-app-ink dark:text-slate-100">
           {{ metric.value }}
         </text>
       </view>
@@ -232,10 +232,10 @@ function emitReminderText(event: { detail: { value: string } }): void {
         :key="tip.id"
         class="rounded-[24rpx] bg-slate-50/80 px-4 py-4 dark:bg-slate-800/60"
       >
-        <text class="block text-sm font-700 text-slate-800 dark:text-slate-100">
+        <text class="block text-sm font-700 text-app-ink dark:text-slate-100">
           {{ tip.title }}
         </text>
-        <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+        <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
           {{ tip.description }}
         </text>
       </view>
@@ -246,7 +246,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
       class="mt-4 overflow-hidden rounded-[24rpx] border border-[#B8E6D8]/60 bg-[#F2FAF7] dark:border-slate-700 dark:bg-slate-800/60"
     >
       <view class="flex items-center justify-between gap-3 px-4 pt-4">
-        <text class="text-sm font-700 text-slate-800 dark:text-slate-100"> AI 养护建议 </text>
+        <text class="text-sm font-700 text-app-ink dark:text-slate-100"> AI 养护建议 </text>
         <TagLabel
           :text="props.loadingAiAdvice ? '生成中' : '已就绪'"
           :tone="props.loadingAiAdvice ? 'blush' : 'mint'"
@@ -260,14 +260,14 @@ function emitReminderText(event: { detail: { value: string } }): void {
         class="px-4 pb-4 pt-3 flex flex-col gap-3"
       >
         <view>
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">今日建议</text>
-          <text class="mt-1 block text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">今日建议</text>
+          <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
             {{ props.aiAdvice.dailyAdvice }}
           </text>
         </view>
         <view>
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">节奏建议</text>
-          <text class="mt-1 block text-sm leading-6 text-slate-600 dark:text-slate-300">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">节奏建议</text>
+          <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
             {{ props.aiAdvice.seasonalAdvice }}
           </text>
         </view>
@@ -283,7 +283,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
 
       <text
         v-else
-        class="block px-4 pb-4 pt-3 text-sm leading-6 text-slate-500 dark:text-slate-300"
+        class="block px-4 pb-4 pt-3 text-sm leading-6 text-app-muted dark:text-slate-300"
       >
         {{ props.aiAdviceMessage || '暂时还没有可用的 AI 建议，先用天气提示安排今天的巡园节奏。' }}
       </text>
@@ -296,8 +296,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
     >
       <view class="flex items-center justify-between gap-3">
         <view>
-          <text class="block text-sm font-700 text-slate-700 dark:text-slate-100"> 手动选择城市 </text>
-          <text class="mt-1 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+          <text class="block text-sm font-700 text-app-ink dark:text-slate-100"> 手动选择城市 </text>
+          <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
             定位不方便时，直接搜城市或选常用城市也可以。
           </text>
         </view>
@@ -325,8 +325,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
             class="btn-chip h-[68rpx] min-h-[68rpx] px-4 text-2xs"
             :class="
               isSelectedCity(candidate)
-                ? 'bg-app-mint text-slate-700'
-                : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+                ? 'bg-app-mint text-app-ink'
+                : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
             "
             hover-class="opacity-92"
             @tap="emit('select-city', candidate)"
@@ -344,9 +344,9 @@ function emitReminderText(event: { detail: { value: string } }): void {
         @tap="showReminderSettings = !showReminderSettings"
       >
         <view class="flex items-center gap-2">
-          <text class="text-sm font-700 text-slate-700 dark:text-slate-100"> 本地提醒与夜间免打扰 </text>
+          <text class="text-sm font-700 text-app-ink dark:text-slate-100"> 本地提醒与夜间免打扰 </text>
           <text
-            class="text-lg text-slate-400 transition-transform duration-200"
+            class="text-lg text-app-muted/70 transition-transform duration-200"
             :class="showReminderSettings ? 'rotate-90' : ''"
             >›</text
           >
@@ -356,8 +356,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
           class="btn-pill-sm"
           :class="
             props.state.reminderConfig.enabled
-              ? 'bg-app-mint text-slate-700'
-              : 'bg-white text-slate-500 dark:bg-slate-900 dark:text-slate-200'
+              ? 'bg-app-mint text-app-ink'
+              : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'
           "
           hover-class="opacity-92"
           @tap.stop="emit('toggle-reminder')"
@@ -366,7 +366,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
         </button>
       </view>
 
-      <text class="mt-1 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+      <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
         当前提醒时间 {{ reminderTimeText }}，免打扰 {{ quietHoursText }}。
       </text>
 
@@ -374,8 +374,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
         v-if="showReminderSettings"
         class="mt-4 grid grid-cols-2 gap-3"
       >
-        <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒小时</text>
+        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">提醒小时</text>
           <input
             :value="String(props.state.reminderConfig.reminderHour)"
             type="number"
@@ -383,8 +383,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
             @input="emitReminderHour"
           />
         </view>
-        <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒分钟</text>
+        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">提醒分钟</text>
           <input
             :value="String(props.state.reminderConfig.reminderMinute)"
             type="number"
@@ -392,8 +392,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
             @input="emitReminderMinute"
           />
         </view>
-        <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">免打扰开始小时</text>
+        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">免打扰开始小时</text>
           <input
             :value="String(props.state.reminderConfig.quietHours.startHour)"
             type="number"
@@ -401,8 +401,8 @@ function emitReminderText(event: { detail: { value: string } }): void {
             @input="emitQuietStartHour"
           />
         </view>
-        <view class="rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900">
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">免打扰结束小时</text>
+        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">免打扰结束小时</text>
           <input
             :value="String(props.state.reminderConfig.quietHours.endHour)"
             type="number"
@@ -414,9 +414,9 @@ function emitReminderText(event: { detail: { value: string } }): void {
 
       <view
         v-if="showReminderSettings"
-        class="mt-3 rounded-[24rpx] bg-white px-4 py-4 dark:bg-slate-900"
+        class="mt-3 rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900"
       >
-        <text class="block text-2xs text-slate-400 dark:text-slate-500">提醒文案</text>
+        <text class="block text-2xs text-app-muted/70 dark:text-app-muted">提醒文案</text>
         <textarea
           :value="props.state.reminderConfig.reminderText"
           :maxlength="50"

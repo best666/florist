@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FlowerCardQuickAction, TagLabelStatus } from '@/interfaces'
+import AppImage from './AppImage.vue'
 import TagLabel from './TagLabel.vue'
 
 interface FlowerCardProps {
@@ -51,7 +52,7 @@ function handleTap(): void {
       </text>
       <text
         v-if="props.nickname"
-        class="mt-0.5 block truncate text-2xs text-app-muted dark:text-slate-400"
+        class="mt-0.5 block truncate text-2xs text-app-muted dark:text-app-muted/70"
       >
         {{ props.nickname }}
       </text>

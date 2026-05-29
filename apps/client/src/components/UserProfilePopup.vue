@@ -113,17 +113,17 @@ function handleSubmit(): void {
   <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 backdrop-blur-[6rpx]" :class="modalClass"
     :style="maskMotionStyle" @tap="closePopup">
     <view
-      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-white px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform"
+      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform"
       :class="panelClass" :style="panelMotionStyle" @tap.stop="() => { }">
       <view class="mb-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-[38rpx] font-800 leading-tight text-slate-800">
+            <text class="block text-[38rpx] font-800 leading-tight text-app-ink">
               编辑资料
             </text>
-            <text class="mt-2 block text-[26rpx] leading-6 text-slate-500">
+            <text class="mt-2 block text-[26rpx] leading-6 text-app-muted">
               可以更新昵称、个性签名和头像，这些信息会跟随当前账号保存。
             </text>
           </view>
@@ -135,7 +135,7 @@ function handleSubmit(): void {
           hover-class="opacity-92" @tap="handleChooseAvatar">
           <view class="relative h-[128rpx] w-[128rpx] shrink-0">
             <view
-              class="h-full w-full overflow-hidden rounded-full bg-white shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
+              class="h-full w-full overflow-hidden rounded-full bg-[var(--color-surface)] shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]">
               <AppImage class="h-full w-full" :src="formState.avatarUrl" mode="aspectFill" error-text="" />
             </view>
             <view v-if="choosingAvatar"
@@ -148,21 +148,21 @@ function handleSubmit(): void {
             </view>
           </view>
           <view class="min-w-0 flex-1">
-            <text class="block text-[24rpx] leading-5 text-slate-500">点击头像替换，会自动裁成合适比例再压缩上传。</text>
+            <text class="block text-[24rpx] leading-5 text-app-muted">点击头像替换，会自动裁成合适比例再压缩上传。</text>
           </view>
         </button>
 
         <view class="rounded-[28rpx] bg-[#F6F7FB] px-4 py-4">
-          <text class="block text-[28rpx] font-700 text-slate-800">昵称</text>
+          <text class="block text-[28rpx] font-700 text-app-ink">昵称</text>
           <input v-model="formState.nickname"
-            class="mt-3 h-[96rpx] rounded-[24rpx] bg-white px-4 text-[28rpx] text-slate-700" :maxlength="40"
+            class="mt-3 h-[96rpx] rounded-[24rpx] bg-[var(--color-surface)] px-4 text-[28rpx] text-app-ink" :maxlength="40"
             placeholder="给这片花园起一个称呼" />
         </view>
 
         <view class="rounded-[28rpx] bg-[#F7F3FA] px-4 py-4">
-          <text class="block text-[28rpx] font-700 text-slate-800">个性签名</text>
+          <text class="block text-[28rpx] font-700 text-app-ink">个性签名</text>
           <textarea v-model="formState.profileSignature"
-            class="field-textarea mt-3 min-h-[148rpx] rounded-[24rpx] bg-white px-4 text-[27rpx] leading-7 text-slate-700"
+            class="field-textarea mt-3 min-h-[148rpx] rounded-[24rpx] bg-[var(--color-surface)] px-4 text-[27rpx] leading-7 text-app-ink"
             :maxlength="80" auto-height placeholder="写一句你想留给这片花园的话" />
         </view>
 

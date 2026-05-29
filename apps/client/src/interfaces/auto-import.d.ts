@@ -101,12 +101,14 @@ declare global {
   const useLocationWeatherReminder: typeof import('../hooks/useLocationWeatherReminder').useLocationWeatherReminder
   const useModel: typeof import('vue').useModel
   const useNetworkStatus: typeof import('../hooks/useNetworkStatus').useNetworkStatus
+  const usePageTheme: typeof import('../hooks/usePageTheme').usePageTheme
   const usePlantDoctorCenter: typeof import('../hooks/usePlantDoctorCenter').usePlantDoctorCenter
   const usePlatform: typeof import('../hooks/usePlatform').usePlatform
   const usePreparedImageAssets: typeof import('../hooks/usePreparedImageAssets').usePreparedImageAssets
   const useSingleFlowerAiAdvice: typeof import('../hooks/useSingleFlowerAiAdvice').useSingleFlowerAiAdvice
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
+  const useTheme: typeof import('../hooks/useTheme').useTheme
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect
@@ -222,12 +224,14 @@ declare module 'vue' {
     readonly useLocationWeatherReminder: UnwrapRef<typeof import('../hooks/useLocationWeatherReminder')['useLocationWeatherReminder']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNetworkStatus: UnwrapRef<typeof import('../hooks/useNetworkStatus')['useNetworkStatus']>
+    readonly usePageTheme: UnwrapRef<typeof import('../hooks/usePageTheme')['usePageTheme']>
     readonly usePlantDoctorCenter: UnwrapRef<typeof import('../hooks/usePlantDoctorCenter')['usePlantDoctorCenter']>
     readonly usePlatform: UnwrapRef<typeof import('../hooks/usePlatform')['usePlatform']>
     readonly usePreparedImageAssets: UnwrapRef<typeof import('../hooks/usePreparedImageAssets')['usePreparedImageAssets']>
     readonly useSingleFlowerAiAdvice: UnwrapRef<typeof import('../hooks/useSingleFlowerAiAdvice')['useSingleFlowerAiAdvice']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
+    readonly useTheme: UnwrapRef<typeof import('../hooks/useTheme')['useTheme']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

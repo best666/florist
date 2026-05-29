@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import ActionHintButton from './ActionHintButton.vue'
 
 interface HomeQuickDrawerAction {
   readonly key: string
@@ -48,7 +49,7 @@ function handleSelect(key: string): void {
     :class="props.modelValue ? 'pointer-events-auto' : 'pointer-events-none'" :style="maskMotionStyle"
     @tap="closeDrawer">
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-white px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
+      class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
       :style="panelMotionStyle" @tap.stop="() => { }">
       <view @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
@@ -63,7 +64,7 @@ function handleSelect(key: string): void {
             </text>
           </view>
           <button
-            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-slate-500 shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
+            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-app-muted shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
             hover-class="opacity-92" @tap="closeDrawer">
             <text class="leading-none">×</text>
           </button>
@@ -75,7 +76,7 @@ function handleSelect(key: string): void {
           :icon="action.icon" @click="handleSelect(action.key)" />
       </view>
 
-      <button class="btn-pill-md mt-4 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+      <button class="btn-pill-md mt-4 bg-slate-100 text-app-muted dark:bg-slate-800 dark:text-slate-200"
         hover-class="opacity-92" @tap="closeDrawer">
         先收起来
       </button>

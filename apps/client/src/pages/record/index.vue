@@ -6,6 +6,7 @@ import RecordCheckinPopup from '@/components/RecordCheckinPopup.vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
 import {
@@ -17,7 +18,10 @@ import {
   type RecordFormValues,
   type TimelineItem,
 } from '@/interfaces'
+import { usePageTheme } from '@/hooks/usePageTheme'
 import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
+
+const themeClass = usePageTheme()
 
 interface RecordTimelineGroup {
   readonly dateLabel: string
@@ -181,13 +185,13 @@ async function handleUndoLatestRecord(): Promise<void> {
 </script>
 
 <template>
-  <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+  <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
-        class="hero-shell app-fade-up bg-linear-to-br from-[#f5ccdb] via-[#fff6e7] to-[#dff7ee] dark:from-slate-900 dark:via-rose-950 dark:to-emerald-950">
+        class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)]">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
+            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
               养护记录打卡簿
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
@@ -198,7 +202,7 @@ async function handleUndoLatestRecord(): Promise<void> {
             </view>
           </view>
           <view
-            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
             🌼
           </view>
         </view>
@@ -219,7 +223,7 @@ async function handleUndoLatestRecord(): Promise<void> {
 
         <view class="mt-4 grid grid-cols-3 gap-3">
           <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
-            class="surface-soft app-pressable min-h-[122rpx] rounded-[26rpx] border-none bg-white/76 px-3 py-3 text-left dark:bg-slate-800"
+            class="surface-soft app-pressable min-h-[122rpx] rounded-[26rpx] border-none bg-[var(--color-surface)]/76 px-3 py-3 text-left dark:bg-slate-800"
             hover-class="opacity-92" @tap="openCheckin(option.value)">
             <view class="text-2xl">
               {{ option.emoji }}
@@ -227,7 +231,7 @@ async function handleUndoLatestRecord(): Promise<void> {
             <text class="mt-2 block text-sm font-800 text-app-ink dark:text-slate-100">
               {{ option.label }}
             </text>
-            <text class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-slate-500">
+            <text class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-app-muted">
               {{ option.description }}
             </text>
           </button>
@@ -235,13 +239,13 @@ async function handleUndoLatestRecord(): Promise<void> {
       </view>
 
       <view v-if="latestUndoableRecord"
-        class="info-soft app-fade-up bg-[#edf9f3] text-[#2f7a64] dark:bg-emerald-500/14 dark:text-emerald-100">
+        class="info-soft app-fade-up bg-[var(--color-mint)]/15 text-[var(--color-sage)] dark:bg-emerald-500/14 dark:text-emerald-100">
         <view class="flex items-start justify-between gap-3">
           <text class="flex-1">
             {{ latestUndoText }}
           </text>
           <button
-            class="surface-soft app-pressable h-9 rounded-full border-none bg-white px-4 text-2xs font-700 text-[#2f7a64] dark:bg-slate-900 dark:text-emerald-200"
+            class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)] px-4 text-2xs font-700 text-[var(--color-sage)] dark:bg-slate-900 dark:text-emerald-200"
             hover-class="opacity-92" @tap="handleUndoLatestRecord">
             一键撤回
           </button>
@@ -249,15 +253,15 @@ async function handleUndoLatestRecord(): Promise<void> {
       </view>
 
       <view v-if="duplicateMessage"
-        class="info-soft app-fade-up bg-[#fff4e4] text-[#9a7144] dark:bg-amber-500/14 dark:text-amber-100">
+        class="info-soft app-fade-up bg-[var(--color-cream)]/60 text-[var(--color-ink)] dark:bg-amber-500/14 dark:text-amber-100">
         {{ duplicateMessage }}
       </view>
 
       <CollapsibleSection title="记录范围与筛选" description="切换单株/全部、快速选植物，都收进这一层。"
         :tag-text="activeTab === 'single' ? '单株视角' : '全部视角'" tag-tone="cream" tag-icon="⌕" :default-expanded="true">
-        <view class="surface-soft flex items-center gap-2 rounded-full bg-white/66 p-1 dark:bg-slate-800">
+        <view class="surface-soft flex items-center gap-2 rounded-full bg-[var(--color-surface)]/66 p-1 dark:bg-slate-800">
           <button v-for="tab in recordTabs" :key="tab.key" class="btn-segment flex-1"
-            :class="activeTab === tab.key ? 'bg-white text-app-ink shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-app-muted/80 dark:text-slate-400'"
+            :class="activeTab === tab.key ? 'bg-[var(--color-surface)] text-app-ink shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-app-muted/80 dark:text-app-muted/70'"
             hover-class="opacity-92" @tap="activeTab = tab.key">
             <text class="truncate">{{ tab.label }}</text>
           </button>
@@ -266,7 +270,7 @@ async function handleUndoLatestRecord(): Promise<void> {
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex items-center gap-2 pb-1">
             <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip"
-              :class="selectedFlowerId === flower.id ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]' : 'surface-soft bg-white/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'"
+              :class="selectedFlowerId === flower.id ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]' : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="handleSwitchFlower(flower.id)">
               {{ flowerDisplayNameMap[flower.id] ?? flower.name }}
             </button>

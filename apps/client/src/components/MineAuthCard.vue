@@ -2,6 +2,8 @@
 import type { IUser } from '@florist/contracts'
 import { UserLoginType } from '@florist/contracts'
 import { computed } from 'vue'
+import TagLabel from './TagLabel.vue'
+import AppImage from './AppImage.vue'
 import { ClientPlatform } from '@/interfaces'
 
 interface MineAuthCardProps {
@@ -51,7 +53,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
 </script>
 
 <template>
-  <view class="card-soft app-fade-up rounded-[32rpx] bg-white px-5 py-5">
+  <view class="card-soft app-fade-up rounded-[32rpx] bg-[var(--color-surface)] px-5 py-5">
     <view class="flex items-center justify-between gap-3">
       <view class="min-w-0 flex flex-1 items-center gap-4">
         <button
@@ -116,7 +118,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       />
       <button
         v-if="!props.isAuthenticated"
-        class="btn-panel surface-soft min-h-[92rpx] bg-[#EAF6EF] text-[#2E8D76]"
+        class="btn-panel surface-soft min-h-[92rpx] bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
         hover-class="opacity-92"
         :loading="props.loading"
         @tap="emit('login')"

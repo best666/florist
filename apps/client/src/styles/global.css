@@ -1,14 +1,15 @@
-/* CSS 变量 — page 适配小程序，:root 适配 H5 */
-page, :root {
-  --color-mint: #8ad8c5;
-  --color-sage: #6ea891;
-  --color-blush: #f2c8d7;
-  --color-cream: #fff1dc;
-  --color-gold: #eabf7d;
-  --color-ivory: #fff8f1;
+/* ====== CSS 变量默认值 (奶油晨光) ====== */
+page,
+uni-page-body {
+  --color-mint: #7EC8B8;
+  --color-sage: #5E9E8E;
+  --color-blush: #E8B4B8;
+  --color-cream: #FDF0E0;
+  --color-gold: #E0C090;
+  --color-ivory: #FFF9F3;
   --color-surface: #ffffff;
-  --color-ink: #32404a;
-  --color-muted: #7a8794;
+  --color-ink: #3D3840;
+  --color-muted: #908C94;
   --radius-card: 28rpx;
   --radius-panel: 36rpx;
   --radius-control: 24rpx;
@@ -16,81 +17,198 @@ page, :root {
   --space-page-x: 24rpx;
   --space-page-y: 24rpx;
   --space-card: 24rpx;
-  --shadow-soft: 0 18rpx 44rpx rgba(148, 163, 184, 0.14);
-  --shadow-lift: 0 14rpx 30rpx rgba(111, 165, 149, 0.18);
-  --shadow-hero: 0 20rpx 56rpx rgba(210, 191, 160, 0.24);
-}
-
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(18rpx); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8rpx); }
-}
-
-@keyframes pulse-soft {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.04); opacity: 0.92; }
-}
-
-/* page 适配小程序，html/body/#app 适配 H5 */
-page,
-html,
-body,
-#app {
+  --shadow-soft: 0 18rpx 44rpx rgba(140,135,130,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(130,145,140,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(180,170,155,0.18);
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(242, 200, 215, 0.22), transparent 34%),
-    radial-gradient(circle at top right, rgba(138, 216, 197, 0.18), transparent 28%),
-    linear-gradient(180deg, #fffdf9 0%, var(--color-ivory) 52%, #fff3e7 100%);
+    radial-gradient(circle at top left, var(--color-blush)/22, transparent 34%),
+    radial-gradient(circle at top right, var(--color-mint)/18, transparent 28%),
+    linear-gradient(180deg, var(--color-ivory) 0%, var(--color-cream) 52%, var(--color-ivory) 100%);
   color: var(--color-ink);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overscroll-behavior: none;
-}
-
-body, page {
   margin: 0;
 }
 
-/* 隐藏滚动条 — 小程序用 page，H5 用 body */
-page::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+/* ====== 结构变量共享（所有主题一致，确保切换主题时间距/圆角不丢失） ====== */
+.theme-default,
+.theme-moss,
+.theme-peach,
+.theme-forest_letter,
+.theme-amber_dawn,
+.theme-moon_shadow {
+  --radius-card: 28rpx;
+  --radius-panel: 36rpx;
+  --radius-control: 24rpx;
+  --radius-pill: 999px;
+  --space-page-x: 24rpx;
+  --space-page-y: 24rpx;
+  --space-card: 24rpx;
 }
 
-body {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  touch-action: manipulation;
+/* ====== 6 套皮肤主题 — 颜色和阴影 ====== */
+
+/* 奶油晨光 — 暖杏米调 (Hue ~25°) */
+.theme-default {
+  --color-mint: #7EC8B8;
+  --color-sage: #5E9E8E;
+  --color-blush: #E8B4B8;
+  --color-cream: #FDF0E0;
+  --color-gold: #E0C090;
+  --color-ivory: #FFF9F3;
+  --color-surface: #ffffff;
+  --color-ink: #3D3840;
+  --color-muted: #908C94;
+  --shadow-soft: 0 18rpx 44rpx rgba(140,135,130,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(130,145,140,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(180,170,155,0.18);
+}
+
+/* 青苔温室 — 鲜绿清亮 (Hue ~150°) */
+.theme-moss {
+  --color-mint: #5CBF8A;
+  --color-sage: #3D8B60;
+  --color-blush: #A8D8B8;
+  --color-cream: #E4F2E0;
+  --color-gold: #88C878;
+  --color-ivory: #F0F8EE;
+  --color-surface: #FAFEFA;
+  --color-ink: #2A3A2C;
+  --color-muted: #6B8B6E;
+  --shadow-soft: 0 18rpx 44rpx rgba(80,140,100,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(70,140,100,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(100,170,130,0.16);
+}
+
+/* 桃雾露台 — 桃粉珊瑚 (Hue ~12°) */
+.theme-peach {
+  --color-mint: #F0A890;
+  --color-sage: #D48878;
+  --color-blush: #F4C4C8;
+  --color-cream: #FFF0EA;
+  --color-gold: #E8A880;
+  --color-ivory: #FFFAF8;
+  --color-surface: #FFFEFD;
+  --color-ink: #4A3838;
+  --color-muted: #A08888;
+  --shadow-soft: 0 18rpx 44rpx rgba(210,150,140,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(220,160,145,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(230,175,160,0.16);
+}
+
+/* 林间信笺 — 棕绿大地 (Hue ~85°) */
+.theme-forest_letter {
+  --color-mint: #8AA878;
+  --color-sage: #6B8A5E;
+  --color-blush: #C8B898;
+  --color-cream: #F0E8D5;
+  --color-gold: #B89860;
+  --color-ivory: #F5F0E6;
+  --color-surface: #FDFAF4;
+  --color-ink: #3A3428;
+  --color-muted: #8B8070;
+  --shadow-soft: 0 18rpx 44rpx rgba(140,130,110,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(130,125,105,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(160,155,130,0.16);
+}
+
+/* 琥珀清晨 — 金黄琥珀 (Hue ~42°) */
+.theme-amber_dawn {
+  --color-mint: #E0C060;
+  --color-sage: #C4A040;
+  --color-blush: #F0D8A8;
+  --color-cream: #FFF4E0;
+  --color-gold: #D4A438;
+  --color-ivory: #FFFBF0;
+  --color-surface: #FFFEFA;
+  --color-ink: #4A3828;
+  --color-muted: #A09070;
+  --shadow-soft: 0 18rpx 44rpx rgba(200,175,120,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(200,155,105,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(220,185,135,0.16);
+}
+
+/* 月影夜棚 — 蓝紫冷调 (Hue ~240°) */
+.theme-moon_shadow {
+  --color-mint: #8A98C0;
+  --color-sage: #6A7AA8;
+  --color-blush: #A8A8D0;
+  --color-cream: #E8E6F2;
+  --color-gold: #9890B8;
+  --color-ivory: #F2F2FA;
+  --color-surface: #FAFAFD;
+  --color-ink: #383850;
+  --color-muted: #8888A0;
+  --shadow-soft: 0 18rpx 44rpx rgba(120,130,160,0.12);
+  --shadow-lift: 0 14rpx 30rpx rgba(110,125,155,0.14);
+  --shadow-hero: 0 20rpx 56rpx rgba(130,145,170,0.16);
+}
+
+/* ====== 动画 ====== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8rpx); }
+}
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.04); opacity: 0.92; }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-16rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ====== 全局重置 ====== */
+html, body, #app {
+  min-height: 100%;
+  background: inherit;
+  color: inherit;
 }
 
 button, textarea, input {
   font: inherit;
   box-sizing: border-box;
 }
+button { line-height: 1; white-space: nowrap; }
+button::after { border: 0; }
+input, textarea { line-height: 1.4; }
 
-button {
-  line-height: 1;
-  white-space: nowrap;
+body, page {
+  margin: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: manipulation;
+}
+page::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0; height: 0;
 }
 
-button::after {
-  border: 0;
-}
-
-input, textarea {
-  line-height: 1.4;
-}
-
-.app-fade-up { animation: fade-up 460ms ease-out both; }
+/* ====== 通用工具类 ====== */
+.app-fade-up         { animation: fade-up 460ms ease-out both; }
 .app-fade-up-delay-1 { animation-delay: 80ms; }
 .app-fade-up-delay-2 { animation-delay: 140ms; }
-.app-float-soft { animation: float-soft 4.8s ease-in-out infinite; }
-.app-breathe { animation: pulse-soft 2.6s ease-in-out infinite; }
-.app-pressable { transition: transform 180ms ease, box-shadow 220ms ease, opacity 180ms ease, filter 180ms ease; }
-.app-pressable:active { transform: translateY(2rpx) scale(0.985); filter: saturate(0.98); }
+.app-float-soft      { animation: float-soft 4.8s ease-in-out infinite; }
+.app-breathe         { animation: pulse-soft 2.6s ease-in-out infinite; }
+.app-pressable {
+  transition: transform 180ms ease, box-shadow 220ms ease, opacity 180ms ease, filter 180ms ease;
+}
+.app-pressable:active {
+  transform: translateY(2rpx) scale(0.985);
+  filter: saturate(0.98);
+}
+
+.app-toast {
+  position: fixed; top: 48rpx; left: 50%; transform: translateX(-50%);
+  z-index: 999; max-width: 640rpx; padding: 18rpx 32rpx;
+  border-radius: 48rpx; background: var(--color-ink); color: #fff;
+  font-size: 26rpx; font-weight: 600; line-height: 1.4; text-align: center;
+  box-shadow: 0 12rpx 36rpx rgba(0,0,0,0.18);
+  animation: slide-down 280ms ease-out; pointer-events: none;
+}

@@ -4,6 +4,9 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
+import AppImage from '@/components/AppImage.vue'
+import SubmitBtn from '@/components/SubmitBtn.vue'
+import TagLabel from '@/components/TagLabel.vue'
 import { fetchPlantDiagnosis, fetchTripCarePlan } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -12,11 +15,14 @@ import { usePlantDoctorCenter } from '@/hooks/usePlantDoctorCenter'
 import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
 import { ClientPlatform, formatCityDisplayName, type CityOption, type LocalFlower, type PlantDoctorHistoryItem } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useFlowerTaxonomyStore } from '@/store'
+import { usePageTheme } from '@/hooks/usePageTheme'
 import {
   formatDateTime,
   getFlowerDisplayName,
   readImageAsDataUrl,
 } from '@/utils'
+
+const themeClass = usePageTheme()
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -340,24 +346,24 @@ function handleOpenHistoryImage(imageUrl: string): void {
 
 <template>
   <view
-    class="page-shell safe-pb bg-linear-to-b from-[#FFFDF7] via-app-ivory to-[#F7FFF8] dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+    class="page-shell safe-pb bg-linear-to-b from-[var(--color-ivory)] via-[var(--color-cream)] to-[var(--color-ivory)]" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
       <view
-        class="overflow-hidden rounded-[36rpx] bg-linear-to-br from-[#BEEBDA] via-[#FFF4DC] to-[#F6D9E7] px-5 py-5 shadow-[0_18rpx_54rpx_rgba(190,235,218,0.22)] dark:from-slate-900 dark:via-emerald-950 dark:to-rose-950">
+        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]">
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-white/78 text-slate-600 dark:bg-white/10 dark:text-slate-100">
+            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
               AI 病虫害识别 + 出差养护方案
             </view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-slate-800 dark:text-slate-50">
+            <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
               先帮你看图，再把它出差这几天安顿好
             </view>
-            <view class="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-200">
+            <view class="mt-2 text-sm leading-6 text-app-muted dark:text-slate-200">
               支持拍照、相册、压缩优化、识别留档和无人托管方案。免费用户每天可识别 3 次，超过后会轻轻提醒你会员权益。
             </view>
           </view>
           <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-white/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-white/8">
+            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
             🔎
           </view>
         </view>
@@ -369,11 +375,11 @@ function handleOpenHistoryImage(imageUrl: string): void {
       </view>
 
       <view v-if="!isAuthenticated"
-        class="card-soft rounded-[32rpx] border border-[#EADBC8] bg-[#FFF9F2] dark:border-slate-700 dark:bg-slate-900">
+        class="card-soft rounded-[32rpx] border border-[var(--color-gold)]/30 bg-[var(--color-cream)]/50 dark:border-slate-700 dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">先登录后使用植物医生</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">先登录后使用植物医生</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               小程序默认使用微信登录，H5 默认使用手机号验证码登录，登录后会自动关联你的个人花园数据。
             </text>
           </view>
@@ -389,8 +395,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">当地天气</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">当地天气</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               出差方案会结合当前城市天气来收紧风险，识别时也会顺手参考环境信息。
             </text>
           </view>
@@ -400,10 +406,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <view class="mt-4 rounded-[26rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
           <view class="flex items-center justify-between gap-3">
             <view class="min-w-0 flex-1 pr-2">
-              <text class="block text-sm font-700 leading-6 text-slate-800 dark:text-slate-100">
+              <text class="block text-sm font-700 leading-6 text-app-ink dark:text-slate-100">
                 {{ cityDisplayName }}
               </text>
-              <text class="mt-1 block text-2xs leading-5 text-slate-500 dark:text-slate-300">
+              <text class="mt-1 block text-2xs leading-5 text-app-muted dark:text-slate-300">
                 {{ weatherState.weather
                   ? `${weatherState.weather.weatherText} · ${Math.round(weatherState.weather.temperature)}°C · 湿度
                 ${weatherState.weather.humidity}%`
@@ -411,19 +417,19 @@ function handleOpenHistoryImage(imageUrl: string): void {
               </text>
             </view>
             <view class="flex flex-wrap justify-end gap-2">
-              <button class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-mint text-slate-700"
+              <button class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-mint text-app-ink"
                 hover-class="opacity-92" @tap="locateCity">
                 <view
-                  class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+                  class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)]/70 text-[20rpx] text-app-ink">
                   ⌖
                 </view>
                 <text class="whitespace-nowrap">重新定位</text>
               </button>
               <button v-if="weatherState.locationDenied"
-                class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-blush text-slate-700"
+                class="btn-pill-sm flex-none shrink-0 gap-1.5 px-3 text-2xs bg-app-blush text-app-ink"
                 hover-class="opacity-92" @tap="requestLocationPermissionAgain">
                 <view
-                  class="flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[20rpx] text-slate-700">
+                  class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)]/70 text-[20rpx] text-app-ink">
                   ⚙
                 </view>
                 <text class="whitespace-nowrap">去开权限</text>
@@ -432,13 +438,13 @@ function handleOpenHistoryImage(imageUrl: string): void {
           </view>
 
           <input
-            class="mt-4 h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            class="mt-4 h-11 rounded-[22rpx] bg-[var(--color-surface)] px-4 text-sm text-app-ink dark:bg-slate-900 dark:text-slate-100"
             :value="weatherState.citySearchKeyword" placeholder="搜城市，如杭州、广州" @input="handleCitySearchInput" />
 
           <scroll-view scroll-x class="mt-3 whitespace-nowrap">
             <view class="flex gap-2 pb-1">
               <button v-for="city in weatherState.citySearchResults.slice(0, 8)" :key="city.id"
-                class="btn-chip h-[68rpx] min-h-[68rpx] bg-white px-4 text-2xs font-700 text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                class="btn-chip h-[68rpx] min-h-[68rpx] bg-[var(--color-surface)] px-4 text-2xs font-700 text-app-muted dark:bg-slate-900 dark:text-slate-100"
                 hover-class="opacity-92" @tap="setManualCity(city)">
                 {{ formatCandidateCity(city) }}
               </button>
@@ -450,8 +456,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">识别对象</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别对象</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               选一盆植物能让建议更贴合；不选也可以先单纯识别图片。
             </text>
           </view>
@@ -461,12 +467,12 @@ function handleOpenHistoryImage(imageUrl: string): void {
         <scroll-view scroll-x class="mt-4 whitespace-nowrap">
           <view class="flex gap-2 pb-1">
             <button class="btn-chip-wide"
-              :class="!selectedFlowerId ? 'bg-app-mint text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
+              :class="!selectedFlowerId ? 'bg-app-mint text-app-ink' : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="selectedFlowerId = ''">
               暂不绑定植株
             </button>
             <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip"
-              :class="selectedFlower?.id === flower.id ? 'bg-app-blush text-slate-700' : 'bg-app-ivory text-slate-500 dark:bg-slate-800 dark:text-slate-200'"
+              :class="selectedFlower?.id === flower.id ? 'bg-app-blush text-app-ink' : 'bg-app-ivory text-app-muted dark:bg-slate-800 dark:text-slate-200'"
               hover-class="opacity-92" @tap="selectedFlowerId = flower.id">
               {{ getFlowerDisplayName(flower) }}
             </button>
@@ -482,8 +488,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">识别图片</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别图片</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               建议拍叶背、病斑、虫点或受损局部，光线稳定一点，识别会更准。
             </text>
           </view>
@@ -492,14 +498,14 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view v-if="selectedImage" class="mt-4 rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-          <AppImage class="h-[320rpx] w-full rounded-[24rpx] bg-white object-cover dark:bg-slate-900"
+          <AppImage class="h-[320rpx] w-full rounded-[24rpx] bg-[var(--color-surface)] object-cover dark:bg-slate-900"
             :src="selectedImage.url" mode="aspectFill" error-text="识别图片先休息一下" @tap="handlePreviewSelectedImage" />
           <view class="mt-3 flex gap-2">
-            <button class="btn-pill-md flex-1 bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            <button class="btn-pill-md flex-1 bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-100"
               hover-class="opacity-92" @tap="handleChooseImage">
               重新拍 / 重新选
             </button>
-            <button class="btn-pill-md flex-1 bg-white text-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            <button class="btn-pill-md flex-1 bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-100"
               hover-class="opacity-92" @tap="cleanupSelectedImage">
               移除图片
             </button>
@@ -507,10 +513,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view v-else
-          class="mt-4 rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-linear-to-br from-white to-[#FFF8EF] px-4 py-6 text-center dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+          class="mt-4 rounded-[28rpx] border border-dashed border-[var(--color-mint)]/25 bg-linear-to-br from-[var(--color-surface)] to-[var(--color-cream)]/50 px-4 py-6 text-center dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
           <text class="block text-[56rpx]">📷</text>
-          <text class="mt-2 block text-sm font-700 text-slate-700 dark:text-slate-100">拍照或从相册选择一张图</text>
-          <text class="mt-1 block text-2xs leading-5 text-slate-500 dark:text-slate-300">系统会先自动压缩和做画质容错，再把图送去识别。</text>
+          <text class="mt-2 block text-sm font-700 text-app-ink dark:text-slate-100">拍照或从相册选择一张图</text>
+          <text class="mt-1 block text-2xs leading-5 text-app-muted dark:text-slate-300">系统会先自动压缩和做画质容错，再把图送去识别。</text>
           <view class="mt-4">
             <SubmitBtn text="选择图片" variant="sunrise" :block="false" @click="handleChooseImage" />
           </view>
@@ -531,8 +537,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view v-if="diagnosisResult" class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">识别结果</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别结果</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               先按最轻的一步处理，再观察半天到一天，会比一下子上很多动作更稳。
             </text>
           </view>
@@ -541,33 +547,33 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view
-          class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#FFF8F0] via-white to-[#F3FCF7] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
-          <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
+          class="mt-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)]">
+          <text class="block text-lg font-800 text-app-ink dark:text-slate-100">{{ diagnosisResult.diagnosisTitle
             }}</text>
-          <text class="mt-2 block text-sm leading-6 text-slate-600 dark:text-slate-300">{{ diagnosisResult.summary
+          <text class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">{{ diagnosisResult.summary
             }}</text>
         </view>
 
         <view class="mt-4 grid gap-3">
           <view class="rounded-[24rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
-            <text class="block text-2xs text-slate-400 dark:text-slate-500">症状表现</text>
+            <text class="block text-2xs text-app-muted/70 dark:text-app-muted">症状表现</text>
             <text v-for="item in diagnosisResult.symptomHighlights" :key="item"
-              class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+              class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
           </view>
           <view class="rounded-[24rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
-            <text class="block text-2xs text-slate-400 dark:text-slate-500">可能成因</text>
+            <text class="block text-2xs text-app-muted/70 dark:text-app-muted">可能成因</text>
             <text v-for="item in diagnosisResult.possibleCauses" :key="item"
-              class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+              class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
           </view>
           <view class="rounded-[24rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
-            <text class="block text-2xs text-slate-400 dark:text-slate-500">救治步骤</text>
+            <text class="block text-2xs text-app-muted/70 dark:text-app-muted">救治步骤</text>
             <text v-for="item in diagnosisResult.treatmentSteps" :key="item"
-              class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+              class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
           </view>
           <view class="rounded-[24rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
-            <text class="block text-2xs text-slate-400 dark:text-slate-500">预防方式</text>
+            <text class="block text-2xs text-app-muted/70 dark:text-app-muted">预防方式</text>
             <text v-for="item in diagnosisResult.preventionTips" :key="item"
-              class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+              class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
           </view>
         </view>
       </view>
@@ -575,8 +581,8 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">出差养护方案</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">出差养护方案</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               结合天气、摆放位置和出差天数，帮你生成无人托管时的照顾节奏。
             </text>
           </view>
@@ -585,9 +591,9 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view class="mt-4 rounded-[28rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
-          <text class="block text-2xs text-slate-400 dark:text-slate-500">出差天数</text>
+          <text class="block text-2xs text-app-muted/70 dark:text-app-muted">出差天数</text>
           <input
-            class="mt-2 h-11 rounded-[22rpx] bg-white px-4 text-sm text-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            class="mt-2 h-11 rounded-[22rpx] bg-[var(--color-surface)] px-4 text-sm text-app-ink dark:bg-slate-900 dark:text-slate-100"
             type="number" :value="String(travelDays)" placeholder="输入 1-30 天" @input="handleTravelDaysInput" />
         </view>
 
@@ -597,28 +603,28 @@ function handleOpenHistoryImage(imageUrl: string): void {
         </view>
 
         <view v-if="tripCarePlan"
-          class="mt-4 rounded-[28rpx] bg-linear-to-br from-[#F8FBFF] via-white to-[#FFF6EC] p-4 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800">
-          <text class="block text-lg font-800 text-slate-800 dark:text-slate-100">{{ tripCarePlan.summary }}</text>
-          <text class="mt-1 block text-2xs text-slate-400 dark:text-slate-500">{{ tripCarePlan.cityName }} · {{
+          class="mt-4 rounded-[var(--radius-card)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-soft)]">
+          <text class="block text-lg font-800 text-app-ink dark:text-slate-100">{{ tripCarePlan.summary }}</text>
+          <text class="mt-1 block text-2xs text-app-muted/70 dark:text-app-muted">{{ tripCarePlan.cityName }} · {{
             tripCarePlan.travelDays }} 天 · 更新于 {{ formatDateTime(tripCarePlan.generatedAt, {
               pattern: 'YYYY-MM-DD HH:mm'
             }) }}</text>
 
           <view class="mt-4 grid gap-3">
-            <view class="rounded-[24rpx] bg-white/88 px-4 py-4 dark:bg-slate-900">
-              <text class="block text-2xs text-slate-400 dark:text-slate-500">出发前</text>
+            <view class="rounded-[24rpx] bg-[var(--color-surface)]/88 px-4 py-4 dark:bg-slate-900">
+              <text class="block text-2xs text-app-muted/70 dark:text-app-muted">出发前</text>
               <text v-for="item in tripCarePlan.beforeTripActions" :key="item"
-                class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+                class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
             </view>
-            <view class="rounded-[24rpx] bg-white/88 px-4 py-4 dark:bg-slate-900">
-              <text class="block text-2xs text-slate-400 dark:text-slate-500">无人托管期间</text>
+            <view class="rounded-[24rpx] bg-[var(--color-surface)]/88 px-4 py-4 dark:bg-slate-900">
+              <text class="block text-2xs text-app-muted/70 dark:text-app-muted">无人托管期间</text>
               <text v-for="item in tripCarePlan.duringTripAdvice" :key="item"
-                class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+                class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
             </view>
-            <view class="rounded-[24rpx] bg-white/88 px-4 py-4 dark:bg-slate-900">
-              <text class="block text-2xs text-slate-400 dark:text-slate-500">回家后检查</text>
+            <view class="rounded-[24rpx] bg-[var(--color-surface)]/88 px-4 py-4 dark:bg-slate-900">
+              <text class="block text-2xs text-app-muted/70 dark:text-app-muted">回家后检查</text>
               <text v-for="item in tripCarePlan.returnHomeChecklist" :key="item"
-                class="mt-2 block text-sm leading-6 text-slate-700 dark:text-slate-200">{{ item }}</text>
+                class="mt-2 block text-sm leading-6 text-app-ink dark:text-slate-200">{{ item }}</text>
             </view>
           </view>
         </view>
@@ -627,13 +633,13 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-slate-800 dark:text-slate-100">本地识别记录</text>
-            <text class="mt-1 block text-sm leading-6 text-slate-500 dark:text-slate-300">
+            <text class="block text-base font-800 text-app-ink dark:text-slate-100">本地识别记录</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
               记录只保存在本地加密存储里，断网时也还在。
             </text>
           </view>
           <button
-            class="h-9 rounded-full border-none bg-slate-100 px-4 text-2xs font-700 text-slate-500 dark:bg-slate-800 dark:text-slate-200"
+            class="h-9 rounded-full border-none bg-slate-100 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
             hover-class="opacity-92" @tap="clearHistory">
             清空记录
           </button>
@@ -644,30 +650,30 @@ function handleOpenHistoryImage(imageUrl: string): void {
             class="rounded-[26rpx] bg-app-ivory/90 px-4 py-4 dark:bg-slate-800">
             <view class="flex items-start justify-between gap-3">
               <view>
-                <text class="block text-sm font-700 text-slate-800 dark:text-slate-100">
+                <text class="block text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ item.diagnosis?.diagnosisTitle ?? item.tripCarePlan?.summary ?? '本地记录' }}
                 </text>
-                <text class="mt-1 block text-2xs leading-5 text-slate-400 dark:text-slate-500">
+                <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
                   {{ formatDateTime(item.createdAt, { pattern: 'YYYY-MM-DD HH:mm' }) }}{{ item.flowerName ? ` ·
                   ${item.flowerName}` : '' }}{{ item.cityName ? ` · ${item.cityName}` : '' }}
                 </text>
               </view>
-              <AppImage v-if="item.image" class="h-[96rpx] w-[96rpx] rounded-[20rpx] bg-white dark:bg-slate-900"
+              <AppImage v-if="item.image" class="h-[96rpx] w-[96rpx] rounded-[20rpx] bg-[var(--color-surface)] dark:bg-slate-900"
                 :src="item.image.url" mode="aspectFill" error-text="图片暂时不可用"
                 @tap="handleOpenHistoryImage(item.image.url)" />
             </view>
 
-            <text v-if="item.diagnosis" class="mt-3 block text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <text v-if="item.diagnosis" class="mt-3 block text-sm leading-6 text-app-muted dark:text-slate-300">
               {{ item.diagnosis.summary }}
             </text>
-            <text v-if="item.tripCarePlan" class="mt-3 block text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <text v-if="item.tripCarePlan" class="mt-3 block text-sm leading-6 text-app-muted dark:text-slate-300">
               {{ item.tripCarePlan.summary }}
             </text>
           </view>
         </view>
 
         <view v-else
-          class="mt-4 rounded-[24rpx] bg-app-ivory/90 px-4 py-4 text-sm leading-6 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+          class="mt-4 rounded-[24rpx] bg-app-ivory/90 px-4 py-4 text-sm leading-6 text-app-muted dark:bg-slate-800 dark:text-slate-300">
           这里会留下最近的识别结果和出差方案，方便你回头再看。
         </view>
       </view>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import TagLabel from './TagLabel.vue'
 import { useEncryptedStorage } from '@/hooks/useEncryptedStorage'
 
 interface CollapsibleSectionProps {
@@ -65,7 +66,7 @@ function handleToggle(): void {
         </text>
         <text
           v-if="props.description"
-          class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300"
+          class="mt-1 block text-xs leading-6 text-app-muted dark:text-slate-300"
         >
           {{ props.description }}
         </text>
@@ -80,7 +81,7 @@ function handleToggle(): void {
           :icon="props.tagIcon"
         />
         <button
-          class="btn-pill-sm surface-soft bg-white/78 px-4 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+          class="btn-pill-sm surface-soft bg-[var(--color-surface)]/78 px-4 text-app-muted dark:bg-slate-800 dark:text-slate-200"
           hover-class="opacity-92"
           @tap="handleToggle"
         >
