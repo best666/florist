@@ -1,8 +1,8 @@
-# config 包说明
+# config 包
 
-当前先保留为共享配置占位目录，后续可视情况沉淀：
+共享配置占位，后续可沉淀以下内容：
 
-- ESLint 共享配置
-- TypeScript 共享扩展配置
-- UnoCSS 共享主题令牌
-- 环境变量校验规则
+- **ESLint** — 共享规则配置，统一前后端代码风格
+- **TypeScript** — 共享 `tsconfig` 扩展，减少各包重复配置
+- **UnoCSS** — 共享主题令牌与 shortcuts
+- **环境变量** — 共享校验规则，复用客户端和服务端 env schema

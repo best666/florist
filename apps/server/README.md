@@ -1,296 +1,142 @@
-# server 应用说明
+# 养花人 · 后端
 
-这里是养花人后端服务，基于 NestJS + Prisma + MySQL，采用轻量单体模块化结构。当前已经不是单纯脚手架，而是可以直接支撑前后端本地联调的服务端应用。
+基于 **NestJS + Prisma + MySQL** 的轻量单体模块化后端服务。
 
-## 当前能力
+## 模块总览
 
-- auth：H5 手机验证码登录、微信小程序登录、会话查询、强制登录态支撑
-- users：当前用户资料读取与更新
-- flowers：植株中心、回收站、批量同步
-- records：养护记录、撤回、批量同步
-- members：会员状态与权益
-- image：头像、植物图片、记录图片上传与裁剪压缩
-- feedback：反馈内容与图片
-- scheduler：提醒配置、提醒日志、定时任务
-- weather：城市搜索、反向地理、当前天气
-- ai-proxy：AI 中转、缓存、配额与请求日志
-- backups：备份状态与手动触发
-- admin：极简管理后台
+| 模块 | 说明 |
+|------|------|
+| auth | H5 手机验证码登录、微信小程序登录、会话查询 |
+| users | 当前用户资料读取与更新 |
+| flowers | 植株中心、回收站、批量同步 |
+| records | 养护记录、撤回、批量同步 |
+| members | 会员状态与权益管理 |
+| image | 头像 / 植株图片上传、裁剪压缩 |
+| feedback | 反馈内容与图片收集 |
+| scheduler | 提醒配置、提醒日志、定时任务 |
+| weather | 城市搜索、反向地理、实时天气 |
+| ai-proxy | AI 中转、缓存、配额与请求日志 |
+| backups | 备份状态与手动触发 |
+| admin | 管理后台（独立 Cookie 会话） |
 
-全局能力：
+全局能力：CORS、参数校验、限流、请求追踪、异常日志、响应压缩、AES 加密、开发态端口自动切换。
 
-- CORS
-- 请求参数校验
-- 限流
-- 请求追踪与异常日志
-- 响应压缩
-- 敏感字段 AES 加密
-- 开发态端口自动切换
-
-## 目录边界
+## 目录结构
 
 ```text
 apps/server
-├── env                     # 环境变量
-├── prisma                  # Prisma schema 与 migrations
-├── src
-│   ├── common              # 公共装饰器、过滤器、服务、工具
-│   ├── config              # 环境变量解析
-│   └── modules             # 业务模块
-├── .mysql                  # 本地 MySQL 数据目录（git 忽略）
-└── .runtime                # 运行时端口文件（git 忽略）
+├── env/                环境变量
+├── prisma/             Schema 与迁移文件
+├── src/
+│   ├── common/         公共装饰器、过滤器、工具
+│   ├── config/         环境变量解析与配置
+│   └── modules/        业务模块
+├── .mysql/             本地 MySQL 数据目录（git 忽略）
+└── .runtime/           运行时端口文件（git 忽略）
 ```
 
-## 常用命令
+## 快速开始
 
-在仓库根目录执行：
+### 数据库
+
+Docker 方式：
 
 ```bash
-pnpm --filter @florist/server start:dev
-pnpm --filter @florist/server build
-pnpm --filter @florist/server build:prod
-pnpm --filter @florist/server prisma:generate
-pnpm --filter @florist/server prisma:migrate:deploy
-pnpm --filter @florist/server prisma:migrate:status
-pnpm --filter @florist/server db:up
-pnpm --filter @florist/server db:down
-pnpm --filter @florist/server db:local:start
-pnpm --filter @florist/server db:local:stop
+pnpm --filter @florist/server db:up       # 启动
+pnpm --filter @florist/server db:down     # 停止
 ```
 
-## 数据库启动方式
-
-### 方式 A：Docker MySQL
+本地 MySQL 二进制（无需 Docker）：
 
 ```bash
-pnpm --filter @florist/server db:up
+pnpm --filter @florist/server db:local:start    # 启动（127.0.0.1:3307）
+pnpm --filter @florist/server db:local:stop     # 停止
 ```
 
-停止：
+启动后自动创建数据库和账号。
+
+### 迁移
 
 ```bash
-pnpm --filter @florist/server db:down
+pnpm --filter @florist/server prisma:migrate:deploy   # 执行迁移
+pnpm --filter @florist/server prisma:migrate:status    # 查看状态
+pnpm --filter @florist/server prisma:generate          # 重新生成客户端
 ```
 
-### 方式 B：本地 MySQL 二进制
-
-```bash
-pnpm --filter @florist/server db:local:start
-```
-
-这个命令会：
-
-- 初始化 apps/server/.mysql/data
-- 在 127.0.0.1:3307 启动本地 MySQL
-- 自动创建 florist 数据库和 florist 账号
-
-停止：
-
-```bash
-pnpm --filter @florist/server db:local:stop
-```
-
-默认数据库信息：
-
-- 数据库名：florist
-- 用户名：florist
-- 密码：florist123
-- 主机地址：127.0.0.1
-- 端口：3307
-
-## Prisma 与迁移
-
-数据库可用后，先执行：
-
-```bash
-pnpm --filter @florist/server prisma:migrate:deploy
-```
-
-查看迁移状态：
-
-```bash
-pnpm --filter @florist/server prisma:migrate:status
-```
-
-修改 schema 后如果需要重新生成客户端：
-
-```bash
-pnpm --filter @florist/server prisma:generate
-```
-
-## 启动与端口行为
-
-开发态启动：
+### 启动
 
 ```bash
 pnpm --filter @florist/server start:dev
 ```
 
-默认目标端口是 3000。
+默认目标端口 3000，被占用时自动切换到下一个空闲端口。当前端口写入 `.runtime/dev-server.json`，H5 前端代理自动跟随。
 
-如果 3000 被占用，服务会自动切换到 3001、3002 等空闲端口，不会直接启动失败。当前实际端口会写入：
+## 环境变量（`apps/server/env/`）
 
-```text
-apps/server/.runtime/dev-server.json
-```
+| 变量 | 说明 |
+|------|------|
+| `PORT` | 服务端口（默认 3000） |
+| `GLOBAL_PREFIX` | API 路径前缀（默认 `api`） |
+| `CORS_ORIGIN` | 允许的跨域来源 |
+| `DATABASE_URL` | MySQL 连接串 |
+| `H5_LOGIN_PHONE` | H5 测试登录手机号 |
+| `H5_LOGIN_CODE` | H5 测试验证码 |
+| `H5_LOGIN_NICKNAME` | H5 默认昵称（留空则自动生成花名） |
+| `WECHAT_MINI_PROGRAM_APP_ID` | 小程序 AppID（生产必填） |
+| `WECHAT_MINI_PROGRAM_SECRET` | 小程序 Secret（生产必填） |
+| `AI_PROXY_BASE_URL` | AI 服务地址 |
+| `AI_PROXY_API_KEY` | AI 服务 Key |
 
-示例内容：
+> 复制 `env/.env.example` 为 `env/.env` 后填写真实值。示例文件中均为占位符。
 
-```json
-{
-	"pid": 11817,
-	"port": 3000,
-	"origin": "http://127.0.0.1:3000"
-}
-```
+## 认证机制
 
-这个文件会被前端 H5 开发代理读取，所以后端切端口后，前端通常不需要手改地址。
+业务接口通过请求头 `x-user-id` 识别用户，不使用 Cookie 会话。
 
-## 环境变量
+### H5 登录
 
-环境文件目录：
+开发态采用"测试手机号 + 验证码"方案，不依赖短信平台。登录时后端验证 `H5_LOGIN_PHONE` 和 `H5_LOGIN_CODE`，成功则创建或复用用户。
 
-```text
-apps/server/env
-```
-
-当前关键变量：
-
-- PORT
-- GLOBAL_PREFIX
-- CORS_ORIGIN
-- DATABASE_URL
-- AI_PROXY_BASE_URL
-- AI_PROXY_API_KEY
-- H5_LOGIN_PHONE：H5 测试登录手机号，建议使用本地自定义测试号
-- H5_LOGIN_CODE：H5 测试登录验证码，建议使用本地自定义测试码
-- H5_LOGIN_NICKNAME：H5 可选默认昵称，留空时自动生成双段随机花名
-- WECHAT_MINI_PROGRAM_APP_ID
-- WECHAT_MINI_PROGRAM_SECRET
-
-当前本地 H5 登录测试配置建议：
-
-- H5_LOGIN_PHONE=replace-with-local-test-phone
-- H5_LOGIN_CODE=replace-with-local-test-code
-- H5_LOGIN_NICKNAME= 留空时自动生成双段随机花名
-
-## 认证机制说明
-
-当前业务接口不是基于浏览器 Cookie 会话，而是通过请求头中的 x-user-id 识别当前用户。
-
-这意味着：
-
-- 前端未登录时会被全局登录拦截，核心业务流程不会继续进入
-- H5 手机验证码登录成功后，接口会切换到手机号用户
-- 小程序微信登录成功后，接口会切换到微信用户
-- 会员云端植物、云端记录、成长相册上传等接口会额外校验 CloudBackup 权益
-
-当前登录接口：
-
-- POST /api/auth/h5/phone/login
-- POST /api/auth/wechat/login
-- GET /api/auth/session
-
-## 开发态登录说明
-
-### H5
-
-H5 当前是开发态“测试手机号 + 测试验证码”方案，不依赖短信平台。
-
-测试账号请以本地 apps/server/env/.env 为准，文档中不再展示具体测试手机号和验证码。
-
-昵称规则：
-
-- 微信小程序登录默认使用用户微信昵称
-- H5 登录可使用请求传入昵称或 H5_LOGIN_NICKNAME
-- 若没有可用昵称，后端自动生成双段随机花名，例如晚樱铃兰
+昵称规则：微信昵称 > 请求传入昵称 > `H5_LOGIN_NICKNAME` > 自动生成双段随机花名。
 
 ### 微信小程序
 
-小程序前端已经调用 uni.login 获取微信临时 code，再请求 /api/auth/wechat/login。
+前端调用 `uni.login` 获取 code，发送至 `POST /api/auth/wechat/login`：
+- 生产态：调用微信官方 `code2Session` 换取 openid
+- 开发态：未配置 AppID/Secret 时回退到基于 code 的本地联调链路
 
-当前后端已经支持两种模式：
+## 会员与上传
 
-- 生产态配置了 WECHAT_MINI_PROGRAM_APP_ID 和 WECHAT_MINI_PROGRAM_SECRET 后，会调用微信官方 code2Session 换取 openid / session_key
-- 开发态如果未配置这两个变量，会继续回退到基于 code 的本地联调链路
-
-## 会员与上传说明
-
-当前会员开通接口在开发阶段仍是后端直开通：
-
-- 前端提交套餐和渠道后，后端直接更新会员状态并返回最新会员信息
-- 这条链路用于联调会员权限，暂未接入第三方支付下单和支付回调
-
-当前图片上传处理规则：
-
-- avatar scope 允许登录用户上传头像
-- flower 和 record scope 仅会员可上传
-- 后端会使用 sharp 对图片进行裁剪、压缩，再写入本地 uploads 目录
+会员开通接口在开发阶段为直开通链路（未接入第三方支付）。图片上传使用 sharp 裁剪压缩后存入本地 uploads 目录，avatar 可全员上传，flower/record scope 仅对会员开放。
 
 ## 管理后台
 
-管理后台入口：
+入口 `/admin`，接口 `/api/admin/*`，使用独立 HttpOnly Cookie 会话，与业务端 `x-user-id` 机制分离。
 
-```text
-/admin
-```
-
-相关接口：
-
-```text
-/api/admin/*
-```
-
-管理后台使用独立的 HttpOnly Cookie 会话，和业务端 x-user-id 机制不是一套系统。
-
-## 构建与验证
-
-推荐命令：
+## 常用命令
 
 ```bash
-pnpm --filter @florist/server build
-```
-
-如果改了数据库相关逻辑，再补：
-
-```bash
-pnpm --filter @florist/server prisma:migrate:status
+pnpm --filter @florist/server start:dev              # 开发启动
+pnpm --filter @florist/server build                  # 生产构建
+pnpm --filter @florist/server prisma:migrate:deploy  # 执行迁移
+pnpm --filter @florist/server prisma:generate        # 生成 Prisma 客户端
 ```
 
 ## 常见问题
 
-### 1. db:up 失败
+### 数据库连接失败
 
-大概率是 Docker daemon 没启动。此时直接改用：
+检查 MySQL 是否在 3307 端口监听，是否已执行迁移。
 
-```bash
-pnpm --filter @florist/server db:local:start
-```
+### 登录验证失败
 
-### 2. flowers / records 接口超时
+检查 `H5_LOGIN_PHONE` / `H5_LOGIN_CODE` 是否与环境变量一致。
 
-优先检查：
+### 端口不是 3000
 
-- 3307 端口是否有 MySQL 在监听
-- 是否执行过 prisma:migrate:deploy
-- 后端是否在数据库恢复后重启过
-
-### 3. 后端端口不是 3000
-
-查看：
-
-```bash
-cat apps/server/.runtime/dev-server.json
-```
-
-### 4. H5 手机验证码登录失败
-
-优先检查 apps/server/env/.env 中的：
-
-- H5_LOGIN_PHONE
-- H5_LOGIN_CODE
+查看 `apps/server/.runtime/dev-server.json` 获取实际端口，前端代理会自动跟随。
 
 ## 相关文档
 
-- [根 README](README.md)
-- [架构说明](docs/architecture.md)
+- [根 README](../../README.md)
+- [前端 README](../client/README.md)

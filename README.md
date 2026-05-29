@@ -1,54 +1,37 @@
 # 养花人
 
-养花人是一个面向养花新手与绿植爱好者的双端应用项目，当前以微信小程序和 H5 为前端载体，配套一个 NestJS 后端服务与 MySQL 数据库。
-
-这个仓库已经不是单纯的工程骨架，而是具备可运行的前后端联调能力，包含以下核心特性：
-
-- UniApp 前端，支持 H5 和微信小程序双端开发
-- NestJS 后端，提供植株、记录、会员、反馈、提醒、天气、AI 中转等接口
-- Prisma + MySQL 数据持久化
-- 前端本地 AES 加密持久化
-- 强制登录后使用核心功能，支持 H5 手机号验证码登录与小程序微信登录
-- 用户资料可修改用户名、头像、个性签名
-- 会员专属云端植物、养护记录、成长相册与相册上传能力
-- 头像和植物图片上传前会先裁剪、压缩，再发送到后端
-- 后端开发态自动切换空闲端口，前端 H5 代理自动跟随后端实际端口
+面向养花新手与绿植爱好者的双端应用，以微信小程序和 H5 为前端载体，配套 NestJS 后端与 MySQL 数据库。
 
 ## 技术栈
 
-- 包管理：pnpm workspace
-- 前端：UniApp + Vue 3 + TypeScript + Pinia + UnoCSS
-- 后端：NestJS + Prisma 7 + MariaDB Adapter
-- 数据库：MySQL
-- 共享层：packages/contracts
+| 层 | 方案 |
+|-----|------|
+| 包管理 | pnpm workspace |
+| 前端 | UniApp + Vue 3 + TypeScript + Pinia + UnoCSS |
+| 后端 | NestJS + Prisma 7 |
+| 数据库 | MySQL 8.x |
+| 共享层 | packages/contracts（类型、枚举、接口契约） |
+| 部署 | Docker + GitHub Actions |
 
 ## 仓库结构
 
 ```text
-.
 ├── apps
-│   ├── client                 # UniApp 前端应用（H5 / mp-weixin）
-│   └── server                 # NestJS 后端服务
-├── docs
-│   └── architecture.md        # 架构说明
+│   ├── client/          UniApp 前端（H5 / 微信小程序）
+│   └── server/          NestJS 后端
 ├── packages
-│   ├── config                 # 共享配置占位目录
-│   └── contracts              # 前后端共享类型、枚举、契约
-├── README.md
-├── package.json               # 根命令入口
-└── pnpm-workspace.yaml
+│   ├── config/          共享配置
+│   └── contracts/       前后端共享类型与契约
+├── deploy/              Docker Compose 生产部署
+└── docs/                架构文档
 ```
 
 ## 环境要求
 
-推荐环境：
-
 - Node.js 20+
 - pnpm 10+
-- MySQL 8.x
-- 微信开发者工具（开发小程序时需要）
-
-如果你不想依赖 Docker，本仓库当前也支持直接使用本地 MySQL 二进制在 apps/server/.mysql 下启动独立数据目录。
+- MySQL 8.x（本地二进制或 Docker）
+- 微信开发者工具（小程序开发）
 
 ## 快速开始
 
@@ -60,386 +43,149 @@ pnpm install
 
 ### 2. 启动数据库
 
-当前项目支持两种方式。
-
-方式 A：Docker MySQL
+Docker 方式：
 
 ```bash
 pnpm db:server:up
 ```
 
-方式 B：本地 MySQL 二进制
+本地 MySQL 二进制（无需 Docker）：
 
 ```bash
 pnpm --filter @florist/server db:local:start
 ```
 
-如果你使用本地 MySQL 二进制，默认会：
-
-- 初始化 apps/server/.mysql/data
-- 在 127.0.0.1:3307 启动 MySQL
-- 自动创建 florist 数据库和 florist 用户
-
-停止本地 MySQL：
+启动后在 `127.0.0.1:3307` 运行，自动创建数据库和用户。停止：
 
 ```bash
 pnpm --filter @florist/server db:local:stop
 ```
 
-### 3. 执行数据库迁移
+### 3. 数据库迁移
 
 ```bash
 pnpm db:server:deploy
 ```
 
-查看当前迁移状态：
+### 4. 依次启动后端和前端
 
 ```bash
-pnpm db:server:status
+pnpm dev:server     # 后端（默认 3000，被占用时自动切换）
+pnpm dev:h5         # H5 前端（默认 9000）
+pnpm dev:mp-weixin  # 微信小程序
 ```
 
-### 4. 启动后端
+H5 开发态代理会动态读取后端运行时端口文件，后端端口变化时无需手动修改前端配置。
 
-```bash
-pnpm dev:server
-```
+## 根命令速览
 
-后端默认目标端口是 3000。
-
-如果 3000 被占用，开发态会自动切到 3001、3002 等空闲端口，并把当前实际端口写入：
-
-```text
-apps/server/.runtime/dev-server.json
-```
-
-### 5. 启动前端
-
-H5：
-
-```bash
-pnpm dev:h5
-```
-
-微信小程序：
-
-```bash
-pnpm dev:mp-weixin
-```
-
-H5 开发态代理会自动读取 apps/server/.runtime/dev-server.json，所以后端从 3000 自动切到 3001 时，前端不需要手动改 VITE_SERVER_BASEURL。
-
-## 根命令说明
-
-根 package.json 中常用命令如下：
-
-```bash
-pnpm dev:h5
-pnpm dev:mp-weixin
-pnpm dev:server
-pnpm db:server:up
-pnpm db:server:down
-pnpm db:server:status
-pnpm db:server:deploy
-pnpm build
-pnpm typecheck
-```
-
-它们的职责分别是：
-
-- dev:h5：启动前端 H5 开发服务
-- dev:mp-weixin：启动微信小程序开发服务
-- dev:server：启动后端开发服务
-- db:server:up：用 Docker 启动后端数据库
-- db:server:down：停止 Docker 数据库容器
-- db:server:status：查看 Prisma 迁移状态
-- db:server:deploy：把迁移应用到数据库
-- build：构建整个 workspace
-- typecheck：检查整个 workspace 的类型
-
-## Docker 部署与 GitHub Actions
-
-当前仓库已经补齐了面向生产环境的 Docker + GitHub Actions 基础链路，覆盖以下文件：
-
-- `.github/workflows/ci.yml`：PR 与 main 分支推送时执行安装、类型检查、后端构建、前端 H5 构建
-- `.github/workflows/cd.yml`：main 分支推送或手动触发时构建并推送 GHCR 镜像，再通过 SSH 到目标机器执行 Docker Compose 部署
-- `apps/server/Dockerfile`：后端 NestJS 生产镜像，容器启动时自动执行 Prisma migrate deploy
-- `apps/client/Dockerfile`：前端 H5 静态资源镜像，使用 Nginx 对 `/api`、`/uploads`、`/admin` 反代到后端容器
-- `deploy/docker-compose.prod.yml`：生产环境单机 Compose 编排
-- `deploy/.env.example`：生产部署变量模板
-
-### 部署拓扑
-
-默认采用单机三容器：
-
-- client：Nginx 提供 H5 静态资源
-- server：NestJS API 服务
-- mysql：MySQL 8.4 数据库
-
-前端生产构建时会把 API 基址设为 `/api`，再由 client 容器反代到 server 容器，所以不需要把后端真实地址写进前端代码。
-
-### 首次部署
-
-1. 在目标服务器安装 Docker 和 Docker Compose Plugin。
-2. 创建部署目录，例如 `/opt/florist`。
-3. 把 `deploy/.env.example` 复制成 `deploy/.env`，并填写真实生产值。
-4. 把 `SERVER_IMAGE` 与 `CLIENT_IMAGE` 改成你的 GHCR 镜像地址，例如 `ghcr.io/<github-user>/florist-server`。
-5. 手动执行一次：
-
-```bash
-cd /opt/florist/deploy
-docker login ghcr.io
-cp .env.example .env
-sh redeploy.sh
-```
-
-### GitHub Secrets
-
-要让 `.github/workflows/cd.yml` 自动发布，需要在仓库 Secrets 中配置：
-
-- `SSH_HOST`：部署服务器地址
-- `SSH_PORT`：SSH 端口，默认 22
-- `SSH_USER`：SSH 用户名
-- `SSH_PRIVATE_KEY`：用于登录服务器的私钥
-- `DEPLOY_PATH`：服务器上的部署根目录，例如 `/opt/florist`
-- `GHCR_DEPLOY_USERNAME`：服务器拉取 GHCR 镜像所用账号
-- `GHCR_DEPLOY_TOKEN`：服务器拉取 GHCR 镜像所用 token，至少需要 `read:packages`
-
-说明：
-
-- 构建镜像时，GitHub Actions 使用内置 `GITHUB_TOKEN` 推送镜像到 GHCR
-- 服务器拉取镜像时，使用 `GHCR_DEPLOY_USERNAME` 和 `GHCR_DEPLOY_TOKEN`
-- 服务器上的 `deploy/.env` 不会由工作流覆盖，敏感配置保留在服务器本地
-
-### 默认发布流程
-
-1. 提交代码到 PR，`ci.yml` 执行类型检查和构建校验。
-2. 合并到 `main` 后，`cd.yml` 自动构建两份镜像：
-	- `ghcr.io/<owner>/florist-server:latest`
-	- `ghcr.io/<owner>/florist-client:latest`
-3. 同时额外推送一份以 commit SHA 命名的不可变镜像标签。
-4. 工作流通过 SSH 登录服务器，执行 `deploy/redeploy.sh`，使用新的 `IMAGE_TAG` 拉起容器。
-
-### 生产注意点
-
-- 当前 Compose 默认把 H5 站点映射到宿主机 `80` 端口，可通过 `CLIENT_HTTP_PORT` 调整。
-- 后端容器未直接暴露端口，外部请求默认统一经由前端 Nginx 进入。
-- 上传目录和备份目录已经在 Compose 中挂到独立 volume，容器重建不会丢失。
-- 后端启动时会自动执行 `prisma migrate deploy`，因此生产数据库需要提前备份并保证迁移文件受控。
-- 如果 GHCR 镜像保持私有，服务器必须先完成 `docker login ghcr.io` 或依赖工作流中的自动登录步骤。
-
-## 推荐开发流程
-
-### 日常后端联调
-
-```bash
-pnpm --filter @florist/server db:local:start
-pnpm db:server:deploy
-pnpm dev:server
-pnpm dev:h5
-```
-
-### 小程序联调
-
-```bash
-pnpm --filter @florist/server db:local:start
-pnpm db:server:deploy
-pnpm dev:server
-pnpm dev:mp-weixin
-```
+| 命令 | 说明 |
+|------|------|
+| `pnpm dev:h5` | 启动 H5 前端 |
+| `pnpm dev:mp-weixin` | 启动微信小程序 |
+| `pnpm dev:server` | 启动后端 |
+| `pnpm db:server:up` | Docker 启动 MySQL |
+| `pnpm db:server:down` | Docker 停止 MySQL |
+| `pnpm db:server:deploy` | 执行 Prisma 迁移 |
+| `pnpm build` | 构建整个 workspace |
+| `pnpm typecheck` | 全量类型检查 |
 
 ## 环境变量
 
-### 前端
+### 前端（`apps/client/env/`）
 
-前端环境文件目录：
+| 变量 | 说明 |
+|------|------|
+| `VITE_APP_TITLE` | 应用标题 |
+| `VITE_APP_PORT` | H5 开发端口 |
+| `VITE_SERVER_BASEURL` | 后端地址 |
+| `VITE_STORAGE_AES_KEY` | 本地加密密钥 |
+| `VITE_WX_APPID` | 微信小程序 AppID |
 
-```text
-apps/client/env
-```
+示例文件：`apps/client/env/.env.example`
 
-当前关键配置：
+### 后端（`apps/server/env/`）
 
-- VITE_APP_PORT：前端开发端口，默认 9000
-- VITE_SERVER_BASEURL：后端默认地址，默认 http://localhost:3000
-- VITE_APP_PROXY_ENABLE：是否启用 H5 代理
-- VITE_APP_PROXY_PREFIX：代理前缀，默认 /api
+| 变量 | 说明 |
+|------|------|
+| `PORT` | 服务端口 |
+| `DATABASE_URL` | MySQL 连接串 |
+| `H5_LOGIN_PHONE` | H5 测试手机号 |
+| `H5_LOGIN_CODE` | H5 测试验证码 |
+| `WECHAT_MINI_PROGRAM_APP_ID` | 小程序 AppID |
+| `WECHAT_MINI_PROGRAM_SECRET` | 小程序 Secret |
+| `AI_PROXY_API_KEY` | AI 服务 API Key |
 
-说明：
+示例文件：`apps/server/env/.env.example`
 
-- 开发态下，即使这里还是 3000，只要启用了代理，H5 仍会优先按后端运行时端口文件转发
-- 小程序不走 Vite 开发代理，而是直接请求配置的 serverBaseUrl
+## 认证与会话
 
-### 后端
+业务接口通过请求头 `x-user-id` 识别用户，而非 Cookie 会话：
 
-后端环境文件目录：
+- H5：手机号 + 验证码登录（开发态使用 env 中的测试账号）
+- 微信小程序：`uni.login` 获取 code 发送后端完成识别
+- 未登录时核心功能被全局拦截，登录后自动注入 `x-user-id`
 
-```text
-apps/server/env
-```
+## 主要模块
 
-当前关键配置：
+| 模块 | 说明 |
+|------|------|
+| auth | 手机验证码登录、微信登录、会话管理 |
+| flowers | 植株中心、回收站、批量同步 |
+| records | 养护记录、撤回、时间线 |
+| members | 会员状态与权益管理 |
+| doctor | AI 病虫害识别、出差养护方案 |
+| album | 成长相册、海报生成 |
+| theme | 6 套莫兰迪色系皮肤切换 |
+| backups | 本地备份与恢复（AES 加密） |
+| weather | 天气与城市查询、每日提醒 |
+| admin | 管理后台（独立 Cookie 会话） |
 
-- PORT：默认 3000
-- GLOBAL_PREFIX：默认 api
-- CORS_ORIGIN：默认允许 http://localhost:9000 和 http://127.0.0.1:9000
-- DATABASE_URL：默认 mysql://florist:florist123@127.0.0.1:3307/florist?connection_limit=5
-- H5_LOGIN_PHONE：H5 测试登录手机号，建议使用本地自定义测试号
-- H5_LOGIN_CODE：H5 测试登录验证码，建议使用本地自定义测试码
-- H5_LOGIN_NICKNAME：H5 可选默认昵称，留空时自动生成双段随机花名
-- WECHAT_MINI_PROGRAM_APP_ID：微信小程序 appId，生产态 code2Session 使用
-- WECHAT_MINI_PROGRAM_SECRET：微信小程序 secret，生产态 code2Session 使用
+## 部署
 
-## 登录与测试账号
+生产环境采用 Docker Compose 单机三容器（Nginx + NestJS + MySQL）。详细说明见 [deploy/](deploy/) 目录。
 
-### H5 登录
+CI/CD 通过 GitHub Actions 自动执行：
+- PR → 类型检查 + 构建校验
+- main → 构建镜像推送 GHCR + SSH 远程部署
 
-H5 当前使用“手机号 + 验证码”的开发态登录方案，后端会验证 apps/server/env/.env 中配置的测试手机号和验证码。
-
-当前测试账号请以本地 apps/server/env/.env 为准，文档中不再展示具体测试手机号和验证码。
-
-- 手机号：建议使用脱敏或专用测试号
-- 验证码：建议使用本地自定义 6 位测试码
-- 昵称规则：微信登录优先使用微信昵称；H5 可使用传入昵称或 H5_LOGIN_NICKNAME；都没有时自动生成双段随机花名，例如晚樱铃兰
-
-登录成功后会创建或复用一个独立用户，并把后续请求的 x-user-id 自动切换到这个用户。
-
-### 小程序登录
-
-小程序当前前端会调用 uni.login 获取微信临时 code，再发送到后端 /api/auth/wechat/login。
-
-当前状态：
-
-- 前端平台适配已接通
-- 后端生产态会调用微信官方 code2Session 换取 openid / session_key
-- 开发态如果没有配置 appId / secret，会继续回退到基于 code 的本地联调链路
-
-如果后续要上真机生产环境，需要在 apps/server/env 中补齐微信小程序 appId 和 secret。
-
-## 认证与请求行为
-
-当前项目不是用浏览器 Cookie 会话来驱动业务接口，而是通过前端持久化用户会话，并在请求头中自动携带：
-
-```text
-x-user-id
-```
-
-这意味着：
-
-- 启动后如果没有登录，会先弹出全局登录拦截，核心功能不可继续使用
-- 登录成功后，请求会自动携带当前会话对应的 x-user-id
-- H5 登录成功后，接口会切换到手机号用户
-- 小程序登录成功后，接口会切换到微信用户
-- 非会员仍可在本地管理植物和记录，但云端植物、云端记录、成长相册和相册图片上传仅会员可用
-
-## 会员与图片上传
-
-当前会员中心已经改为真实后端状态驱动：
-
-- 会员页选择套餐后，会直接调用后端开通接口并立即刷新真实会员状态
-- 当前仍是开发阶段的直开通链路，还没有接第三方真实支付网关
-- 云端备份、成长相册、植物相册上传等能力由 CloudBackup 权益控制
-
-当前用户资料与图片上传行为：
-
-- 登录后可修改用户名、头像、个性签名
-- 头像上传会先做居中裁剪和压缩
-- 植物档案图与养护记录图上传前会先压缩，再按卡片比例裁剪
-- 非会员不能使用植物相册上传与成长相册能力
-
-## 当前已落地的主要模块
-
-后端已具备：
-
-- auth：匿名、本地会话、微信登录、H5 手机验证码登录
-- users：当前用户信息管理
-- flowers：植株中心、回收站、同步
-- records：养护记录、撤回、同步
-- members：会员权益
-- feedback：反馈与图片
-- scheduler：提醒配置与日志
-- weather：天气与城市查询
-- ai-proxy：AI 中转
-- backups：备份状态与手动触发
-- admin：极简管理后台
-
-前端已具备：
-
-- 首页花园视图与底部导航
-- 记录页与植物医生页
-- 我的页面、用户资料编辑与本地备份
-- 自定义分类/状态
-- 折叠区与抽屉交互
-- AES 本地持久化
-- 强制登录拦截、登录入口与会话切换
-- 会员中心、会员主题和会员云端权限控制
-
-## 构建与验证
-
-常用验证命令：
+## 常用验证
 
 ```bash
-pnpm typecheck
-pnpm build
-pnpm --filter @florist/client build:h5
-pnpm --filter @florist/client build:mp-weixin
-pnpm --filter @florist/server build
+pnpm typecheck                        # 全量类型检查
+pnpm --filter @florist/client build:h5       # H5 构建
+pnpm --filter @florist/client build:mp-weixin  # 小程序构建
+pnpm --filter @florist/server build          # 后端构建
 ```
-
-当前建议至少执行：
-
-- 改前端页面或状态：pnpm --filter @florist/client typecheck
-- 改 H5 开发代理、路由、环境变量：pnpm --filter @florist/client build:h5
-- 改小程序平台逻辑：pnpm --filter @florist/client build:mp-weixin
-- 改后端模块、DTO、服务：pnpm --filter @florist/server build
 
 ## 常见问题
 
-### 1. 后端启动后不是 3000
+### 后端端口不是 3000
 
-这是正常行为。开发态下如果 3000 被占用，后端会自动切换到下一个空闲端口。
-
-查看当前端口：
+开发态下端口被占用会自动切换，查看当前端口：
 
 ```bash
 cat apps/server/.runtime/dev-server.json
 ```
 
-### 2. H5 请求仍然打错端口
+### H5 请求打错端口
 
-先确认：
+检查后端是否启动、`dev-server.json` 是否存在、请求是否走 `/api` 代理。
 
-- 后端是否启动成功
-- apps/server/.runtime/dev-server.json 是否存在
-- H5 是否走的是 /api 代理，而不是绕过代理直接请求旧地址
+### Docker 数据库起不来
 
-### 3. Docker 数据库起不来
-
-如果 Docker Desktop 没启动，`pnpm db:server:up` 会失败。此时直接改用：
+改用本地 MySQL 二进制：
 
 ```bash
 pnpm --filter @florist/server db:local:start
 ```
 
-### 4. flowers / records 接口超时
+### 登录成功但数据未切换
 
-先检查：
-
-- 3307 上的 MySQL 是否真的在监听
-- 是否执行过 `pnpm db:server:deploy`
-- 当前后端是否已重启并连接到正常数据库
-
-### 5. H5 登录成功但页面还是旧数据
-
-当前实现里登录成功后会强制刷新 flowers、records 和会员状态；如果你看到的仍是旧数据，优先确认当前请求头中的 x-user-id 是否已经切到新会话用户。
+确认请求头 `x-user-id` 已切换到新用户。
 
 ## 相关文档
 
-- docs/architecture.md
-- apps/server/README.md
-- apps/client/README.md
-
-## 维护说明
-
-当前仓库已经在“可联调、可验证、可继续迭代”的阶段，README 的目标不是展示愿景，而是帮助开发者在本地尽快把整套链路跑起来。
-
-如果你后续继续调整脚本、数据库策略、登录方式或代理逻辑，建议同步更新这一份 README，避免运行说明与代码状态脱节。
+- [前端 README](apps/client/README.md)
+- [后端 README](apps/server/README.md)
+- [架构说明](docs/architecture.md)
