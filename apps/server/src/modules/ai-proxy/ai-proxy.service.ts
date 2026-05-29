@@ -1,9 +1,11 @@
 import type {
   IAiAdvice,
+  IAiChatResponse,
   IAiPlantDiagnosis,
   IAiExtremeWeatherAlert,
   IAiTripCarePlan,
   IPlantAiAdvice,
+  IPlantHealthCheck,
 } from '@florist/contracts';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,8 +15,10 @@ import type { ServerEnvConfig } from '../../config/server-env';
 import { ImageService } from '../image/image.service';
 import { UsersService } from '../users/users.service';
 import {
+  RequestAiChatDto,
   RequestCareAdviceDto,
   RequestPlantDiagnosisDto,
+  RequestPlantHealthCheckDto,
   RequestSinglePlantCareAdviceDto,
   RequestTripCarePlanDto,
 } from './dto/request-care-advice.dto';
@@ -420,6 +424,40 @@ function buildTripPlanPrompt(payload: RequestTripCarePlanDto): string {
   ].join('\n');
 }
 
+function buildChatPrompt(payload: RequestAiChatDto): string {
+  const contextLines: string[] = []
+
+  if (payload.weather) {
+    contextLines.push(`天气: ${JSON.stringify(payload.weather)}`)
+  }
+  if (payload.flowers && payload.flowers.length > 0) {
+    contextLines.push(`花园植株: ${JSON.stringify(payload.flowers)}`)
+  } else if (payload.flower) {
+    contextLines.push(`当前植株: ${JSON.stringify(payload.flower)}`)
+  }
+
+  return [
+    '你是植愈日记应用的植物养护顾问。',
+    '请用温柔、实用的中文回答用户问题，适合新手理解。',
+    '输出必须是纯 JSON，格式: {"answer": "你的回复内容"}',
+    contextLines.length > 0 ? `参考上下文: ${contextLines.join('; ')}` : '',
+    `用户问题: ${payload.question}`,
+  ].filter(Boolean).join('\n');
+}
+
+function buildChatFallback(payload: RequestAiChatDto): IAiChatResponse {
+  const plantHint = payload.flower
+    ? `关于「${payload.flower.name ?? payload.flower.nickname ?? '这株植物'}」`
+    : payload.flowers && payload.flowers.length > 0
+      ? `关于你花园里的 ${payload.flowers.length} 株植物`
+      : ''
+
+  return {
+    answer: `${plantHint}，建议你先观察叶片状态和土壤干湿情况。如果方便的话，可以拍一张清晰的照片，或者描述一下具体症状，我能给你更准确的建议。`,
+    generatedAt: new Date().toISOString(),
+  }
+}
+
 @Injectable()
 export class AiProxyService {
   public constructor(
@@ -481,7 +519,7 @@ export class AiProxyService {
   }
 
   private async resolveAiResponse<TResponse>(input: {
-    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan';
+    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan' | 'chat' | 'plant-health-check';
     userId?: string;
     payload: unknown;
     prompt: string;
@@ -598,6 +636,37 @@ export class AiProxyService {
       payload,
       prompt: buildTripPlanPrompt(payload),
       fallbackFactory: () => buildTripCarePlanFallback(payload),
+      ...(userId ? { userId } : {}),
+    });
+  }
+
+  public async getAiChat(payload: RequestAiChatDto, userId?: string): Promise<IAiChatResponse> {
+    return this.resolveAiResponse({
+      scope: 'chat',
+      payload,
+      prompt: buildChatPrompt(payload),
+      fallbackFactory: () => buildChatFallback(payload),
+      ...(userId ? { userId } : {}),
+    });
+  }
+
+  public async getPlantHealthCheck(
+    payload: RequestPlantHealthCheckDto,
+    userId?: string,
+  ): Promise<IPlantHealthCheck> {
+    return this.resolveAiResponse({
+      scope: 'plant-health-check',
+      payload,
+      prompt: [
+        '你是植株健康快检助手。请基于植物状态做快速判断，只输出纯 JSON。',
+        '格式: {"status":"healthy|attention|warning","summary":"一句话总结","suggestedAction":"建议操作（可选）"}',
+        `输入数据: ${JSON.stringify(payload)}`,
+      ].join('\n'),
+      fallbackFactory: (): IPlantHealthCheck => ({
+        status: 'healthy',
+        summary: '暂无足够数据做精确判断，从已有记录看状态平稳。',
+        generatedAt: new Date().toISOString(),
+      }),
       ...(userId ? { userId } : {}),
     });
   }

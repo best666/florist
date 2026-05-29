@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { IAiAdvice } from '@florist/contracts'
 import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
-import { fetchGardenAiCareAdvice } from '@/api'
 import AppBottomNav from '@/components/AppBottomNav.vue'
 import CarePromptDrawer from '@/components/CarePromptDrawer.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
@@ -18,6 +16,7 @@ import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
 import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from '@/components/SubmitBtn.vue'
 import TimeLine from '@/components/TimeLine.vue'
+import { useGardenAiAdvice } from '@/hooks/useGardenAiAdvice'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { useSingleFlowerAiAdvice } from '@/hooks/useSingleFlowerAiAdvice'
@@ -59,9 +58,7 @@ const formMode = ref<'create' | 'edit'>('create')
 const editingFlowerId = ref<string | null>(null)
 const deletingFlower = ref<LocalFlower | null>(null)
 const isSaving = ref(false)
-const aiAdvice = ref<IAiAdvice | null>(null)
-const loadingAiAdvice = ref(false)
-const aiAdviceMessage = ref('')
+const { advice: aiAdvice, loading: loadingAiAdvice, message: aiAdviceMessage, fetchAdvice: fetchGardenAdvice } = useGardenAiAdvice()
 const selectedAdviceFlowerId = ref<string | null>(null)
 const isQuickDrawerVisible = ref(false)
 const isFilterExpanded = ref(false)
@@ -95,17 +92,16 @@ onShow(async () => {
   }
 })
 
+// 天气 / 城市 / 植株数量变化时尝试获取当日 AI 建议（每天仅调用一次 AI，后续走缓存）
 watch(
   [
-    () => weatherReminderState.weather?.fetchedAt ?? '',
-    () => activeFlowers.value.map((flower) => `${flower.id}:${flower.updatedAt}`).join('|'),
-    () => sortedRecords.value[0]?.createdAt ?? '',
+    () => weatherReminderState.weather?.city?.id ?? '',
+    () => activeFlowers.value.length,
     () => isOffline.value,
   ],
-  async ([weatherKey]) => {
-    if (!weatherKey || !weatherReminderState.weather || activeFlowers.value.length === 0) {
+  async ([cityId, flowerCount]) => {
+    if (!cityId || !weatherReminderState.weather || flowerCount === 0) {
       aiAdvice.value = null
-      aiAdviceMessage.value = ''
       return
     }
 
@@ -115,26 +111,13 @@ watch(
       return
     }
 
-    loadingAiAdvice.value = true
-
-    try {
-      aiAdvice.value = await fetchGardenAiCareAdvice({
-        weather: weatherReminderState.weather,
-        flowers: activeFlowers.value,
-        records: sortedRecords.value,
-      })
-      aiAdviceMessage.value = ''
-    } catch (error) {
-      aiAdvice.value = null
-      aiAdviceMessage.value =
-        error instanceof Error ? error.message : 'AI 建议刚刚没有接上，先用天气卡片安排今天的照顾节奏。'
-    } finally {
-      loadingAiAdvice.value = false
-    }
+    await fetchGardenAdvice(
+      weatherReminderState.weather,
+      activeFlowers.value,
+      sortedRecords.value,
+    )
   },
-  {
-    immediate: true,
-  },
+  { immediate: true },
 )
 
 const formInitialValue = computed<FlowerFormValues>(() => {
@@ -234,11 +217,7 @@ watch(
   },
 )
 
-const flowerGridClass = computed(() => {
-  if (viewportWidth.value >= 768) return 'grid-cols-3'
-  if (viewportWidth.value >= 480) return 'grid-cols-2'
-  return 'grid-cols-2'
-})
+const flowerGridClass = computed(() => 'grid-cols-3')
 
 const attentionCount = computed(
   () =>
@@ -816,6 +795,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           :name="getFlowerDisplayName(flower)"
           :nickname="flowerTaxonomyStore.resolveFlowerCategoryLabel(flower)"
           :image-src="getFlowerCoverImage(flower)"
+          :emoji="flower.emoji || '🪴'"
           :status="flower.careStatus"
           :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower)"
           @tap="

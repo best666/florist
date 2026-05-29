@@ -1,14 +1,18 @@
 import type {
   IAiAdvice,
+  IAiChatResponse,
   IAiPlantDiagnosis,
   IAiTripCarePlan,
   IPlantAiAdvice,
+  IPlantHealthCheck,
 } from '@florist/contracts';
 import { Body, Controller, Post } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import {
+  RequestAiChatDto,
   RequestCareAdviceDto,
   RequestPlantDiagnosisDto,
+  RequestPlantHealthCheckDto,
   RequestSinglePlantCareAdviceDto,
   RequestTripCarePlanDto,
 } from './dto/request-care-advice.dto';
@@ -48,5 +52,21 @@ export class AiProxyController {
     @Body() payload: RequestTripCarePlanDto,
   ): Promise<IAiTripCarePlan> {
     return this.aiProxyService.getTripCarePlan(payload, userId);
+  }
+
+  @Post('chat')
+  public getAiChat(
+    @CurrentUserId() userId: string | undefined,
+    @Body() payload: RequestAiChatDto,
+  ): Promise<IAiChatResponse> {
+    return this.aiProxyService.getAiChat(payload, userId);
+  }
+
+  @Post('plant-health-check')
+  public getPlantHealthCheck(
+    @CurrentUserId() userId: string | undefined,
+    @Body() payload: RequestPlantHealthCheckDto,
+  ): Promise<IPlantHealthCheck> {
+    return this.aiProxyService.getPlantHealthCheck(payload, userId);
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FlowerCardQuickAction, TagLabelStatus } from '@/interfaces'
+import type { TagLabelStatus } from '@/interfaces'
 import AppImage from './AppImage.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -7,15 +7,19 @@ interface FlowerCardProps {
   name: string
   nickname?: string
   imageSrc?: string
+  emoji?: string
   status?: Exclude<TagLabelStatus, 'custom'>
   statusText?: string
+  aiHealthText?: string
 }
 
 const props = withDefaults(defineProps<FlowerCardProps>(), {
   nickname: '',
   imageSrc: '',
+  emoji: '🪴',
   status: 'healthy',
   statusText: '',
+  aiHealthText: '',
 })
 
 const emit = defineEmits<{
@@ -33,16 +37,24 @@ function handleTap(): void {
     hover-class="opacity-90"
     @tap="handleTap"
   >
-    <view class="relative aspect-1 overflow-hidden bg-app-cream">
+    <!-- 封面区：有图显示图，无图显示 emoji -->
+    <view class="relative aspect-1 overflow-hidden bg-[var(--color-cream)]/40">
       <AppImage
+        v-if="props.imageSrc"
         :src="props.imageSrc"
         mode="aspectFill"
         class="h-full w-full"
-        error-text="暂无封面"
+        error-text=""
       />
-      <view class="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#32404a]/40 to-transparent" />
+      <view
+        v-else
+        class="flex h-full w-full items-center justify-center text-[72rpx]"
+      >
+        {{ props.emoji }}
+      </view>
+      <view class="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#32404a]/20 to-transparent" />
       <view class="absolute left-2 top-2">
-        <TagLabel :status="props.status" :text="props.statusText" />
+        <TagLabel :status="props.status" :text="props.statusText || ''" />
       </view>
     </view>
 
@@ -55,6 +67,14 @@ function handleTap(): void {
         class="mt-0.5 block truncate text-2xs text-app-muted dark:text-app-muted/70"
       >
         {{ props.nickname }}
+      </text>
+      <!-- AI 健康分析 -->
+      <text
+        v-if="props.aiHealthText"
+        class="mt-1 block truncate text-3xs leading-5"
+        :class="props.status === 'healthy' ? 'text-[var(--color-sage)]' : 'text-[var(--color-blush)]'"
+      >
+        {{ props.aiHealthText }}
       </text>
     </view>
   </view>

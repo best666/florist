@@ -7,6 +7,11 @@ import type {
 } from '@/interfaces'
 import { getSeasonByDate, getSolarTerm } from '@/utils'
 import { http } from '@/utils/request'
+import { getEncryptedStorage, setEncryptedStorage } from '@/utils/storage'
+
+/** 出差方案客户端缓存 TTL：24 小时 */
+const TRIP_PLAN_CACHE_TTL_MS = 24 * 60 * 60 * 1000
+const TRIP_PLAN_CACHE_NAMESPACE = 'ai-doctor'
 
 interface PlantDoctorWeatherPayload {
   cityName: string
@@ -104,8 +109,25 @@ export function fetchPlantDiagnosis(
   })
 }
 
-export function fetchTripCarePlan(context: PlantDoctorTripPlanContext): Promise<IAiTripCarePlan> {
-  return http.post<IAiTripCarePlan, {
+export async function fetchTripCarePlan(context: PlantDoctorTripPlanContext): Promise<IAiTripCarePlan> {
+  // 客户端缓存：相同花 + 相同城市 + 相同天数 + 同一天 → 复用缓存
+  const cacheKey = [
+    'trip-plan',
+    context.flower.id,
+    context.weather.city.id,
+    String(context.travelDays),
+    new Date().toISOString().slice(0, 10),
+  ].join('::')
+
+  const cached = getEncryptedStorage<{ value: IAiTripCarePlan; cachedAt: number }>(cacheKey, {
+    namespace: TRIP_PLAN_CACHE_NAMESPACE,
+  })
+
+  if (cached && Date.now() - cached.cachedAt < TRIP_PLAN_CACHE_TTL_MS) {
+    return cached.value
+  }
+
+  const result = await http.post<IAiTripCarePlan, {
     travelDays: number
     weather: PlantDoctorWeatherPayload
     flower: PlantDoctorFlowerPayload
@@ -119,4 +141,11 @@ export function fetchTripCarePlan(context: PlantDoctorTripPlanContext): Promise<
     skipErrorToast: true,
     cancelDuplicate: true,
   })
+
+  setEncryptedStorage(cacheKey, { value: result, cachedAt: Date.now() }, {
+    namespace: TRIP_PLAN_CACHE_NAMESPACE,
+    expiresInMs: TRIP_PLAN_CACHE_TTL_MS,
+  })
+
+  return result
 }

@@ -85,7 +85,7 @@ export const SERVER_ENV_DEFAULTS = {
   aiProxyBaseUrl: 'https://example.com',
   aiProxyApiKey: 'replace-with-local-key',
   aiProxyModel: 'gpt-4o-mini',
-  aiDailyQuota: 60,
+  aiDailyQuota: 10,
   aiCacheTtlMs: 10 * 60 * 1000,
   weatherCacheTtlMs: 15 * 60 * 1000,
   imageCacheTtlMs: 60 * 60 * 1000,

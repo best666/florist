@@ -54,3 +54,23 @@ export interface IPlantAiAdvice extends IAiAdvice {
   /** 温柔降级文案。 */
   readonly gentleFallbackMessage?: string
 }
+
+/** 植株健康快检结果 */
+export interface IPlantHealthCheck {
+  /** 健康状态 */
+  readonly status: 'healthy' | 'attention' | 'warning'
+  /** 一句话总结 */
+  readonly summary: string
+  /** 建议操作（可选） */
+  readonly suggestedAction?: string
+  /** 生成时间 */
+  readonly generatedAt: IsoDateTimeString
+}
+
+/** AI 聊天响应 */
+export interface IAiChatResponse {
+  /** AI 回复内容 */
+  readonly answer: string
+  /** 生成时间 */
+  readonly generatedAt: IsoDateTimeString
+}

@@ -1,15 +1,14 @@
-import { MemberBenefitType } from '@florist/contracts'
 import { reactive } from 'vue'
 import type {
   PlantDoctorCenterState,
   PlantDoctorHistoryItem,
   PlantDoctorUsageQuota,
 } from '@/interfaces'
-import { useMemberStore } from '@/store'
 import {
-  DAILY_FREE_PLANT_DIAGNOSIS_LIMIT,
+  DAILY_FREE_AI_WEATHER_ADVICE_LIMIT,
   MAX_PLANT_DOCTOR_HISTORY_COUNT,
 } from '@/interfaces'
+import { useFreeTierLimits } from '@/hooks/useFreeTierLimits'
 import { getEncryptedStorage, setEncryptedStorage } from '@/utils/storage'
 
 interface PlantDoctorUsageCache {
@@ -25,20 +24,17 @@ function createDateKey(date = new Date()): string {
   return date.toISOString().slice(0, 10)
 }
 
-function createQuotaStatus(cache: PlantDoctorUsageCache | null, isMemberUnlimited: boolean): PlantDoctorUsageQuota {
+function createQuotaStatus(cache: PlantDoctorUsageCache | null): PlantDoctorUsageQuota {
   const dateKey = createDateKey()
   const usedCount = cache && cache.dateKey === dateKey ? cache.usedCount : 0
-  const remainingCount = isMemberUnlimited
-    ? DAILY_FREE_PLANT_DIAGNOSIS_LIMIT
-    : Math.max(DAILY_FREE_PLANT_DIAGNOSIS_LIMIT - usedCount, 0)
 
   return {
     dateKey,
     usedCount,
-    freeLimit: DAILY_FREE_PLANT_DIAGNOSIS_LIMIT,
-    remainingCount,
-    isMemberUnlimited,
-    exceeded: !isMemberUnlimited && usedCount >= DAILY_FREE_PLANT_DIAGNOSIS_LIMIT,
+    freeLimit: DAILY_FREE_AI_WEATHER_ADVICE_LIMIT,
+    remainingCount: Math.max(DAILY_FREE_AI_WEATHER_ADVICE_LIMIT - usedCount, 0),
+    isMemberUnlimited: false,
+    exceeded: usedCount >= DAILY_FREE_AI_WEATHER_ADVICE_LIMIT,
   }
 }
 
@@ -66,22 +62,23 @@ function writeUsageCache(cache: PlantDoctorUsageCache): void {
   })
 }
 
+/**
+ * 植物医生中心 — 免费层限额管理
+ *
+ * AI 天气建议（诊断 + 出差方案）：2 次/天
+ */
 export function usePlantDoctorCenter() {
-  const memberStore = useMemberStore()
-
-  function resolveUnlimitedQuota(): boolean {
-    memberStore.syncMembershipStatus()
-    return memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
-  }
+  const freeTier = useFreeTierLimits()
 
   const state = reactive<PlantDoctorCenterState>({
     history: readHistory(),
-    quota: createQuotaStatus(readUsageCache(), resolveUnlimitedQuota()),
+    quota: createQuotaStatus(readUsageCache()),
     latestLimitMessage: '',
   })
 
   function refreshQuota(): PlantDoctorUsageQuota {
-    state.quota = createQuotaStatus(readUsageCache(), resolveUnlimitedQuota())
+    freeTier.refreshFromStorage()
+    state.quota = createQuotaStatus(readUsageCache())
     return state.quota
   }
 
@@ -93,16 +90,12 @@ export function usePlantDoctorCenter() {
       return true
     }
 
-    state.latestLimitMessage = '今天免费的 3 次识别已经用完啦。会员可继续使用更多 AI 识别次数，也能把更完整的托管建议一起带走。'
+    state.latestLimitMessage = `今天的 ${DAILY_FREE_AI_WEATHER_ADVICE_LIMIT} 次免费 AI 识别已经用完啦，明天再来试试吧。`
     return false
   }
 
   function markDiagnosisUsed(): PlantDoctorUsageQuota {
     const quota = refreshQuota()
-
-    if (quota.isMemberUnlimited) {
-      return quota
-    }
 
     const nextCache: PlantDoctorUsageCache = {
       dateKey: quota.dateKey,
@@ -110,7 +103,8 @@ export function usePlantDoctorCenter() {
     }
 
     writeUsageCache(nextCache)
-    state.quota = createQuotaStatus(nextCache, quota.isMemberUnlimited)
+    freeTier.recordWeatherAdviceUse()
+    state.quota = createQuotaStatus(nextCache)
     return state.quota
   }
 

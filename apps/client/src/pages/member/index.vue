@@ -2,15 +2,18 @@
 import { onShow } from '@dcloudio/uni-app'
 import { computed } from 'vue'
 import { useMemberStore } from '@/store'
+import { useFreeTierLimits } from '@/hooks/useFreeTierLimits'
 import { THEME_SKIN_DEFINITIONS } from '@/utils'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { MAX_FREE_PHOTO_UPLOADS } from '@/interfaces'
 
 const themeClass = usePageTheme()
-
 const memberStore = useMemberStore()
+const freeTier = useFreeTierLimits()
 
 onShow(() => {
   void memberStore.initializeMembership(true)
+  freeTier.refreshFromStorage()
 })
 
 const themeSkins = computed(() => THEME_SKIN_DEFINITIONS)
@@ -26,31 +29,92 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
+      <!-- 限时免费 Hero -->
       <view
         class="overflow-hidden rounded-[var(--radius-panel)] bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]"
       >
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted">皮肤主题中心</view>
+            <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted">限时免费</view>
             <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink">
-              选一个喜欢的配色，让花园更有你的风格
+              当前所有功能免费开放中
             </view>
             <view class="mt-2 text-sm leading-6 text-app-muted">
-              莫兰迪色系，柔和低饱和，久看不累。切换后全局配色即时生效。
+              植株云端保存、皮肤主题、备份恢复全部可用。AI 识别和咨询有每日免费次数限制。
             </view>
           </view>
           <view
             class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/60 text-[64rpx]"
           >
-            🎨
+            🎁
           </view>
         </view>
       </view>
 
+      <!-- 使用统计 -->
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">今日使用</text>
+        <view class="mt-4 grid grid-cols-2 gap-3">
+          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
+            <text class="block text-2xs text-app-muted">AI 天气建议</text>
+            <text class="mt-1 block text-lg font-800" :class="freeTier.weatherAdviceExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
+              {{ freeTier.weatherAdviceRemaining.value }} 次剩余
+            </text>
+          </view>
+          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
+            <text class="block text-2xs text-app-muted">AI 养护咨询</text>
+            <text class="mt-1 block text-lg font-800" :class="freeTier.consultationExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
+              {{ freeTier.consultationRemaining.value }} 次剩余
+            </text>
+          </view>
+          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3 col-span-2">
+            <text class="block text-2xs text-app-muted">照片上传（共 {{ MAX_FREE_PHOTO_UPLOADS }} 张额度）</text>
+            <text class="mt-1 block text-lg font-800" :class="freeTier.photoUploadsExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
+              {{ freeTier.photoUploadsRemaining.value }} 张剩余
+            </text>
+          </view>
+        </view>
+      </view>
 
+      <!-- 免费权益说明 -->
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">免费权益</text>
+        <view class="mt-4 flex flex-col gap-2">
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-[var(--color-sage)]">✓</text>
+            <text>植株全部保存云端，永久同步</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-[var(--color-sage)]">✓</text>
+            <text>全部皮肤主题免费切换</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-[var(--color-sage)]">✓</text>
+            <text>本地备份与恢复（AES 加密）</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-[var(--color-sage)]">✓</text>
+            <text>成长海报无水印导出</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-[var(--color-sage)]">✓</text>
+            <text>照片上传 5 张额度</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-app-ink">→</text>
+            <text>AI 天气建议每日 2 次</text>
+          </view>
+          <view class="flex items-center gap-2 text-sm text-app-muted">
+            <text class="text-app-ink">→</text>
+            <text>AI 养护咨询每日 1 次</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 主题选择 -->
       <view class="card-soft rounded-[32rpx]">
         <view>
-          <text class="block text-base font-800 text-app-ink">皮肤主题中心</text>
+          <text class="block text-base font-800 text-app-ink">皮肤主题</text>
           <text class="mt-1 block text-sm text-app-muted">切换后全局配色即时生效。</text>
         </view>
 

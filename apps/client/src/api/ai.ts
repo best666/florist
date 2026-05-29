@@ -1,4 +1,4 @@
-import type { IAiAdvice, IPlantAiAdvice } from '@florist/contracts'
+import type { IAiAdvice, IAiChatResponse, IPlantAiAdvice, IPlantHealthCheck } from '@florist/contracts'
 import { getRecordActionLabel } from '@/interfaces'
 import type {
   GardenAiAdviceContext,
@@ -258,6 +258,54 @@ export function buildSingleFlowerHistoryLabel(records: ReadonlyArray<LocalRecord
   }
 
   return `最近一次是${getRecordActionLabel(latestRecord.actionType)}，记录时间 ${latestRecord.createdAt.slice(0, 16).replace('T', ' ')}`
+}
+
+/** AI 聊天：发送问题 + 植物上下文，获取 AI 回复 */
+export async function fetchAiChat(context: {
+  question: string
+  weather?: WeatherSnapshot
+  flowers?: ReadonlyArray<LocalFlower>
+  flower?: LocalFlower
+  records?: ReadonlyArray<LocalRecord>
+}): Promise<IAiChatResponse> {
+  const payload: Record<string, unknown> = { question: context.question }
+
+  if (context.weather) payload.weather = mapWeatherPayload(context.weather)
+  if (context.flowers) payload.flowers = context.flowers.map(f => mapFlowerPayload(f, context.records ?? []))
+  else if (context.flower) payload.flower = mapFlowerPayload(context.flower, context.records ?? [])
+
+  return http.post<IAiChatResponse>('/ai-proxy/chat', payload, {
+    timeout: 30000,
+    loadingText: 'AI 正在思考中',
+    skipErrorToast: true,
+    cancelDuplicate: true,
+  })
+}
+
+/** 单株植物健康快检：分析当前状态并给出简要建议，结果缓存 24h */
+export async function fetchPlantHealthCheck(
+  flower: LocalFlower,
+  records: ReadonlyArray<LocalRecord>,
+  weather?: WeatherSnapshot | null,
+): Promise<IPlantHealthCheck> {
+  const cacheKey = `plant-health::${flower.id}::${new Date().toISOString().slice(0, 10)}`
+
+  const cached = getEncryptedStorage<IPlantHealthCheck>(cacheKey, { namespace: AI_CACHE_NAMESPACE })
+  if (cached) return cached
+
+  const payload: Record<string, unknown> = {
+    flower: mapFlowerPayload(flower, records),
+  }
+  if (weather) payload.weather = mapWeatherPayload(weather)
+
+  const result = await http.post<IPlantHealthCheck>('/ai-proxy/plant-health-check', payload, {
+    timeout: 15000,
+    skipErrorToast: true,
+    cancelDuplicate: true,
+  })
+
+  setEncryptedStorage(cacheKey, result, { namespace: AI_CACHE_NAMESPACE, expiresInMs: AI_CACHE_TTL_MS })
+  return result
 }
 
 export const fetchAiCareAdvice = fetchGardenAiCareAdvice

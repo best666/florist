@@ -168,3 +168,36 @@ export class RequestTripCarePlanDto {
   @Type(() => AdviceFlowerDto)
   public flower!: AdviceFlowerDto;
 }
+
+export class RequestAiChatDto {
+  @IsString()
+  @MaxLength(500)
+  public question!: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdviceWeatherDto)
+  public weather?: AdviceWeatherDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AdviceFlowerDto)
+  public flowers?: AdviceFlowerDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdviceFlowerDto)
+  public flower?: AdviceFlowerDto;
+}
+
+export class RequestPlantHealthCheckDto {
+  @ValidateNested()
+  @Type(() => AdviceFlowerDto)
+  public flower!: AdviceFlowerDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AdviceWeatherDto)
+  public weather?: AdviceWeatherDto;
+}

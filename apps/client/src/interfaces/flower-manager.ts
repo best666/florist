@@ -54,6 +54,7 @@ export interface LocalFlower {
   readonly careDifficulty: FlowerCareDifficulty
   readonly careStatus: FlowerHealthStatus
   readonly coverImageId?: string
+  readonly emoji?: string
   readonly note?: string
   readonly images: ReadonlyArray<IImageAsset>
   readonly lastWateredAt?: IsoDateTimeString

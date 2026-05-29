@@ -9,6 +9,7 @@ import {
   readAuthUserIdFromStorage,
   removeCachedImage,
 } from '@/utils'
+import { resolvePlantEmoji } from '@/utils/plant-emoji'
 import { useFlowerTaxonomyStore } from './flower-taxonomy'
 import { useMemberStore } from './member'
 
@@ -49,6 +50,7 @@ function buildFlowerEntity(values: FlowerFormValues, existingFlower?: LocalFlowe
     careStatus: values.careStatus,
     ...(note ? { note } : {}),
     ...(values.coverImageId ? { coverImageId: values.coverImageId } : {}),
+    emoji: existingFlower?.emoji ?? resolvePlantEmoji(values.name.trim(), values.category),
     images: cloneImages(values.images),
     ...(lastWateredAt ? { lastWateredAt } : {}),
     ...(lastFertilizedAt ? { lastFertilizedAt } : {}),

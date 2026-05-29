@@ -97,6 +97,8 @@ declare global {
   const useCssVars: typeof import('vue').useCssVars
   const useCustomOptionEditor: typeof import('../hooks/useCustomOptionEditor').useCustomOptionEditor
   const useEncryptedStorage: typeof import('../hooks/useEncryptedStorage').useEncryptedStorage
+  const useFreeTierLimits: typeof import('../hooks/useFreeTierLimits').useFreeTierLimits
+  const useGardenAiAdvice: typeof import('../hooks/useGardenAiAdvice').useGardenAiAdvice
   const useId: typeof import('vue').useId
   const useLocationWeatherReminder: typeof import('../hooks/useLocationWeatherReminder').useLocationWeatherReminder
   const useModel: typeof import('vue').useModel
@@ -220,6 +222,8 @@ declare module 'vue' {
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useCustomOptionEditor: UnwrapRef<typeof import('../hooks/useCustomOptionEditor')['useCustomOptionEditor']>
     readonly useEncryptedStorage: UnwrapRef<typeof import('../hooks/useEncryptedStorage')['useEncryptedStorage']>
+    readonly useFreeTierLimits: UnwrapRef<typeof import('../hooks/useFreeTierLimits')['useFreeTierLimits']>
+    readonly useGardenAiAdvice: UnwrapRef<typeof import('../hooks/useGardenAiAdvice')['useGardenAiAdvice']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLocationWeatherReminder: UnwrapRef<typeof import('../hooks/useLocationWeatherReminder')['useLocationWeatherReminder']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
