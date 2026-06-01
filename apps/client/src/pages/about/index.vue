@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import InfoPopover from '@/components/InfoPopover.vue'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { usePageTip } from '@/hooks/usePageTip'
+import { ABOUT_TIPS } from '@/interfaces/page-tips'
 
 const themeClass = usePageTheme()
+const { currentTip: aboutTip } = usePageTip(ABOUT_TIPS)
 
 const featureList = [
-  '本地加密保存植株、打卡、提醒和成长记录，断网也能继续使用。',
-  '支持天气提醒、AI 养护建议、病虫害识别、出差照护方案。',
-  '强调轻量、稳定和可持续维护，不把复杂流程堆进单一页面。',
+  '植株、打卡、提醒和成长记录安全保存在你的设备上，离线也能用。',
+  '天气提醒、AI 养护建议、病虫害识别、出差照护方案。',
+  '轻量、稳定、温柔，帮你把每一盆植物都照顾好。',
 ]
 </script>
 
@@ -20,15 +24,15 @@ const featureList = [
           养花人是一款把照护过程慢慢沉淀下来的花园工具
         </view>
         <view class="mt-2 text-sm leading-6 text-app-muted">
-          它服务于日常养护、小程序双端体验和本地数据安全，不追求堆砌复杂功能，而是希望让每一次照顾都更轻一点、更稳一点。
+          {{ aboutTip }}
         </view>
       </view>
 
       <view class="card-soft rounded-[32rpx]">
-        <text class="block text-base font-800 text-app-ink">产品定位</text>
-        <text class="mt-3 block text-sm leading-7 text-app-muted">
-          我们希望把花卉养护中最容易被忽略的细节做成一个温和的陪伴系统：记录发生过什么、提醒今天该做什么、在出错时还能把数据找回来。
-        </text>
+        <view class="flex items-center gap-1">
+          <text class="block text-base font-800 text-app-ink">产品定位</text>
+          <InfoPopover content="把花卉养护中最容易被忽略的细节做成一个温和的陪伴系统：记录发生过什么、提醒今天该做什么、在出错时还能把数据找回来。" />
+        </view>
       </view>
 
       <view class="card-soft rounded-[32rpx]">
@@ -42,10 +46,10 @@ const featureList = [
       </view>
 
       <view class="card-soft rounded-[32rpx]">
-        <text class="block text-base font-800 text-app-ink">设计原则</text>
-        <text class="mt-3 block text-sm leading-7 text-app-muted">
-          功能先落在现有工程边界里，能复用现有 request、storage、platform、Pinia 状态就不平行再造一套。页面负责编排，组件负责展示，副作用逻辑尽量下沉到 hook 和工具层。
-        </text>
+        <view class="flex items-center gap-1">
+          <text class="block text-base font-800 text-app-ink">设计原则</text>
+          <InfoPopover content="每一个功能都尽量简单直接，页面负责排版，组件负责展示，复杂逻辑留在底层。让你用起来轻巧顺手。" />
+        </view>
       </view>
     </view>
   </view>

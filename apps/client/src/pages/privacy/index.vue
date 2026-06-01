@@ -21,7 +21,7 @@ const themeClass = usePageTheme()
       <view class="card-soft rounded-[32rpx]">
         <text class="block text-base font-800 text-app-ink">1. 本地数据</text>
         <text class="mt-3 block text-sm leading-7 text-app-muted">
-          植株、打卡、提醒配置、反馈草稿等核心数据默认保存在本地加密存储中。你也可以手动生成加密备份串，用于自行保存和恢复。
+          植株、打卡、提醒配置、反馈草稿等数据默认安全保存在你的设备上。你也可以手动生成备份文件，用于自行保存和恢复。
         </text>
       </view>
 

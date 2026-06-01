@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
 import AppButton from '@/components/AppButton.vue'
 import AppImage from '@/components/AppImage.vue'
+import InfoPopover from '@/components/InfoPopover.vue'
 import SubmitBtn from '@/components/SubmitBtn.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import { fetchPlantDiagnosis, fetchTripCarePlan } from '@/api'
@@ -363,7 +364,7 @@ function handleOpenHistoryImage(imageUrl: string): void {
               先帮你看图，再把它出差这几天安顿好
             </view>
             <view class="mt-2 text-sm leading-6 text-app-muted dark:text-slate-200">
-              支持拍照、相册、压缩优化、识别留档和无人托管方案。免费用户每天可识别 3 次，超过后会轻轻提醒你会员权益。
+              {{ doctorTip }}
             </view>
           </view>
           <view
@@ -399,10 +400,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">当地天气</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              出差方案会结合当前城市天气来收紧风险，识别时也会顺手参考环境信息。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">当地天气</text>
+              <InfoPopover content="出差托管方案会结合当前城市天气来评估风险，病虫害识别时也会参考温度和湿度信息。" />
+            </view>
           </view>
           <TagLabel :text="weatherState.weather?.weatherText ?? '等待天气'" tone="mint" />
         </view>
@@ -460,10 +461,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别对象</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              选一盆植物能让建议更贴合；不选也可以先单纯识别图片。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别对象</text>
+              <InfoPopover content="选一盆你的植物，诊断建议会更贴合它的种类和养护历史。不选也可以直接用图片识别。" />
+            </view>
           </view>
           <TagLabel :text="quotaText" :tone="plantDoctorState.quota.exceeded ? 'cream' : 'blush'" />
         </view>
@@ -492,10 +493,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别图片</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              建议拍叶背、病斑、虫点或受损局部，光线稳定一点，识别会更准。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别图片</text>
+              <InfoPopover content="拍叶背、病斑、虫点或受损局部，光线自然不反光，识别会更准。早上 9-11 点光线最柔和。" />
+            </view>
           </view>
           <TagLabel :text="selectedImage ? '已准备好' : '待上传'" :tone="selectedImage ? 'mint' : 'slate'"
             :icon="selectedImage ? '✓' : '↑'" size="md" />
@@ -541,9 +542,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view v-if="diagnosisResult" class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别结果</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              先按最轻的一步处理，再观察半天到一天，会比一下子上很多动作更稳。
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别结果</text>
+              <InfoPopover content="建议先按最轻的一步处理，再观察半天到一天。循序渐进比一下子上很多动作更稳妥。" />
+            </view>
             </text>
           </view>
           <TagLabel :text="diagnosisResult.confidenceLabel"
@@ -585,9 +587,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">出差养护方案</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              结合天气、摆放位置和出差天数，帮你生成无人托管时的照顾节奏。
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">出差养护方案</text>
+              <InfoPopover content="结合天气、摆放位置和出差天数，生成无人托管期间的照顾计划：出门前准备、行程中的注意事项、回家后的检查要点。" />
+            </view>
             </text>
           </view>
           <TagLabel :text="selectedFlower ? selectedFlowerStatusLabel : '请先选植株'"
@@ -637,10 +640,10 @@ function handleOpenHistoryImage(imageUrl: string): void {
       <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">本地识别记录</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              {{ doctorTip }}
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别记录</text>
+              <InfoPopover :content="doctorTip || ''" />
+            </view>
           </view>
           <AppButton
             variant="pill" size="none"

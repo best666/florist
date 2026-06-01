@@ -7,6 +7,7 @@ import GrowthPosterWorkbench from '@/components/GrowthPosterWorkbench.vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import InfoPopover from '@/components/InfoPopover.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
@@ -200,11 +201,9 @@ onShow(async () => {
             <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
               成长相册 + 海报生成保存
             </view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
+            <view class="mt-3 flex items-center gap-2 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
               把它从第一张照片到现在的模样，轻轻串成一条成长线
-            </view>
-            <view class="mt-2 text-sm leading-6 text-app-muted dark:text-slate-200">
-              自动汇总单植株照片、标出养护关键节点，并把最近的变化拼成一张柔和海报。
+              <InfoPopover content="选择一盆植物，相册会自动收集它的档案照片和打卡配图按时间排列。还能把最近的变化拼成一张柔和的海报保存分享。" />
             </view>
           </view>
           <view
@@ -222,10 +221,10 @@ onShow(async () => {
       <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">选择植物</text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              相册会自动按时间汇总这盆植物的档案照片和打卡配图。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">选择植物</text>
+              <InfoPopover content="相册会自动按时间汇总这盆植物的档案照片和打卡配图，滑动即可浏览它的成长历程。" />
+            </view>
           </view>
           <TagLabel :text="selectedFlower ? `${careDays} 天陪伴` : '待选择'" :tone="selectedFlower ? 'mint' : 'slate'"
             :icon="selectedFlower ? '✓' : '○'" size="md" />

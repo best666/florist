@@ -16,6 +16,7 @@ import {
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import ImagePicker from './ImagePicker.vue'
+import InfoPopover from './InfoPopover.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -140,12 +141,12 @@ function handleSubmit(): void {
 
         <view class="flex items-start justify-between gap-3">
           <view>
-            <text class="block text-xl font-800 text-app-ink dark:text-slate-100">
-              记录一次温柔照顾
-            </text>
-            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              打卡会先保存到本地加密数据里，断网时也能继续写下今天的小进展。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-xl font-800 text-app-ink dark:text-slate-100">
+                记录一次温柔照顾
+              </text>
+              <InfoPopover content="打卡记录会安全保存在你的设备上，没有网络也能正常使用。所有的浇水、施肥、修剪都会被温柔记下。" />
+            </view>
           </view>
           <TagLabel :text="selectedActionMeta.label" :tone="selectedActionMeta.tone" />
         </view>

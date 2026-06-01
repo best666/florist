@@ -7,6 +7,7 @@ import AppBottomNav from '@/components/AppBottomNav.vue'
 import AppButton from '@/components/AppButton.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
+import InfoPopover from '@/components/InfoPopover.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
@@ -229,12 +230,12 @@ async function handleUndoLatestRecord(): Promise<void> {
       <view class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">
-              快捷打卡
-            </text>
-            <text class="mt-1 block text-sm text-app-muted dark:text-slate-300">
-              轻点一下，就把今天的照顾和心情一起收好。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">
+                快捷打卡
+              </text>
+              <InfoPopover content="轻点一下，就把今天的照顾和心情一起收好。每种操作都支持拍照片、写备注，记录下每一次温柔的照顾。" />
+            </view>
           </view>
           <TagLabel :text="`${sortedRecords.length} 条记录`" tone="mint" />
         </view>
@@ -309,12 +310,12 @@ async function handleUndoLatestRecord(): Promise<void> {
         class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">
           <view>
-            <text class="block text-base font-800 text-app-ink dark:text-slate-100">
-              {{ group.dateLabel }}
-            </text>
-            <text class="mt-1 block text-sm text-app-muted dark:text-slate-300">
-              倒序时间轴，今天的照顾会排在最前面。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">
+                {{ group.dateLabel }}
+              </text>
+              <InfoPopover content="按时间倒序排列，最新的记录排在最前面。向左滑动单条记录可以快速撤回。" />
+            </view>
           </view>
           <TagLabel :text="`${group.items.length} 条`" tone="blush" />
         </view>

@@ -14,6 +14,7 @@ import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/uti
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { useCustomOptionEditor } from '@/hooks/useCustomOptionEditor'
 import ImagePicker from './ImagePicker.vue'
+import InfoPopover from './InfoPopover.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -575,10 +576,10 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-app-ink dark:text-slate-100">图片相册</text>
-            <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
-              多图上传、预览、删除都会即时落本地缓存，适合离线记录。
-            </text>
+            <view class="flex items-center gap-1">
+              <text class="text-sm font-700 text-app-ink dark:text-slate-100">图片相册</text>
+              <InfoPopover content="多图上传、预览、删除都会即时保存，没有网络也能正常操作。上传的图片会自动压缩优化。" />
+            </view>
 
             <ImagePicker
               v-model="formState.images"

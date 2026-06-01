@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app'
 import { computed } from 'vue'
+import InfoPopover from '@/components/InfoPopover.vue'
 import { useMemberStore } from '@/store'
 import { useFreeTierLimits } from '@/hooks/useFreeTierLimits'
 import { THEME_SKIN_DEFINITIONS } from '@/utils'
@@ -36,11 +37,9 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted">限时免费</view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink">
+            <view class="mt-3 flex items-center gap-2 text-[42rpx] font-900 leading-tight text-app-ink">
               当前所有功能免费开放中
-            </view>
-            <view class="mt-2 text-sm leading-6 text-app-muted">
-              植株云端保存、皮肤主题、备份恢复全部可用。AI 识别和咨询有每日免费次数限制。
+              <InfoPopover content="植株数据云端保存、皮肤主题自由切换、备份恢复都免费开放。AI 识别和咨询有每日免费次数，会员可不限次数使用。" />
             </view>
           </view>
           <view

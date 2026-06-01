@@ -581,7 +581,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
             <view
               class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100"
             >
-              {{ isOffline ? '离线小花园模式' : '在线加密缓存模式' }}
+              {{ isOffline ? '离线花园' : '今日花园' }}
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
               今天也把花园照顾得软乎乎的
@@ -624,7 +624,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         v-if="isOffline"
         class="info-soft app-fade-up bg-[#fff4e0]/92 text-[#8a633e] dark:bg-amber-500/14 dark:text-amber-100"
       >
-        当前网络不可用，已自动切到本地离线使用。你现在的新增、编辑、图片缓存和删除操作都会保存在设备加密存储里。
+        网络暂时休息中，你的所有操作都会安全保存在本地，联网后会自动同步。
       </view>
 
       <view class="grid grid-cols-3 gap-3">
@@ -867,7 +867,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         title="真的要先送去回收站吗"
         :description="
           deletingFlower
-            ? `${deletingFlower.name} 会先留在回收站 7 天，期间仍会保留本地加密缓存，之后自动清除。`
+            ? `${deletingFlower.name} 会先放在回收站保留 7 天，期间随时可以恢复，之后才会彻底清除。`
             : '这次删除会先进回收站，不会立刻彻底消失。'
         "
         confirm-text="确认删除"

@@ -226,14 +226,6 @@ function goToCommunity(): void {
 
       <MineStatisticsGrid :cards="statisticsCards" />
 
-      <CollapsibleSection
-        title="皮肤主题"
-        :description="`当前 ${memberStore.currentTheme.label} · 莫兰迪色系，柔和护眼`"
-        :default-expanded="false"
-      >
-        <MineThemeSelector />
-      </CollapsibleSection>
-
       <view
         class="card-soft rounded-[28rpx] dark:bg-slate-900 app-pressable"
         hover-class="opacity-92"
@@ -252,6 +244,14 @@ function goToCommunity(): void {
       </view>
 
       <CollapsibleSection
+        title="皮肤主题"
+        :description="`当前 ${memberStore.currentTheme.label} · 莫兰迪色系，柔和护眼`"
+        :default-expanded="false"
+      >
+        <MineThemeSelector />
+      </CollapsibleSection>
+
+      <CollapsibleSection
         title="扩展服务与沉淀"
         :tag-text="`${plantDoctorHistoryCount} 条植物医生历史`"
         tag-tone="cream"
@@ -262,9 +262,9 @@ function goToCommunity(): void {
 
       <CollapsibleSection
         title="本地备份与恢复"
-        :tag-text="memberStore.hasCloudBackup ? '云备份权益已解锁' : 'AES 本地加密'"
+        :tag-text="memberStore.hasCloudBackup ? '云备份已开启' : '本地安全存储'"
         :tag-tone="memberStore.hasCloudBackup ? 'mint' : 'cream'"
-        :tag-icon="memberStore.hasCloudBackup ? '☁' : '⌁'"
+        :tag-icon="memberStore.hasCloudBackup ? '☁' : '🔒'"
       >
         <MineBackupPanel
           :reminder-config="weatherReminderState.reminderConfig"
