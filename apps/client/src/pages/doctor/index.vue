@@ -4,6 +4,7 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
+import AppButton from '@/components/AppButton.vue'
 import AppImage from '@/components/AppImage.vue'
 import SubmitBtn from '@/components/SubmitBtn.vue'
 import TagLabel from '@/components/TagLabel.vue'
@@ -641,11 +642,13 @@ function handleOpenHistoryImage(imageUrl: string): void {
               {{ doctorTip }}
             </text>
           </view>
-          <button
-            class="h-9 rounded-full border-none bg-slate-100 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
-            hover-class="opacity-92" @tap="clearHistory">
+          <AppButton
+            variant="pill" size="none"
+            custom-class="h-9 px-4 bg-slate-100 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+            hover-class="opacity-92" @tap="clearHistory"
+          >
             清空记录
-          </button>
+          </AppButton>
         </view>
 
         <view v-if="plantDoctorState.history.length > 0" class="mt-4 flex flex-col gap-3">

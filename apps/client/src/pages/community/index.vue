@@ -3,6 +3,7 @@ import type { IFeedback, IImageAsset } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
+import AppButton from '@/components/AppButton.vue'
 import ImagePicker from '@/components/ImagePicker.vue'
 import SubmitBtn from '@/components/SubmitBtn.vue'
 import {
@@ -210,20 +211,20 @@ onShow(() => {
         <view class="mt-4 flex items-center gap-3">
           <view class="text-2xs text-app-muted">{{ totalCount }} 条花友反馈</view>
           <view class="ml-auto flex gap-2">
-            <button
-              class="h-8 rounded-full border-none px-4 text-2xs font-700"
-              :class="sortBy === 'votes' ? 'bg-[var(--color-mint)] text-app-ink' : 'bg-[var(--color-surface)] text-app-muted'"
-              hover-class="opacity-92" @tap="changeSort('votes')"
+            <AppButton
+              variant="pill" size="sm"
+              :custom-class="sortBy === 'votes' ? 'h-8 bg-[var(--color-mint)] text-app-ink' : 'h-8 bg-[var(--color-surface)] text-app-muted'"
+              @tap="changeSort('votes')"
             >
               🔥 热门
-            </button>
-            <button
-              class="h-8 rounded-full border-none px-4 text-2xs font-700"
-              :class="sortBy === 'newest' ? 'bg-[var(--color-mint)] text-app-ink' : 'bg-[var(--color-surface)] text-app-muted'"
-              hover-class="opacity-92" @tap="changeSort('newest')"
+            </AppButton>
+            <AppButton
+              variant="pill" size="sm"
+              :custom-class="sortBy === 'newest' ? 'h-8 bg-[var(--color-mint)] text-app-ink' : 'h-8 bg-[var(--color-surface)] text-app-muted'"
+              @tap="changeSort('newest')"
             >
               🕐 最新
-            </button>
+            </AppButton>
           </view>
         </view>
       </view>
@@ -247,14 +248,14 @@ onShow(() => {
             <text class="block text-2xs text-app-muted">{{ formatDateTime(item.createdAt, { pattern: 'MM-DD HH:mm' }) }}</text>
           </view>
           <!-- 投票按钮 -->
-          <button
-            class="flex items-center gap-1.5 rounded-full border-none px-3 py-1.5"
-            :class="item.hasVoted ? 'bg-[var(--color-mint)]/20 text-[var(--color-sage)]' : 'bg-[var(--color-surface)] text-app-muted'"
+          <AppButton
+            variant="pill" size="none"
+            :custom-class="'gap-1.5 px-3 py-1.5 ' + (item.hasVoted ? 'bg-[var(--color-mint)]/20 text-[var(--color-sage)]' : 'bg-[var(--color-surface)] text-app-muted')"
             hover-class="opacity-90" @tap="handleVote(item)"
           >
             <text>{{ item.hasVoted ? '✅' : '👍' }}</text>
             <text class="text-2xs font-700">{{ item.voteCount }}</text>
-          </button>
+          </AppButton>
         </view>
 
         <!-- 内容 -->
@@ -281,18 +282,18 @@ onShow(() => {
 
         <!-- 操作栏 -->
         <view class="mt-3 flex gap-3 border-t border-[var(--color-cream)]/30 pt-3">
-          <button
-            class="h-8 rounded-full border-none bg-transparent px-3 text-2xs text-app-muted"
+          <AppButton
+            variant="text" size="sm" custom-class="h-8 px-3 text-app-muted"
             hover-class="opacity-80" @tap="toggleExpand(item.id)"
           >
             💬 {{ item.comments?.length ?? 0 }} 条讨论
-          </button>
-          <button
-            class="h-8 rounded-full border-none bg-transparent px-3 text-2xs text-app-muted"
+          </AppButton>
+          <AppButton
+            variant="text" size="sm" custom-class="h-8 px-3 text-app-muted"
             hover-class="opacity-80" @tap="toggleCommentInput(item.id)"
           >
             ✍️ 参与讨论
-          </button>
+          </AppButton>
         </view>
 
         <!-- 评论列表 -->
@@ -313,19 +314,23 @@ onShow(() => {
           <input v-model="commentContent" class="field-input-sm flex-1 dark:bg-slate-900 dark:text-slate-100"
             placeholder="写下你的想法..." :maxlength="200" confirm-type="done"
             @confirm="handleAddComment(item.id)" />
-          <button class="h-[80rpx] min-h-[80rpx] rounded-[18rpx] border-none bg-[var(--color-mint)]/30 px-4 text-2xs font-700 text-[var(--color-sage)]"
-            hover-class="opacity-90" :loading="isCommenting" @tap="handleAddComment(item.id)">
+          <AppButton
+            variant="card" size="sm" tone="mint" custom-class="h-[80rpx] min-h-[80rpx] rounded-[18rpx]"
+            hover-class="opacity-90" :loading="isCommenting" @tap="handleAddComment(item.id)"
+          >
             发送
-          </button>
+          </AppButton>
         </view>
       </view>
 
       <!-- 加载更多 -->
       <view v-if="hasMore" class="flex justify-center py-4">
-        <button class="h-10 rounded-full border-none bg-[var(--color-surface)] px-6 text-2xs text-app-muted"
-          hover-class="opacity-90" :loading="isLoading" @tap="loadFeedbacks()">
+        <AppButton
+          variant="pill" size="none" custom-class="h-10 px-6 text-2xs bg-[var(--color-surface)] text-app-muted"
+          hover-class="opacity-90" :loading="isLoading" @tap="loadFeedbacks()"
+        >
           加载更多
-        </button>
+        </AppButton>
       </view>
     </view>
 
@@ -334,12 +339,13 @@ onShow(() => {
 
   <!-- 浮动反馈按钮 -->
   <view class="fixed bottom-[180rpx] right-6 z-50">
-    <button
-      class="app-pressable flex h-[112rpx] w-[112rpx] items-center justify-center rounded-full border-none bg-[var(--color-mint)] text-[44rpx] shadow-[0_12rpx_36rpx_rgba(138,216,197,0.40)]"
+    <AppButton
+      variant="pill" size="none"
+      custom-class="h-[112rpx] w-[112rpx] text-[44rpx] bg-[var(--color-mint)] shadow-[0_12rpx_36rpx_rgba(138,216,197,0.40)]"
       hover-class="opacity-90" @tap="openNewFeedback"
     >
       💡
-    </button>
+    </AppButton>
   </view>
 
   <!-- 新增反馈弹窗 -->

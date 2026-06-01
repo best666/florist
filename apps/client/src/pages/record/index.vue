@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import RecordCheckinPopup from '@/components/RecordCheckinPopup.vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
+import AppButton from '@/components/AppButton.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
 import TagLabel from '@/components/TagLabel.vue'
@@ -263,11 +264,13 @@ async function handleUndoLatestRecord(): Promise<void> {
           <text class="flex-1">
             {{ latestUndoText }}
           </text>
-          <button
-            class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)] px-4 text-2xs font-700 text-[var(--color-sage)] dark:bg-slate-900 dark:text-emerald-200"
-            hover-class="opacity-92" @tap="handleUndoLatestRecord">
+          <AppButton
+            variant="pill" size="none"
+            custom-class="h-9 px-4 bg-[var(--color-surface)] text-[var(--color-sage)] shadow-[var(--shadow-soft)] dark:bg-slate-900 dark:text-emerald-200"
+            hover-class="opacity-92" @tap="handleUndoLatestRecord"
+          >
             一键撤回
-          </button>
+          </AppButton>
         </view>
       </view>
 
