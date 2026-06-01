@@ -31,10 +31,11 @@ export class CreateRecordDto {
   @Type(() => ImageAssetItemDto)
   public images!: ImageAssetItemDto[];
 
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(1440)
-  public cooldownMinutes!: number;
+  public cooldownMinutes?: number;
 }
 
 export class UndoRecordResponseDto {

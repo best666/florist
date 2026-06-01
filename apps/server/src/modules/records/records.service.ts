@@ -120,7 +120,7 @@ export class RecordsService {
           flowerId: payload.flowerId,
           actionType: payload.actionType,
           note: normalizeOptionalString(payload.note),
-          cooldownMinutes: payload.cooldownMinutes,
+          cooldownMinutes: payload.cooldownMinutes ?? 10,
           createdAt,
         },
       });
@@ -265,7 +265,7 @@ export class RecordsService {
             flowerId: payload.flowerId,
             actionType: payload.actionType,
             note: normalizeOptionalString(payload.note),
-            cooldownMinutes: payload.cooldownMinutes,
+            cooldownMinutes: payload.cooldownMinutes ?? 10,
             createdAt: new Date(payload.createdAt),
           },
           create: {
@@ -274,7 +274,7 @@ export class RecordsService {
             flowerId: payload.flowerId,
             actionType: payload.actionType,
             note: normalizeOptionalString(payload.note),
-            cooldownMinutes: payload.cooldownMinutes,
+            cooldownMinutes: payload.cooldownMinutes ?? 10,
             createdAt: new Date(payload.createdAt),
           },
         });

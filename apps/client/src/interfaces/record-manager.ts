@@ -104,7 +104,7 @@ export function createDefaultRecordFormValues(): RecordFormValues {
     actionType: DEFAULT_RECORD_ACTION_TYPE,
     note: '',
     images: [],
-    cooldownMinutes: 180,
+    cooldownMinutes: 10,
   }
 }
 

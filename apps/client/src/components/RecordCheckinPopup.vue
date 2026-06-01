@@ -225,26 +225,6 @@ function handleSubmit(): void {
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-app-ink dark:text-slate-100">打卡类型</text>
-            <view class="mt-3 grid grid-cols-3 gap-3">
-              <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
-                class="app-pressable min-h-[110rpx] rounded-[24rpx] border-none px-3 py-3 text-left"
-                :class="formState.actionType === option.value ? 'bg-[var(--color-surface)] shadow-[0_12rpx_28rpx_rgba(148,163,184,0.14)] dark:bg-slate-900' : 'bg-[var(--color-surface)]/60 dark:bg-slate-900/70'"
-                hover-class="opacity-92" @tap="formState.actionType = option.value">
-                <view class="text-2xl">
-                  {{ option.emoji }}
-                </view>
-                <text class="mt-2 block text-sm font-700 text-app-ink dark:text-slate-100">
-                  {{ option.label }}
-                </text>
-                <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
-                  {{ option.description }}
-                </text>
-              </button>
-            </view>
-          </view>
-
-          <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-sm font-700 text-app-ink dark:text-slate-100">选择植株</text>
             <view class="mt-3 flex flex-wrap gap-2">
               <button v-for="flower in props.flowerOptions" :key="flower.id" class="btn-chip"
@@ -252,28 +232,6 @@ function handleSubmit(): void {
                 hover-class="opacity-92" @tap="formState.flowerId = flower.id">
                 {{ flower.nickname || flower.name }}
               </button>
-            </view>
-          </view>
-
-          <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-sm font-700 text-app-ink dark:text-slate-100">冷却时间</text>
-            <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
-              同一盆植物的同类操作会按这次设置的冷却时间做重复拦截。
-            </text>
-
-            <view class="mt-3 flex flex-wrap gap-2">
-              <button v-for="option in RECORD_COOLDOWN_PRESET_OPTIONS" :key="option.value" class="btn-chip"
-                :class="formState.cooldownMinutes === option.value ? 'bg-app-blush text-app-ink' : 'bg-[var(--color-surface)] text-app-muted dark:bg-slate-900 dark:text-slate-200'"
-                hover-class="opacity-92" @tap="formState.cooldownMinutes = option.value">
-                {{ option.label }}
-              </button>
-            </view>
-
-            <view class="mt-3">
-              <text class="mb-2 block text-2xs text-app-muted/70 dark:text-app-muted">自定义分钟</text>
-              <input :value="String(formState.cooldownMinutes)" type="number" placeholder="输入冷却分钟数"
-                class="field-input-md dark:bg-slate-900 dark:text-slate-100"
-                @input="formState.cooldownMinutes = Number($event.detail.value || 0)">
             </view>
           </view>
 
@@ -303,6 +261,27 @@ function handleSubmit(): void {
                   <text class="text-2xl font-500">+</text>
                   <text class="text-2xs">添加配图</text>
                 </view>
+              </button>
+            </view>
+          </view>
+
+          <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
+            <text class="text-sm font-700 text-app-ink dark:text-slate-100">打卡类型</text>
+            <view class="mt-3 grid grid-cols-3 gap-3">
+              <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
+                class="app-pressable min-h-[110rpx] rounded-[24rpx] border-2 border-solid px-3 py-3 text-left"
+                :class="formState.actionType === option.value ? 'bg-[var(--color-surface)] shadow-[0_12rpx_28rpx_rgba(148,163,184,0.14)] dark:bg-slate-900' : 'bg-[var(--color-surface)]/60 border-transparent dark:bg-slate-900/70'"
+                :style="formState.actionType === option.value ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` } : {}"
+                hover-class="opacity-92" @tap="formState.actionType = option.value">
+                <view class="text-2xl">
+                  {{ option.emoji }}
+                </view>
+                <text class="mt-2 block text-sm font-700 text-app-ink dark:text-slate-100">
+                  {{ option.label }}
+                </text>
+                <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted">
+                  {{ option.description }}
+                </text>
               </button>
             </view>
           </view>

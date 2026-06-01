@@ -19,7 +19,7 @@ import {
   type TimelineItem,
 } from '@/interfaces'
 import { usePageTheme } from '@/hooks/usePageTheme'
-import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
+import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, hasRepeatedActionWithinHours, showGentleSuccess, showGentleToast } from '@/utils'
 
 const themeClass = usePageTheme()
 
@@ -40,7 +40,6 @@ const activeTab = ref<'single' | 'all'>('all')
 const isCheckinVisible = ref(false)
 const currentActionType = ref(DEFAULT_RECORD_ACTION_TYPE)
 const isSubmitting = ref(false)
-const duplicateMessage = ref('')
 
 onLoad((query) => {
   const targetFlowerId = query && typeof query.flowerId === 'string' ? query.flowerId : ''
@@ -142,17 +141,33 @@ function handleSwitchFlower(flowerId: string): void {
 
 function openCheckin(actionType = DEFAULT_RECORD_ACTION_TYPE): void {
   currentActionType.value = actionType
-  duplicateMessage.value = ''
   isCheckinVisible.value = true
 }
 
 async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
-  const cooldownResult = recordStore.isActionCoolingDown(values.flowerId, values.actionType)
+  // 10 分钟内同植物同操作 → 确认弹窗，纯防误触
+  const recentDuplicate = hasRepeatedActionWithinHours(
+    sortedRecords.value.map(record => ({
+      targetId: record.flowerId,
+      actionType: record.actionType,
+      createdAt: record.createdAt,
+    })),
+    {
+      targetId: values.flowerId,
+      actionType: values.actionType,
+      withinHours: 10 / 60,
+    },
+  )
 
-  if (cooldownResult.cooling) {
-    duplicateMessage.value = `刚刚已经替它${getRecordActionLabel(values.actionType)}过啦，先休息 ${cooldownResult.remainingMinutes} 分钟再记录会更准确。`
-    showGentleToast(duplicateMessage.value)
-    return
+  if (recentDuplicate) {
+    const actionLabel = getRecordActionLabel(values.actionType)
+    const result = await uni.showModal({
+      title: '重复记录提醒',
+      content: `刚刚已经记录过一次${actionLabel}了，确定要再记录一次吗？`,
+      confirmText: '确认记录',
+      cancelText: '再想想',
+    })
+    if (!result.confirm) return
   }
 
   isSubmitting.value = true
@@ -160,7 +175,6 @@ async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
   try {
     await recordStore.addRecord(values)
     isCheckinVisible.value = false
-    duplicateMessage.value = ''
     showGentleSuccess('这次打卡已经轻轻记下啦。')
   }
   finally {
@@ -223,7 +237,9 @@ async function handleUndoLatestRecord(): Promise<void> {
 
         <view class="mt-4 grid grid-cols-3 gap-3">
           <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
-            class="surface-soft app-pressable min-h-[122rpx] rounded-[26rpx] border-none bg-[var(--color-surface)]/76 px-3 py-3 text-left dark:bg-slate-800"
+            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800"
+            :class="currentActionType === option.value ? '' : 'border-transparent'"
+            :style="currentActionType === option.value ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` } : {}"
             hover-class="opacity-92" @tap="openCheckin(option.value)">
             <view class="text-2xl">
               {{ option.emoji }}
@@ -250,11 +266,6 @@ async function handleUndoLatestRecord(): Promise<void> {
             一键撤回
           </button>
         </view>
-      </view>
-
-      <view v-if="duplicateMessage"
-        class="info-soft app-fade-up bg-[var(--color-cream)]/60 text-[var(--color-ink)] dark:bg-amber-500/14 dark:text-amber-100">
-        {{ duplicateMessage }}
       </view>
 
       <CollapsibleSection title="记录范围与筛选" description="切换单株/全部、快速选植物，都收进这一层。"
