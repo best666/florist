@@ -31,6 +31,8 @@ import {
 } from '@/interfaces'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { usePageTip } from '@/hooks/usePageTip'
+import { HOME_TIPS } from '@/interfaces/page-tips'
 import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const themeClass = usePageTheme()
@@ -42,6 +44,7 @@ const recordStore = useRecordStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
 const { isOffline } = useNetworkStatus()
+const { currentTip: homeTip } = usePageTip(HOME_TIPS)
 const {
   state: weatherReminderState,
   locateCity,
@@ -58,7 +61,12 @@ const formMode = ref<'create' | 'edit'>('create')
 const editingFlowerId = ref<string | null>(null)
 const deletingFlower = ref<LocalFlower | null>(null)
 const isSaving = ref(false)
-const { advice: aiAdvice, loading: loadingAiAdvice, message: aiAdviceMessage, fetchAdvice: fetchGardenAdvice } = useGardenAiAdvice()
+const {
+  advice: aiAdvice,
+  loading: loadingAiAdvice,
+  message: aiAdviceMessage,
+  fetchAdvice: fetchGardenAdvice,
+} = useGardenAiAdvice()
 const selectedAdviceFlowerId = ref<string | null>(null)
 const isQuickDrawerVisible = ref(false)
 const isFilterExpanded = ref(false)
@@ -111,11 +119,7 @@ watch(
       return
     }
 
-    await fetchGardenAdvice(
-      weatherReminderState.weather,
-      activeFlowers.value,
-      sortedRecords.value,
-    )
+    await fetchGardenAdvice(weatherReminderState.weather, activeFlowers.value, sortedRecords.value)
   },
   { immediate: true },
 )
@@ -558,7 +562,8 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
 
 <template>
   <view
-    class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100" :class="themeClass"
+    class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100"
+    :class="themeClass"
   >
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
       <view
@@ -566,14 +571,16 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       >
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
+            <view
+              class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100"
+            >
               {{ isOffline ? '离线小花园模式' : '在线加密缓存模式' }}
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
               今天也把花园照顾得软乎乎的
             </view>
             <view class="mt-2 text-body text-app-muted dark:text-slate-200">
-              首页会优先读取本地加密缓存。断网也能继续新增、编辑、查看植株和相册，不会丢记录。
+              {{ homeTip }}
             </view>
           </view>
 
@@ -667,19 +674,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         :expanded="isFilterExpanded"
         @update:expanded="isFilterExpanded = $event"
       >
-        <view class="flex items-center justify-between gap-3">
-          <view class="text-sm leading-6 text-app-muted dark:text-slate-300">
-            按品类、位置和养护状态快速整理植物卡片。
-          </view>
-          <button
-            class="btn-chip surface-soft bg-[var(--color-surface)]/74 text-app-muted dark:bg-slate-800 dark:text-slate-200"
-            hover-class="opacity-92"
-            @tap="resetFilters"
-          >
-            重置
-          </button>
-        </view>
-
         <scroll-view
           scroll-x
           class="mt-4 whitespace-nowrap"

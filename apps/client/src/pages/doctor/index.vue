@@ -16,6 +16,8 @@ import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePre
 import { ClientPlatform, formatCityDisplayName, type CityOption, type LocalFlower, type PlantDoctorHistoryItem } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useFlowerTaxonomyStore } from '@/store'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { usePageTip } from '@/hooks/usePageTip'
+import { DOCTOR_TIPS } from '@/interfaces/page-tips'
 import {
   formatDateTime,
   getFlowerDisplayName,
@@ -23,6 +25,7 @@ import {
 } from '@/utils'
 
 const themeClass = usePageTheme()
+const { currentTip: doctorTip } = usePageTip(DOCTOR_TIPS)
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -635,7 +638,7 @@ function handleOpenHistoryImage(imageUrl: string): void {
           <view>
             <text class="block text-base font-800 text-app-ink dark:text-slate-100">本地识别记录</text>
             <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              记录只保存在本地加密存储里，断网时也还在。
+              {{ doctorTip }}
             </text>
           </view>
           <button

@@ -104,6 +104,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useNetworkStatus: typeof import('../hooks/useNetworkStatus').useNetworkStatus
   const usePageTheme: typeof import('../hooks/usePageTheme').usePageTheme
+  const usePageTip: typeof import('../hooks/usePageTip').usePageTip
   const usePlantDoctorCenter: typeof import('../hooks/usePlantDoctorCenter').usePlantDoctorCenter
   const usePlatform: typeof import('../hooks/usePlatform').usePlatform
   const usePreparedImageAssets: typeof import('../hooks/usePreparedImageAssets').usePreparedImageAssets
@@ -229,6 +230,7 @@ declare module 'vue' {
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNetworkStatus: UnwrapRef<typeof import('../hooks/useNetworkStatus')['useNetworkStatus']>
     readonly usePageTheme: UnwrapRef<typeof import('../hooks/usePageTheme')['usePageTheme']>
+    readonly usePageTip: UnwrapRef<typeof import('../hooks/usePageTip')['usePageTip']>
     readonly usePlantDoctorCenter: UnwrapRef<typeof import('../hooks/usePlantDoctorCenter')['usePlantDoctorCenter']>
     readonly usePlatform: UnwrapRef<typeof import('../hooks/usePlatform')['usePlatform']>
     readonly usePreparedImageAssets: UnwrapRef<typeof import('../hooks/usePreparedImageAssets')['usePreparedImageAssets']>

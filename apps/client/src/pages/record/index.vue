@@ -19,9 +19,12 @@ import {
   type TimelineItem,
 } from '@/interfaces'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { usePageTip } from '@/hooks/usePageTip'
+import { RECORD_TIPS } from '@/interfaces/page-tips'
 import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, hasRepeatedActionWithinHours, showGentleSuccess, showGentleToast } from '@/utils'
 
 const themeClass = usePageTheme()
+const { currentTip: recordTip } = usePageTip(RECORD_TIPS)
 
 interface RecordTimelineGroup {
   readonly dateLabel: string
@@ -212,7 +215,7 @@ async function handleUndoLatestRecord(): Promise<void> {
               每一次照顾，都给它留一个轻轻的脚印
             </view>
             <view class="mt-2 text-body text-app-muted dark:text-slate-200">
-              快捷打卡、备注、配图、撤回和时间轴都只保存在本地加密数据里，断网也能继续使用。
+              {{ recordTip }}
             </view>
           </view>
           <view

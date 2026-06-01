@@ -19,6 +19,8 @@ import { updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { usePageTheme } from '@/hooks/usePageTheme'
+import { usePageTip } from '@/hooks/usePageTip'
+import { MINE_TIPS } from '@/interfaces/page-tips'
 import { ClientPlatform, DEFAULT_LOCAL_REMINDER_CONFIG, type MineStatisticsCard } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useMemberStore, useRecordStore } from '@/store'
 import {
@@ -32,6 +34,7 @@ import {
 } from '@/utils'
 
 const themeClass = usePageTheme()
+const { currentTip: mineTip } = usePageTip(MINE_TIPS)
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
@@ -189,7 +192,7 @@ function handleFeedbackCountChange(count: number): void {
               把照护数据、提醒和备份，都安静收在这里
             </view>
             <view class="mt-3 text-[28rpx] leading-7 text-app-muted">
-              整理养护记录、管理备份、设置提醒和查看花园数据。
+              {{ mineTip }}
             </view>
           </view>
           <view
