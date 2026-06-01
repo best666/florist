@@ -109,8 +109,15 @@ export enum MemberPaymentStatus {
  * 用户反馈处理状态枚举。
  */
 export enum FeedbackStatus {
+  /** 待 AI 审核 */
   Pending = 'pending',
+  /** AI 审核通过，已公开 */
+  Approved = 'approved',
+  /** AI 审核驳回 */
+  Rejected = 'rejected',
+  /** 管理员已审阅 */
   Reviewed = 'reviewed',
+  /** 已归档 */
   Archived = 'archived',
 }
 

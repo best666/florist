@@ -670,4 +670,31 @@ export class AiProxyService {
       ...(userId ? { userId } : {}),
     });
   }
+
+  /**
+   * AI 内容审核 —— 检查反馈/评论是否合规。
+   * 返回 { passed: true } 表示通过，{ passed: false, reason: '...' } 表示驳回。
+   */
+  public async moderateFeedbackContent(content: string): Promise<{ passed: boolean; reason?: string }> {
+    const prompt = [
+      '你是内容审核助手。请判断以下用户反馈是否合规，只输出纯 JSON。',
+      '合规标准：不包含侮辱性/攻击性语言、不包含广告/垃圾信息、内容与植物养护或应用体验相关。',
+      '格式: {"passed": true} 或 {"passed": false, "reason": "不合规原因（简短中文）"}',
+      `用户内容: "${content}"`,
+    ].join('\n');
+
+    try {
+      const result = await this.resolveAiResponse<{ passed: boolean; reason?: string }>({
+        scope: 'chat',
+        payload: { content },
+        prompt,
+        fallbackFactory: () => ({ passed: true }),
+      });
+
+      return result;
+    } catch {
+      // AI 审核失败时默认通过（不阻塞用户提交）
+      return { passed: true };
+    }
+  }
 }

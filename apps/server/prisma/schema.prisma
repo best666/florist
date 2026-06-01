@@ -24,6 +24,8 @@ model User {
   undoLogs          RecordUndoLog[]
   members           Member[]
   feedbacks         Feedback[]
+  feedbackVotes     FeedbackVote[]
+  feedbackComments  FeedbackComment[]
 
   @@index([loginType, updatedAt])
   @@index([status, updatedAt])
@@ -127,20 +129,25 @@ model Member {
 }
 
 model Feedback {
-  id            String          @id @db.VarChar(64)
-  userId        String          @db.VarChar(64)
-  contentCipher String          @db.Text
-  replyCipher   String?         @db.Text
-  repliedAt     DateTime?       @db.DateTime(3)
-  repliedBy     String?         @db.VarChar(64)
-  status        String          @db.VarChar(32)
-  createdAt     DateTime        @default(now()) @db.DateTime(3)
-  updatedAt     DateTime        @updatedAt @db.DateTime(3)
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images        FeedbackImage[]
+  id                  String            @id @db.VarChar(64)
+  userId              String            @db.VarChar(64)
+  contentCipher       String            @db.Text
+  replyCipher         String?           @db.Text
+  repliedAt           DateTime?         @db.DateTime(3)
+  repliedBy           String?           @db.VarChar(64)
+  status              String            @db.VarChar(32)
+  isPublic            Boolean           @default(false)
+  voteCount           Int               @default(0)
+  aiModerationResult  Json?
+  createdAt           DateTime          @default(now()) @db.DateTime(3)
+  updatedAt           DateTime          @updatedAt @db.DateTime(3)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images              FeedbackImage[]
+  votes               FeedbackVote[]
+  comments            FeedbackComment[]
 
   @@index([userId, createdAt])
-  @@index([status, updatedAt])
+  @@index([status, isPublic, voteCount(sort: Desc)])
 }
 
 model FeedbackImage {
@@ -152,6 +159,30 @@ model FeedbackImage {
   feedback      Feedback  @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 
   @@index([feedbackId])
+}
+
+model FeedbackVote {
+  id         String   @id @db.VarChar(64)
+  feedbackId String   @db.VarChar(64)
+  userId     String   @db.VarChar(64)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([feedbackId, userId])
+  @@index([feedbackId])
+}
+
+model FeedbackComment {
+  id         String   @id @db.VarChar(64)
+  feedbackId String   @db.VarChar(64)
+  userId     String   @db.VarChar(64)
+  content    String   @db.VarChar(500)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([feedbackId, createdAt])
 }
 
 model AiDailyQuota {

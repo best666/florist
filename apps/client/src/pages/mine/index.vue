@@ -7,7 +7,6 @@ import MineAboutLinks from '@/components/MineAboutLinks.vue'
 import MineAuthCard from '@/components/MineAuthCard.vue'
 import MineBackupPanel from '@/components/MineBackupPanel.vue'
 import MineExtensionPanel from '@/components/MineExtensionPanel.vue'
-import MineFeedbackPanel from '@/components/MineFeedbackPanel.vue'
 import MinePermissionsPanel from '@/components/MinePermissionsPanel.vue'
 import MineRecycleBinPanel from '@/components/MineRecycleBinPanel.vue'
 import MineStatisticsGrid from '@/components/MineStatisticsGrid.vue'
@@ -24,7 +23,6 @@ import { MINE_TIPS } from '@/interfaces/page-tips'
 import { ClientPlatform, DEFAULT_LOCAL_REMINDER_CONFIG, type MineStatisticsCard } from '@/interfaces'
 import { useAppStore, useAuthStore, useFlowerStore, useMemberStore, useRecordStore } from '@/store'
 import {
-  readMineFeedbackHistory,
   readPlantDoctorHistoryFromStorage,
   readReminderConfigFromStorage,
   showGentleConfirm,
@@ -47,8 +45,6 @@ const { sortedRecords } = storeToRefs(recordStore)
 
 const { state: weatherReminderState } = useLocationWeatherReminder()
 
-const feedbackCount = ref(0)
-const feedbackPanelRefreshToken = ref(0)
 const plantDoctorHistoryCount = ref(0)
 const loginPopupVisible = ref(false)
 const profilePopupVisible = ref(false)
@@ -72,22 +68,30 @@ const careDays = computed(() => {
 
 const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
   {
-    key: 'plants', label: '植株总数', value: String(totalPlantCount.value),
+    key: 'plants',
+    label: '植株总数',
+    value: String(totalPlantCount.value),
     hint: '包含仍在照护中的植物和回收站临时保留项。',
     accentClass: 'from-[#CDEEDC] to-[#FFF0D9]',
   },
   {
-    key: 'records', label: '打卡次数', value: String(sortedRecords.value.length),
+    key: 'records',
+    label: '打卡次数',
+    value: String(sortedRecords.value.length),
     hint: '每一次浇水、施肥、修剪都会被温柔记下。',
     accentClass: 'from-[#FBD4E3] to-[#FFF4E7]',
   },
   {
-    key: 'survival', label: '存活数量', value: String(survivalPlantCount.value),
+    key: 'survival',
+    label: '存活数量',
+    value: String(survivalPlantCount.value),
     hint: '当前仍在花园里继续陪伴你的植物数量。',
     accentClass: 'from-[#D7E9FF] to-[#FFF9DD]',
   },
   {
-    key: 'days', label: '养护天数', value: String(careDays.value),
+    key: 'days',
+    label: '养护天数',
+    value: String(careDays.value),
     hint: '从第一盆植物入住开始累计的陪伴时间。',
     accentClass: 'from-[#FFE8C5] to-[#F8D7CE]',
   },
@@ -100,15 +104,9 @@ const recycleBinSummary = computed(() => {
   return `当前有 ${recycleBinFlowers.value.length} 株植物在回收站，随时可以手动恢复。`
 })
 
-function bumpFeedbackRefreshToken(): void {
-  feedbackPanelRefreshToken.value += 1
-}
-
 function refreshLocalSnapshots(): void {
-  feedbackCount.value = readMineFeedbackHistory().length
   plantDoctorHistoryCount.value = readPlantDoctorHistoryFromStorage().length
   weatherReminderState.reminderConfig = readReminderConfigFromStorage()
-  bumpFeedbackRefreshToken()
 }
 
 // ── 备份面板事件 ──
@@ -121,9 +119,7 @@ function onBackupRestored(): void {
 function onBackupCleared(): void {
   weatherReminderState.reminderConfig = { ...DEFAULT_LOCAL_REMINDER_CONFIG }
   writeReminderConfigToStorage(weatherReminderState.reminderConfig)
-  feedbackCount.value = 0
   plantDoctorHistoryCount.value = 0
-  bumpFeedbackRefreshToken()
 }
 
 // ── 生命周期 ──
@@ -140,12 +136,20 @@ onShow(async () => {
 
 // ── 登录 / 资料 ──
 
-function openLoginPopup(): void { loginPopupVisible.value = true }
-function openProfilePopup(): void { profilePopupVisible.value = true }
+function openLoginPopup(): void {
+  loginPopupVisible.value = true
+}
+function openProfilePopup(): void {
+  profilePopupVisible.value = true
+}
 
 const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
-  onCloseLoginPopup: () => { loginPopupVisible.value = false },
-  onLoginSuccess: async () => { refreshLocalSnapshots() },
+  onCloseLoginPopup: () => {
+    loginPopupVisible.value = false
+  },
+  onLoginSuccess: async () => {
+    refreshLocalSnapshots()
+  },
 })
 
 async function handleLogoutToLocalMode(): Promise<void> {
@@ -161,7 +165,9 @@ async function handleLogoutToLocalMode(): Promise<void> {
 }
 
 async function handleSubmitProfile(payload: {
-  nickname: string; avatarUrl: string; profileSignature: string
+  nickname: string
+  avatarUrl: string
+  profileSignature: string
 }): Promise<void> {
   isSavingProfile.value = true
   try {
@@ -176,15 +182,20 @@ async function handleSubmitProfile(payload: {
   }
 }
 
-function handleFeedbackCountChange(count: number): void {
-  feedbackCount.value = count
+function goToCommunity(): void {
+  uni.navigateTo({ url: '/pages/community/index' })
 }
 </script>
 
 <template>
-  <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
+  <view
+    class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory"
+    :class="themeClass"
+  >
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[140rpx]">
-      <view class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)]">
+      <view
+        class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)]"
+      >
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted"> 我的花园 </view>
@@ -213,6 +224,8 @@ function handleFeedbackCountChange(count: number): void {
         @logout="handleLogoutToLocalMode"
       />
 
+      <MineStatisticsGrid :cards="statisticsCards" />
+
       <CollapsibleSection
         title="皮肤主题"
         :description="`当前 ${memberStore.currentTheme.label} · 莫兰迪色系，柔和护眼`"
@@ -221,7 +234,22 @@ function handleFeedbackCountChange(count: number): void {
         <MineThemeSelector />
       </CollapsibleSection>
 
-      <MineStatisticsGrid :cards="statisticsCards" />
+      <view
+        class="card-soft rounded-[28rpx] dark:bg-slate-900 app-pressable"
+        hover-class="opacity-92"
+        @tap="goToCommunity"
+      >
+        <view class="flex items-center justify-between gap-3">
+          <view class="flex items-center gap-3">
+            <text class="text-xl">💬</text>
+            <view>
+              <text class="block text-base font-800 text-app-ink dark:text-slate-100">花友社区</text>
+              <text class="mt-1 block text-sm text-app-muted">提出建议、参与讨论、投票推动开发进度</text>
+            </view>
+          </view>
+          <text class="text-app-muted">→</text>
+        </view>
+      </view>
 
       <CollapsibleSection
         title="扩展服务与沉淀"
@@ -252,18 +280,6 @@ function handleFeedbackCountChange(count: number): void {
         :tag-icon="weatherReminderState.reminderConfig.enabled ? '✓' : '⏸'"
       >
         <MinePermissionsPanel />
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="意见反馈"
-        :tag-text="`${feedbackCount} 条已保存`"
-        tag-tone="slate"
-        tag-icon="✎"
-      >
-        <MineFeedbackPanel
-          :refresh-token="feedbackPanelRefreshToken"
-          @count-change="handleFeedbackCountChange"
-        />
       </CollapsibleSection>
 
       <CollapsibleSection
