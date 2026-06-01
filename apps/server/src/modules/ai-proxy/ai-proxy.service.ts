@@ -468,13 +468,121 @@ export class AiProxyService {
     private readonly usersService: UsersService,
   ) {}
 
+  private resolveShouldUseAgent(): boolean {
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+    // Agent 配置了非默认值即视为可用
+    return !appConfig.aiAgentUrl.includes('example.com')
+      && !appConfig.aiAgentApiKey.includes('change-me');
+  }
+
   private resolveShouldUseFallback(): boolean {
     const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
     return appConfig.aiProxyBaseUrl.includes('example.com')
       || appConfig.aiProxyApiKey.includes('replace-with-local-key');
   }
 
-  private async requestUpstream<TResponse>(scope: string, prompt: string): Promise<TResponse> {
+  /** 调用 AI Agent 的结构化端点 */
+  private async requestAgent<TResponse>(scope: string, payload: unknown, userId?: string): Promise<TResponse> {
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+    const baseUrl = appConfig.aiAgentUrl.replace(/\/$/, '');
+    const resolvedUserId = userId ?? 'anonymous';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-API-Key': appConfig.aiAgentApiKey,
+    };
+
+    let requestUrl: string;
+    let body: unknown;
+
+    switch (scope) {
+      case 'care-advice': {
+        const p = payload as RequestCareAdviceDto;
+        requestUrl = `${baseUrl}/advice/daily`;
+        body = {
+          user_id: resolvedUserId,
+          city_name: p.weather.cityName,
+          force_refresh: false,
+        };
+        break;
+      }
+      case 'plant-care-advice': {
+        const p = payload as RequestSinglePlantCareAdviceDto;
+        requestUrl = `${baseUrl}/advice/analyze`;
+        body = {
+          user_id: resolvedUserId,
+          focus: `single_plant:${p.flower.id}`,
+        };
+        break;
+      }
+      case 'plant-diagnosis': {
+        const p = payload as RequestPlantDiagnosisDto;
+        requestUrl = `${baseUrl}/diagnosis/plant`;
+        body = {
+          user_id: resolvedUserId,
+          plant_id: p.flower?.id ?? null,
+          symptoms: p.flower
+            ? `${p.flower.name}（状态: ${p.flower.careStatus}）`
+            : '未知植物异常',
+          image_data_url: p.imageDataUrl,
+          weather: p.weather ? {
+            temperature: p.weather.temperature,
+            humidity: p.weather.humidity,
+            weather_text: p.weather.weatherText,
+          } : null,
+        };
+        break;
+      }
+      case 'trip-care-plan': {
+        const p = payload as RequestTripCarePlanDto;
+        requestUrl = `${baseUrl}/advice/trip-plan`;
+        body = {
+          user_id: resolvedUserId,
+          plant_id: p.flower.id,
+          travel_days: p.travelDays,
+          city_name: p.weather.cityName,
+        };
+        break;
+      }
+      case 'chat': {
+        const p = payload as RequestAiChatDto;
+        requestUrl = `${baseUrl}/chat`;
+        body = {
+          user_id: resolvedUserId,
+          message: p.question,
+          city_name: p.weather?.cityName ?? null,
+          attachments: [],
+        };
+        break;
+      }
+      case 'plant-health-check': {
+        const p = payload as RequestPlantHealthCheckDto;
+        requestUrl = `${baseUrl}/advice/analyze`;
+        body = {
+          user_id: resolvedUserId,
+          focus: 'health_overview',
+        };
+        break;
+      }
+      default:
+        throw new Error(`Unknown AI scope: ${scope}`);
+    }
+
+    const response = await fetch(requestUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Agent 返回错误: ${response.status}`);
+    }
+
+    return response.json() as Promise<TResponse>;
+  }
+
+  /** 直接调 AI（保留向后兼容，Agent 不可用时降级） */
+  private async requestDirectAi<TResponse>(scope: string, prompt: string): Promise<TResponse> {
     const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
     const requestUrl = `${appConfig.aiProxyBaseUrl.replace(/\/$/, '')}/chat/completions`;
 
@@ -488,19 +596,10 @@ export class AiProxyService {
         model: appConfig.aiProxyModel,
         temperature: 0.4,
         messages: [
-          {
-            role: 'system',
-            content: '你只返回纯 JSON，不要输出 markdown，不要解释。',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
+          { role: 'system', content: '你只返回纯 JSON，不要输出 markdown，不要解释。' },
+          { role: 'user', content: prompt },
         ],
-        metadata: {
-          scope,
-          app: 'florist',
-        },
+        metadata: { scope, app: 'florist' },
       }),
     });
 
@@ -530,24 +629,42 @@ export class AiProxyService {
     const requestHash = this.requestMonitorService.createPayloadHash(input.scope, input.payload);
     const cacheKey = `ai:${input.scope}:${resolvedUserId}:${requestHash}`;
     const startedAt = Date.now();
+    let upstreamProvider = 'local-fallback';
 
     try {
       const { value, cacheHit } = await this.runtimeCacheService.remember<TResponse>(
         cacheKey,
         appConfig.aiCacheTtlMs,
         async () => {
-          if (this.resolveShouldUseFallback()) {
-            return input.fallbackFactory();
+          const useAgent = this.resolveShouldUseAgent();
+          const useDirectAi = !this.resolveShouldUseFallback();
+
+          // 优先：AI Agent
+          if (useAgent) {
+            try {
+              const result = await this.requestAgent<TResponse>(input.scope, input.payload, resolvedUserId);
+              upstreamProvider = 'ai-agent';
+              return result;
+            } catch {
+              // Agent 失败 → 降级到直接 AI
+            }
           }
 
-          await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1);
+          // 其次：直接 AI（兼容旧配置）
+          if (useDirectAi) {
+            try {
+              await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1);
+              const result = await this.requestDirectAi<TResponse>(input.scope, input.prompt);
+              upstreamProvider = appConfig.aiProxyModel;
+              return result;
+            } catch {
+              // 直接 AI 失败 → 降级到本地 fallback
+            }
+          }
 
-          try {
-            return await this.requestUpstream<TResponse>(input.scope, input.prompt);
-          }
-          catch {
-            return input.fallbackFactory();
-          }
+          // 最后：本地 fallback
+          upstreamProvider = 'local-fallback';
+          return input.fallbackFactory();
         },
       );
 
@@ -560,13 +677,12 @@ export class AiProxyService {
         success: true,
         statusCode: 200,
         durationMs: Date.now() - startedAt,
-        quotaCost: cacheHit || this.resolveShouldUseFallback() ? 0 : 1,
-        upstreamProvider: this.resolveShouldUseFallback() ? 'local-fallback' : appConfig.aiProxyModel,
+        quotaCost: cacheHit || upstreamProvider === 'local-fallback' ? 0 : 1,
+        upstreamProvider,
       });
 
       return value;
-    }
-    catch (error) {
+    } catch (error) {
       await this.requestMonitorService.logProxyRequest({
         scope: 'ai-proxy',
         endpoint: input.scope,
@@ -577,7 +693,7 @@ export class AiProxyService {
         statusCode: 500,
         durationMs: Date.now() - startedAt,
         quotaCost: 0,
-        upstreamProvider: appConfig.aiProxyModel,
+        upstreamProvider,
         errorMessage: error instanceof Error ? error.message : 'unknown error',
       });
 
@@ -676,6 +792,28 @@ export class AiProxyService {
    * 返回 { passed: true } 表示通过，{ passed: false, reason: '...' } 表示驳回。
    */
   public async moderateFeedbackContent(content: string): Promise<{ passed: boolean; reason?: string }> {
+    // 优先走 Agent 专用审核端点
+    if (this.resolveShouldUseAgent()) {
+      try {
+        const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+        const response = await fetch(`${appConfig.aiAgentUrl.replace(/\/$/, '')}/tools/moderate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': appConfig.aiAgentApiKey,
+          },
+          body: JSON.stringify({ content }),
+        });
+
+        if (response.ok) {
+          return response.json() as Promise<{ passed: boolean; reason?: string }>;
+        }
+      } catch {
+        // Agent 审核失败 → 降级
+      }
+    }
+
+    // 降级：走通用 AI 审核
     const prompt = [
       '你是内容审核助手。请判断以下用户反馈是否合规，只输出纯 JSON。',
       '合规标准：不包含侮辱性/攻击性语言、不包含广告/垃圾信息、内容与植物养护或应用体验相关。',
@@ -690,10 +828,8 @@ export class AiProxyService {
         prompt,
         fallbackFactory: () => ({ passed: true }),
       });
-
       return result;
     } catch {
-      // AI 审核失败时默认通过（不阻塞用户提交）
       return { passed: true };
     }
   }

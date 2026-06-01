@@ -13,14 +13,17 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Anthropic
-    anthropic_api_key: str = "sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    # LLM Backend: 'anthropic' or 'openai'
+    llm_backend: Literal["anthropic", "openai"] = "openai"
+
+    # Anthropic (used when llm_backend='anthropic')
+    anthropic_api_key: str = ""
     anthropic_default_model: str = "claude-sonnet-4-20250514"
     anthropic_simple_model: str = "claude-haiku-3-5-20241022"
 
-    # OpenAI (embeddings only)
+    # OpenAI-compatible (used when llm_backend='openai', e.g. DeepSeek)
     openai_api_key: str = ""
-    embedding_model: str = "text-embedding-3-small"
+    openai_base_url: str = "https://api.deepseek.com/v1"
 
     # MySQL
     mysql_host: str = "127.0.0.1"

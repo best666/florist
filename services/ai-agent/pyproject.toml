@@ -10,7 +10,6 @@ dependencies = [
     "sse-starlette>=2.0.0",
 
     # AI
-    "anthropic>=0.70.0",
     "openai>=1.0.0",
 
     # Vector

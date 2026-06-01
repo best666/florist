@@ -52,7 +52,7 @@ def _local_knowledge_search(query: str, plant_category: str | None, season: str 
     snippets = [
         {
             "title": "浇水通用原则",
-            "content": "大多数室内植物遵循"见干见湿"原则：等盆土表面干了再浇透水，避免天天浇一点。可以用手指插入土中2-3厘米感受干湿。冬季减少浇水频率，夏季增加。",
+            "content": "大多数室内植物遵循「见干见湿」原则：等盆土表面干了再浇透水，避免天天浇一点。可以用手指插入土中2-3厘米感受干湿。冬季减少浇水频率，夏季增加。",
             "category": "watering",
         },
         {

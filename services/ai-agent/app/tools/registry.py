@@ -80,6 +80,21 @@ class ToolRegistry:
                 })
         return tools
 
+    def get_openai_tools(self, active_tool_names: list[str] | None = None) -> list[dict]:
+        """Return tools in OpenAI function-calling format."""
+        tools = []
+        for name, tool in self._tools.items():
+            if active_tool_names is None or name in active_tool_names:
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
+                })
+        return tools
+
     def check_policy(self, name: str, user_id: str | None) -> bool:
         """Check if a tool can be invoked based on its policy."""
         tool = self._tools.get(name)

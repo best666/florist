@@ -19,6 +19,8 @@ export interface ServerEnvSource {
   readonly AI_PROXY_BASE_URL?: string;
   readonly AI_PROXY_API_KEY?: string;
   readonly AI_PROXY_MODEL?: string;
+  readonly AI_AGENT_URL?: string;
+  readonly AI_AGENT_API_KEY?: string;
   readonly AI_DAILY_QUOTA?: string;
   readonly AI_CACHE_TTL_MS?: string;
   readonly WEATHER_CACHE_TTL_MS?: string;
@@ -52,6 +54,8 @@ export interface ServerEnvConfig {
   readonly aiProxyBaseUrl: string;
   readonly aiProxyApiKey: string;
   readonly aiProxyModel: string;
+  readonly aiAgentUrl: string;
+  readonly aiAgentApiKey: string;
   readonly aiDailyQuota: number;
   readonly aiCacheTtlMs: number;
   readonly weatherCacheTtlMs: number;
@@ -85,6 +89,8 @@ export const SERVER_ENV_DEFAULTS = {
   aiProxyBaseUrl: 'https://example.com',
   aiProxyApiKey: 'replace-with-local-key',
   aiProxyModel: 'gpt-4o-mini',
+  aiAgentUrl: 'http://127.0.0.1:8000',
+  aiAgentApiKey: 'florist-agent-api-key-change-me',
   aiDailyQuota: 10,
   aiCacheTtlMs: 10 * 60 * 1000,
   weatherCacheTtlMs: 15 * 60 * 1000,
@@ -211,6 +217,14 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
     aiProxyModel: normalizeString(
       envSource.AI_PROXY_MODEL,
       SERVER_ENV_DEFAULTS.aiProxyModel,
+    ),
+    aiAgentUrl: normalizeString(
+      envSource.AI_AGENT_URL,
+      SERVER_ENV_DEFAULTS.aiAgentUrl,
+    ),
+    aiAgentApiKey: normalizeString(
+      envSource.AI_AGENT_API_KEY,
+      SERVER_ENV_DEFAULTS.aiAgentApiKey,
     ),
     aiDailyQuota: normalizeNumber(
       envSource.AI_DAILY_QUOTA,

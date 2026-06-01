@@ -10,5 +10,6 @@ import { AiProxyService } from './ai-proxy.service';
 	imports: [FlowersModule, WeatherModule, ImageModule, UsersModule],
 	controllers: [AiProxyController],
 	providers: [AiProxyService],
+	exports: [AiProxyService],
 })
 export class AiProxyModule {}
