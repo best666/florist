@@ -2,7 +2,7 @@
 import type { IImageAsset } from '@florist/contracts'
 import { computed, ref } from 'vue'
 import AppImage from './AppImage.vue'
-import { useAuthStore, useMemberStore } from '@/store'
+import { useAppStore, useAuthStore, useMemberStore } from '@/store'
 import { usePreparedImageAssets, removePreparedImageAsset } from '@/hooks/usePreparedImageAssets'
 import { showGentleToast } from '@/utils'
 
@@ -53,6 +53,7 @@ const emit = defineEmits<{
   'update:coverImageId': [value: string | undefined]
 }>()
 
+const appStore = useAppStore()
 const authStore = useAuthStore()
 const memberStore = useMemberStore()
 const { chooseUploadedImageAssets, chooseCachedImageAssets } = usePreparedImageAssets()
@@ -62,16 +63,22 @@ const imageList = computed<IImageAsset[]>(() => [...props.modelValue])
 const remainingCount = computed(() => Math.max(0, props.maxCount - imageList.value.length))
 const canAdd = computed(() => remainingCount.value > 0 && !isUploading.value)
 
-function checkAuth(): boolean {
+function checkGate(): boolean {
   if (props.uploadMode === 'local') return true
 
+  // 离线时云端上传不可用，但不应阻断 — 提示用户当前是离线模式
+  if (appStore.isOffline) {
+    showGentleToast('当前处于离线模式，云端图片上传暂不可用。图片会先保存在本地，联网后可以重新添加。')
+    return false
+  }
+
   if (!authStore.isAuthenticated) {
-    showGentleToast('请先登录后再添加图片。')
+    showGentleToast('请先登录后再使用云端图片上传。')
     return false
   }
 
   if (!memberStore.hasCloudGardenAccess) {
-    showGentleToast('云端图片上传仅对会员开放。')
+    showGentleToast('云端图片上传仅对会员开放，开通后即可使用。')
     return false
   }
 
@@ -80,7 +87,7 @@ function checkAuth(): boolean {
 
 async function handleChooseImages(): Promise<void> {
   if (!canAdd.value) return
-  if (!checkAuth()) return
+  if (!checkGate()) return
 
   isUploading.value = true
 

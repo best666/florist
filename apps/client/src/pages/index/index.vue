@@ -29,7 +29,7 @@ import {
   type TimelineItem,
   createDefaultFlowerFormValues,
 } from '@/interfaces'
-import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
+import { useAuthStore, useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { HOME_TIPS } from '@/interfaces/page-tips'
@@ -37,6 +37,7 @@ import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, sh
 
 const themeClass = usePageTheme()
 
+const authStore = useAuthStore()
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const memberStore = useMemberStore()
@@ -492,6 +493,12 @@ function handleRefreshSingleFlowerAiAdvice(): void {
 }
 
 function handleOpenGrowthAlbum(): void {
+  if (!authStore.isAuthenticated) {
+    showGentleToast('请先登录后再查看成长相册，云端图片需要登录后才能访问。')
+    uni.navigateTo({ url: '/pages/mine/index' })
+    return
+  }
+
   if (!memberStore.hasCloudGardenAccess) {
     showGentleToast('成长相册仅对会员开放，开通后才能查看和管理植物图片。')
     uni.navigateTo({
