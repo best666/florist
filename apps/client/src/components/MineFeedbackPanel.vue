@@ -10,8 +10,7 @@ import {
   showGentleToast,
   writeMineFeedbackHistory,
 } from '@/utils'
-import AppImage from './AppImage.vue'
-import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
+import ImagePicker from './ImagePicker.vue'
 
 interface MineFeedbackPanelProps {
   readonly refreshToken: number
@@ -28,9 +27,7 @@ const feedbackDraft = reactive({
   images: [] as IImageAsset[],
 })
 const feedbackHistory = ref<ReadonlyArray<MineFeedbackItem>>([])
-const isChoosingImages = ref(false)
 const isSubmitting = ref(false)
-const { chooseCachedImageAssets } = usePreparedImageAssets()
 
 function refreshFeedbackHistory(options?: { resetDraft?: boolean }): void {
   feedbackHistory.value = readMineFeedbackHistory()
@@ -51,44 +48,6 @@ watch(() => props.refreshToken, () => {
 
 function handleContentInput(event: { detail?: { value?: string } }): void {
   feedbackDraft.content = event.detail?.value ?? ''
-}
-
-async function handleChooseImages(): Promise<void> {
-  const remaining = 3 - feedbackDraft.images.length
-
-  if (remaining <= 0) {
-    showGentleToast('反馈图片先保留 3 张以内，会更好整理。')
-    return
-  }
-
-  isChoosingImages.value = true
-
-  try {
-    const imageAssets = await chooseCachedImageAssets({
-      assetPrefix: 'feedback-image',
-      count: remaining,
-      maxSizeInBytes: 1024 * 1024,
-    })
-
-    feedbackDraft.images.push(...imageAssets)
-  }
-  catch {
-    // 用户取消选择图片时不提示。
-  }
-  finally {
-    isChoosingImages.value = false
-  }
-}
-
-async function handleRemoveImage(imageId: string): Promise<void> {
-  const targetImage = feedbackDraft.images.find(image => image.id === imageId)
-
-  if (!targetImage) {
-    return
-  }
-
-  await removePreparedImageAsset(targetImage)
-  feedbackDraft.images = feedbackDraft.images.filter(image => image.id !== imageId)
 }
 
 async function handleSubmit(): Promise<void> {
@@ -127,22 +86,16 @@ async function handleSubmit(): Promise<void> {
       :value="feedbackDraft.content" auto-height placeholder="比如：某个页面交互不顺手、希望增加什么能力、或者哪一步让你有点卡住。"
       @input="handleContentInput" />
 
-    <view class="mt-4 grid grid-cols-3 gap-3">
-      <view v-for="image in feedbackDraft.images" :key="image.id"
-        class="relative overflow-hidden rounded-[24rpx] bg-[var(--color-cream)]/40">
-        <AppImage class="h-[180rpx] w-full" :src="image.url" mode="aspectFill" error-text="反馈图片先休息一下" />
-        <button
-          class="btn-pill-sm absolute right-2 top-2 h-8 min-h-8 w-8 min-w-8 rounded-full bg-black/55 px-0 text-xs text-white"
-          hover-class="opacity-92" @tap="handleRemoveImage(image.id)">
-          ×
-        </button>
-      </view>
-
-      <button v-if="feedbackDraft.images.length < 3"
-        class="btn-base h-[180rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 text-sm font-700 text-app-muted"
-        hover-class="opacity-92" :loading="isChoosingImages" @tap="handleChooseImages">
-        + 添加图片
-      </button>
+    <view class="mt-4">
+      <ImagePicker
+        v-model="feedbackDraft.images"
+        :max-count="3"
+        upload-mode="local"
+        asset-prefix="feedback-image"
+        :max-size-in-bytes="1024 * 1024"
+        add-text="添加图片"
+        error-text="反馈图片先休息一下"
+      />
     </view>
 
     <button class="btn-panel mt-4 bg-linear-to-r from-[var(--color-blush)]/45 to-[var(--color-gold)]/60 text-app-ink" hover-class="opacity-92"

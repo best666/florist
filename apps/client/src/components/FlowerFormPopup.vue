@@ -9,12 +9,11 @@ import {
   createDefaultFlowerFormValues,
   type FlowerFormValues,
 } from '@/interfaces'
-import { useAuthStore, useFlowerTaxonomyStore, useMemberStore } from '@/store'
+import { useFlowerTaxonomyStore } from '@/store'
 import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { useCustomOptionEditor } from '@/hooks/useCustomOptionEditor'
-import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
-import AppImage from './AppImage.vue'
+import ImagePicker from './ImagePicker.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -43,10 +42,6 @@ const emit = defineEmits<{
 
 const formState = reactive<FlowerFormValues>(createDefaultFlowerFormValues())
 const formError = ref('')
-const isUploadingImages = ref(false)
-const authStore = useAuthStore()
-const memberStore = useMemberStore()
-const { chooseUploadedImageAssets } = usePreparedImageAssets()
 
 // 自定义选项编辑器（品类/位置/难度/状态共用同一套逻辑）
 const categoryEditor = useCustomOptionEditor({
@@ -202,7 +197,7 @@ const panelClass = computed(() =>
 
 const panelTitle = computed(() => (props.mode === 'edit' ? '编辑植株档案' : '新增一盆小可爱'))
 const submitText = computed(() => (props.mode === 'edit' ? '保存修改' : '创建植株'))
-const isSubmitDisabled = computed(() => props.submitting || isUploadingImages.value)
+const isSubmitDisabled = computed(() => props.submitting)
 
 function assignFormValue(nextValue: FlowerFormValues): void {
   formState.name = nextValue.name
@@ -300,67 +295,6 @@ function validateForm(): boolean {
 
   formError.value = ''
   return true
-}
-
-async function handleChooseImages(): Promise<void> {
-  if (!authStore.isAuthenticated) {
-    showFormError('请先登录后再添加植物图片。')
-    return
-  }
-
-  if (!memberStore.hasCloudGardenAccess) {
-    showFormError('植物相册和云端图片上传仅对会员开放。')
-    return
-  }
-
-  const remainingCount = 6 - formState.images.length
-
-  if (remainingCount <= 0) {
-    showFormError('最多上传 6 张图片')
-    return
-  }
-
-  isUploadingImages.value = true
-
-  try {
-    const uploadedImages = await chooseUploadedImageAssets({
-      assetPrefix: 'image',
-      count: remainingCount,
-      cropMode: 'card',
-      maxWidth: 1440,
-      quality: 82,
-      maxSizeInBytes: 1.8 * 1024 * 1024,
-      scope: 'flower',
-    })
-
-    formState.images = [...formState.images, ...uploadedImages]
-  } catch {
-    showFormError('图片处理失败，请换一张再试试')
-  } finally {
-    isUploadingImages.value = false
-  }
-}
-
-function handlePreviewImage(currentImageUrl: string): void {
-  uni.previewImage({
-    urls: formState.images.map((image) => image.url),
-    current: currentImageUrl,
-  })
-}
-
-async function handleRemoveImage(imageId: string): Promise<void> {
-  const targetImage = formState.images.find((image) => image.id === imageId)
-
-  if (!targetImage) {
-    return
-  }
-
-  if (formState.coverImageId === imageId) {
-    formState.coverImageId = undefined
-  }
-
-  formState.images = formState.images.filter((image) => image.id !== imageId)
-  await removePreparedImageAsset(targetImage)
 }
 
 function handleSubmit(): void {
@@ -646,57 +580,21 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
               多图上传、预览、删除都会即时落本地缓存，适合离线记录。
             </text>
 
-            <view class="mt-3 grid grid-cols-3 gap-3">
-              <view
-                v-for="image in formState.images"
-                :key="image.id"
-                class="relative overflow-hidden rounded-[24rpx] bg-[var(--color-surface)] dark:bg-slate-900"
-                :class="formState.coverImageId === image.id ? 'ring-2 ring-[#92E5D5]' : ''"
-              >
-                <AppImage
-                  :src="image.url"
-                  mode="aspectFill"
-                  class="h-[180rpx] w-full"
-                  error-text="这张图片先休息一下"
-                  @tap="handlePreviewImage(image.url)"
-                />
-                <view
-                  v-if="formState.coverImageId === image.id"
-                  class="absolute left-2 top-2 rounded-full bg-[#92E5D5] px-1.5 py-0.5 text-2xs font-700 text-app-ink"
-                >
-                  封面
-                </view>
-                <view class="absolute right-1 top-1 flex flex-col gap-1">
-                  <button
-                    v-if="formState.coverImageId !== image.id"
-                    class="btn-pill-sm h-6 min-h-6 rounded-full bg-slate-900/50 px-1.5 text-2xs text-white"
-                    hover-class="opacity-90"
-                    @tap.stop="formState.coverImageId = image.id"
-                  >
-                    封面
-                  </button>
-                  <button
-                    class="btn-pill-sm h-6 min-h-6 w-6 min-w-6 rounded-full bg-slate-900/45 px-0 text-xs text-white"
-                    hover-class="opacity-90"
-                    @tap.stop="handleRemoveImage(image.id)"
-                  >
-                    ×
-                  </button>
-                </view>
-              </view>
-
-              <button
-                v-if="formState.images.length < 6"
-                class="btn-base h-[180rpx] aspect-1 rounded-[24rpx] bg-[var(--color-surface)] px-0 text-app-muted dark:bg-slate-900 dark:text-slate-200"
-                hover-class="opacity-92"
-                @tap="handleChooseImages"
-              >
-                <view class="flex size-full flex-col items-center justify-center gap-2">
-                  <text class="text-2xl font-500">+</text>
-                  <text class="text-2xs">添加图片</text>
-                </view>
-              </button>
-            </view>
+            <ImagePicker
+              v-model="formState.images"
+              v-model:cover-image-id="formState.coverImageId"
+              :max-count="6"
+              upload-mode="cloud"
+              asset-prefix="image"
+              scope="flower"
+              crop-mode="card"
+              :max-width="1440"
+              :quality="82"
+              :max-size-in-bytes="1.8 * 1024 * 1024"
+              add-text="添加图片"
+              error-text="这张图片先休息一下"
+              :support-cover="true"
+            />
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">

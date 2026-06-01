@@ -4,7 +4,6 @@ import { computed, reactive, ref, watch } from 'vue'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
-  RECORD_COOLDOWN_PRESET_OPTIONS,
   createDefaultRecordFormValues,
   getRecordActionMeta,
   type LocalFlower,
@@ -16,9 +15,7 @@ import {
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
-import { removePreparedImageAsset, usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
-import { useAuthStore, useMemberStore } from '@/store'
-import AppImage from './AppImage.vue'
+import ImagePicker from './ImagePicker.vue'
 import SubmitBtn from './SubmitBtn.vue'
 import TagLabel from './TagLabel.vue'
 
@@ -43,10 +40,6 @@ const emit = defineEmits<{
 
 const formState = reactive<RecordFormValues>(createDefaultRecordFormValues())
 const formError = ref('')
-const isUploadingImages = ref(false)
-const authStore = useAuthStore()
-const memberStore = useMemberStore()
-const { chooseUploadedImageAssets } = usePreparedImageAssets()
 
 const modalClass = computed(() => (
   props.modelValue ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
@@ -120,65 +113,6 @@ function validateForm(): boolean {
   return true
 }
 
-async function handleChooseImages(): Promise<void> {
-  if (!authStore.isAuthenticated) {
-    showFormError('请先登录后再添加打卡配图。')
-    return
-  }
-
-  if (!memberStore.hasCloudGardenAccess) {
-    showFormError('成长相册和云端打卡配图仅对会员开放。')
-    return
-  }
-
-  const remainingCount = 4 - formState.images.length
-
-  if (remainingCount <= 0) {
-    showFormError('最多添加 4 张配图就够啦。')
-    return
-  }
-
-  isUploadingImages.value = true
-
-  try {
-    const uploadedImages = await chooseUploadedImageAssets({
-      assetPrefix: 'record-image',
-      count: remainingCount,
-      cropMode: 'card',
-      maxWidth: 1440,
-      quality: 82,
-      maxSizeInBytes: 1.8 * 1024 * 1024,
-      scope: 'record',
-    })
-
-    formState.images = [...formState.images, ...uploadedImages]
-  }
-  catch {
-    showFormError('这次配图没保存成功，换一张再试试。')
-  }
-  finally {
-    isUploadingImages.value = false
-  }
-}
-
-function handlePreviewImage(currentImageUrl: string): void {
-  uni.previewImage({
-    urls: formState.images.map(image => image.url),
-    current: currentImageUrl,
-  })
-}
-
-async function handleRemoveImage(imageId: string): Promise<void> {
-  const targetImage = formState.images.find(image => image.id === imageId)
-
-  if (!targetImage) {
-    return
-  }
-
-  formState.images = formState.images.filter(image => image.id !== imageId)
-  await removePreparedImageAsset(targetImage)
-}
-
 function handleSubmit(): void {
   if (!validateForm()) {
     return
@@ -242,27 +176,19 @@ function handleSubmit(): void {
                 class="field-textarea dark:bg-slate-900 dark:text-slate-100" />
             </view>
 
-            <view class="mt-3 grid grid-cols-3 gap-3">
-              <view v-for="image in formState.images" :key="image.id"
-                class="relative overflow-hidden rounded-[24rpx] bg-[var(--color-surface)] dark:bg-slate-900">
-                <AppImage :src="image.url" mode="aspectFill" class="h-[180rpx] w-full" error-text="这张配图先休息一下"
-                  @tap="handlePreviewImage(image.url)" />
-                <button
-                  class="btn-pill-sm absolute right-2 top-2 h-7 min-h-7 w-7 min-w-7 rounded-full bg-slate-900/45 px-0 text-xs text-white"
-                  hover-class="opacity-90" @tap.stop="handleRemoveImage(image.id)">
-                  ×
-                </button>
-              </view>
-
-              <button v-if="formState.images.length < 4"
-                class="btn-base h-[180rpx] rounded-[24rpx] bg-[var(--color-surface)] px-0 text-app-muted dark:bg-slate-900 dark:text-slate-200"
-                hover-class="opacity-92" @tap="handleChooseImages">
-                <view class="flex h-full flex-col items-center justify-center gap-2">
-                  <text class="text-2xl font-500">+</text>
-                  <text class="text-2xs">添加配图</text>
-                </view>
-              </button>
-            </view>
+            <ImagePicker
+              v-model="formState.images"
+              :max-count="4"
+              upload-mode="cloud"
+              asset-prefix="record-image"
+              scope="record"
+              crop-mode="card"
+              :max-width="1440"
+              :quality="82"
+              :max-size-in-bytes="1.8 * 1024 * 1024"
+              add-text="添加配图"
+              error-text="这张配图先休息一下"
+            />
           </view>
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
@@ -294,7 +220,7 @@ function handleSubmit(): void {
           先不记录
         </button>
         <view class="flex-1">
-          <SubmitBtn text="完成打卡" loading-text="保存中..." :loading="props.submitting || isUploadingImages" variant="mint"
+          <SubmitBtn text="完成打卡" loading-text="保存中..." :loading="props.submitting" variant="mint"
             size="md" @click="handleSubmit" />
         </view>
       </view>
