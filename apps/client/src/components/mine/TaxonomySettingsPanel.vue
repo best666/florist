@@ -113,16 +113,21 @@ function confirmAdd(): void {
 <template>
   <view class="flex flex-col gap-4">
     <!-- 品类 -->
-    <CollapsibleSection title="🌿 品类管理" :default-expanded="false">
+    <CollapsibleSection
+      title="🌿 品类管理"
+      :default-expanded="false"
+    >
       <InfoPopover content="植株品类默认选项可以隐藏或新增自定义。隐藏的选项不会在新增或筛选时出现。" />
       <view class="mt-3 flex flex-wrap gap-2">
         <text
           v-for="opt in FLOWER_CATEGORY_OPTIONS"
           :key="opt.value"
           class="inline-block cursor-pointer rounded-full px-3 py-1.5 text-2xs font-600"
-          :class="categoryHiddenSet.has(opt.value)
-            ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
-            : 'bg-[var(--color-mint)]/10 text-[var(--color-sage)]'"
+          :class="
+            categoryHiddenSet.has(opt.value)
+              ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
+              : 'bg-[var(--color-mint)]/10 text-white/88'
+          "
           @tap="toggleHideCategory(opt.value, opt.label)"
         >
           {{ opt.label }}
@@ -139,15 +144,20 @@ function confirmAdd(): void {
     </CollapsibleSection>
 
     <!-- 位置 -->
-    <CollapsibleSection title="📍 位置管理" :default-expanded="false">
+    <CollapsibleSection
+      title="📍 位置管理"
+      :default-expanded="false"
+    >
       <view class="mt-3 flex flex-wrap gap-2">
         <text
           v-for="opt in FLOWER_PLACEMENT_OPTIONS"
           :key="opt.value"
           class="inline-block cursor-pointer rounded-full px-3 py-1.5 text-2xs font-600"
-          :class="placementHiddenSet.has(opt.value)
-            ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
-            : 'bg-[var(--color-blush)]/10 text-[var(--color-ink)]'"
+          :class="
+            placementHiddenSet.has(opt.value)
+              ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
+              : 'bg-[var(--color-blush)]/10 text-[var(--color-ink)]'
+          "
           @tap="toggleHidePlacement(opt.value, opt.label)"
         >
           {{ opt.label }}
@@ -164,15 +174,20 @@ function confirmAdd(): void {
     </CollapsibleSection>
 
     <!-- 难度 -->
-    <CollapsibleSection title="💪 难度管理" :default-expanded="false">
+    <CollapsibleSection
+      title="💪 难度管理"
+      :default-expanded="false"
+    >
       <view class="mt-3 flex flex-wrap gap-2">
         <text
           v-for="opt in FLOWER_DIFFICULTY_OPTIONS"
           :key="opt.value"
           class="inline-block cursor-pointer rounded-full px-3 py-1.5 text-2xs font-600"
-          :class="difficultyHiddenSet.has(opt.value)
-            ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
-            : 'bg-[var(--color-cream)]/40 text-[var(--color-ink)]'"
+          :class="
+            difficultyHiddenSet.has(opt.value)
+              ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
+              : 'bg-[var(--color-cream)]/40 text-[var(--color-ink)]'
+          "
           @tap="toggleHideDifficulty(opt.value, opt.label)"
         >
           {{ opt.label }}
@@ -189,15 +204,20 @@ function confirmAdd(): void {
     </CollapsibleSection>
 
     <!-- 状态 -->
-    <CollapsibleSection title="📊 状态管理" :default-expanded="false">
+    <CollapsibleSection
+      title="📊 状态管理"
+      :default-expanded="false"
+    >
       <view class="mt-3 flex flex-wrap gap-2">
         <text
           v-for="opt in FLOWER_STATUS_OPTIONS"
           :key="opt.value"
           class="inline-block cursor-pointer rounded-full px-3 py-1.5 text-2xs font-600"
-          :class="statusHiddenSet.has(opt.value)
-            ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
-            : 'bg-[var(--color-blush)]/8 text-[var(--color-ink)]'"
+          :class="
+            statusHiddenSet.has(opt.value)
+              ? 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800 dark:text-slate-600'
+              : 'bg-[var(--color-blush)]/8 text-[var(--color-ink)]'
+          "
           @tap="toggleHideStatus(opt.value, opt.label)"
         >
           {{ opt.label }}
@@ -214,7 +234,10 @@ function confirmAdd(): void {
     </CollapsibleSection>
 
     <!-- 新增入口 -->
-    <view v-if="editingType" class="card-soft rounded-[28rpx] px-4 py-4">
+    <view
+      v-if="editingType"
+      class="card-soft rounded-[28rpx] px-4 py-4"
+    >
       <view class="flex items-center gap-2">
         <input
           v-model="newCustomName"
@@ -222,15 +245,27 @@ function confirmAdd(): void {
           placeholder="输入自定义名称（最多10字）"
           :maxlength="10"
         />
-        <text class="btn-pill-sm bg-[var(--color-mint)]/15 px-4 text-[var(--color-sage)]" @tap="confirmAdd">确认</text>
-        <text class="btn-pill-sm bg-slate-100 px-4 text-app-muted" @tap="cancelAdd">取消</text>
+        <text
+          class="btn-pill-sm bg-[var(--color-mint)]/15 px-4 text-[var(--color-sage)]"
+          @tap="confirmAdd"
+          >确认</text
+        >
+        <text
+          class="btn-pill-sm bg-slate-100 px-4 text-app-muted"
+          @tap="cancelAdd"
+          >取消</text
+        >
       </view>
     </view>
-    <view v-else class="text-center">
+    <view
+      v-else
+      class="text-center"
+    >
       <text
         class="inline-block cursor-pointer rounded-full bg-[var(--color-gold)]/12 px-5 py-2 text-2xs font-700 text-[var(--color-gold)]"
         @tap="startAdd('category')"
-      >+ 新增自定义品类</text>
+        >+ 新增自定义品类</text
+      >
     </view>
   </view>
 </template>

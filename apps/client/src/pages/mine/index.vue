@@ -233,19 +233,19 @@ function goToCommunity(): void {
       </view>
 
       <CollapsibleSection
-        title="养护分类管理"
-        description="点击可隐藏不需要的默认选项，或新增自定义分类。修改后新建植株和筛选都会自动更新。"
-        :default-expanded="false"
-      >
-        <TaxonomySettingsPanel />
-      </CollapsibleSection>
-
-      <CollapsibleSection
         title="皮肤主题"
         :description="`当前 ${memberStore.currentTheme.label} · 莫兰迪色系，柔和护眼`"
         :default-expanded="false"
       >
         <MineThemeSelector />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="养护分类管理"
+        description="点击可隐藏不需要的默认选项，或新增自定义分类。修改后新建植株和筛选都会自动更新。"
+        :default-expanded="false"
+      >
+        <TaxonomySettingsPanel />
       </CollapsibleSection>
 
       <CollapsibleSection

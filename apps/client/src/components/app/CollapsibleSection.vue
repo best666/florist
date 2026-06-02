@@ -60,7 +60,10 @@ function handleToggle(): void {
 
 <template>
   <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
-    <view class="flex items-start justify-between gap-3">
+    <view
+      class="flex items-start justify-between gap-3"
+      @tap="handleToggle"
+    >
       <view class="min-w-0 flex-1">
         <view class="flex items-center gap-1">
           <text class="block text-base font-800 text-app-ink text-nowrap dark:text-slate-100">
@@ -81,13 +84,14 @@ function handleToggle(): void {
           :tone="props.tagTone"
           :icon="props.tagIcon"
         />
-        <button
-          class="btn-pill-sm surface-soft bg-[var(--color-surface)]/78 px-4 text-app-muted dark:bg-slate-800 dark:text-slate-200"
-          hover-class="opacity-92"
-          @tap="handleToggle"
-        >
-          {{ internalExpanded ? '收起' : '展开' }}
-        </button>
+        <view class="flex h-[48rpx] w-[48rpx] items-center justify-center text-app-muted/50 dark:text-slate-400">
+          <view
+            class="text-[24rpx] leading-none transition-transform duration-200"
+            :style="{ transform: internalExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }"
+          >
+            ▼
+          </view>
+        </view>
       </view>
     </view>
 
