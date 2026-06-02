@@ -137,3 +137,11 @@ export enum UserStatus {
   Normal = 'normal',
   Disabled = 'disabled',
 }
+
+/** 分类法类型枚举 */
+export enum TaxonomyType {
+  Category = 'category',
+  Placement = 'placement',
+  Difficulty = 'difficulty',
+  Status = 'status',
+}

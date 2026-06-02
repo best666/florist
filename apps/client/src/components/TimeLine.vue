@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SoftTone, TimelineItem } from '@/interfaces'
-import TagLabel from './TagLabel.vue'
+import TagLabel from './app/TagLabel.vue'
 
 interface TimeLineProps {
   /**

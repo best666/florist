@@ -2,10 +2,10 @@
 import type { IFeedback, IImageAsset } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
-import AppBottomNav from '@/components/AppBottomNav.vue'
-import AppButton from '@/components/AppButton.vue'
-import ImagePicker from '@/components/ImagePicker.vue'
-import SubmitBtn from '@/components/SubmitBtn.vue'
+import AppBottomNav from '@/components/app/AppBottomNav.vue'
+import AppButton from '@/components/app/AppButton.vue'
+import ImagePicker from '@/components/app/ImagePicker.vue'
+import SubmitBtn from '@/components/app/SubmitBtn.vue'
 import {
   addComment,
   createFeedback,
@@ -17,7 +17,7 @@ import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { COMMUNITY_TIPS } from '@/interfaces/page-tips'
 import { useAuthStore } from '@/store'
-import { formatDateTime, showGentleSuccess, showGentleToast } from '@/utils'
+import { formatDateTime, handleCatchAndToast, showGentleSuccess, showGentleToast } from '@/utils'
 
 const themeClass = usePageTheme()
 const { currentTip: communityTip } = usePageTip(COMMUNITY_TIPS)
@@ -163,7 +163,7 @@ async function handleSubmitFeedback(): Promise<void> {
     showGentleSuccess('反馈已提交，AI 审核通过后将在社区展示。')
     loadFeedbacks(true)
   } catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '提交失败，请稍后再试。')
+    handleCatchAndToast(error, '提交失败，请稍后再试。')
   } finally {
     isSubmitting.value = false
   }

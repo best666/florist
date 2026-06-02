@@ -64,6 +64,10 @@ export interface LocalFlower {
   readonly isDeleted: boolean
   readonly deletedAt?: IsoDateTimeString
   readonly pendingPurgeAt?: IsoDateTimeString
+  readonly customCategoryId?: string
+  readonly customPlacementId?: string
+  readonly customCareDifficultyId?: string
+  readonly customCareStatusId?: string
 }
 
 export interface FlowerFilterState {
@@ -73,57 +77,57 @@ export interface FlowerFilterState {
 }
 
 export const FLOWER_CATEGORY_OPTIONS: ReadonlyArray<KeyValueOption<FlowerCategory>> = [
-  { label: '多肉', value: FlowerCategory.Succulent },
-  { label: '草本', value: FlowerCategory.Herbaceous },
-  { label: '木本', value: FlowerCategory.Woody },
-  { label: '水培', value: FlowerCategory.Hydroponic },
-  { label: '藤蔓', value: FlowerCategory.Vine },
+  { label: '🌵 多肉', value: FlowerCategory.Succulent },
+  { label: '🌿 草本', value: FlowerCategory.Herbaceous },
+  { label: '🌳 木本', value: FlowerCategory.Woody },
+  { label: '💧 水培', value: FlowerCategory.Hydroponic },
+  { label: '🌱 藤蔓', value: FlowerCategory.Vine },
 ] as const
 
 export const FLOWER_PLACEMENT_OPTIONS: ReadonlyArray<KeyValueOption<FlowerPlacement>> = [
-  { label: '阳台', value: FlowerPlacement.IndoorBalcony },
-  { label: '户外', value: FlowerPlacement.OutdoorOpenAir },
-  { label: '室内散光', value: FlowerPlacement.IndoorShade },
+  { label: '☀️ 阳台', value: FlowerPlacement.IndoorBalcony },
+  { label: '🌤 户外', value: FlowerPlacement.OutdoorOpenAir },
+  { label: '🪟 室内散光', value: FlowerPlacement.IndoorShade },
 ] as const
 
 export const FLOWER_DIFFICULTY_OPTIONS: ReadonlyArray<KeyValueOption<FlowerCareDifficulty>> = [
-  { label: '轻松', value: FlowerCareDifficulty.Easy },
-  { label: '适中', value: FlowerCareDifficulty.Medium },
-  { label: '进阶', value: FlowerCareDifficulty.Hard },
+  { label: '🌱 新手友好', value: FlowerCareDifficulty.Easy },
+  { label: '🌿 有点讲究', value: FlowerCareDifficulty.Medium },
+  { label: '🌲 大神向', value: FlowerCareDifficulty.Hard },
 ] as const
 
 export const FLOWER_STATUS_OPTIONS: ReadonlyArray<KeyValueOption<FlowerHealthStatus>> = [
-  { label: '缺水', value: 'watering-needed' },
-  { label: '正常', value: 'healthy' },
-  { label: '休眠', value: 'dormant' },
-  { label: '需施肥', value: 'fertilizing-needed' },
+  { label: '💧 渴了', value: 'watering-needed' },
+  { label: '✅ 精神不错', value: 'healthy' },
+  { label: '😴 在睡觉', value: 'dormant' },
+  { label: '🍽 饿了', value: 'fertilizing-needed' },
 ] as const
 
 const FLOWER_CATEGORY_LABEL_MAP: Record<FlowerCategory, string> = {
-  [FlowerCategory.Succulent]: '多肉',
-  [FlowerCategory.Herbaceous]: '草本',
-  [FlowerCategory.Woody]: '木本',
-  [FlowerCategory.Hydroponic]: '水培',
-  [FlowerCategory.Vine]: '藤蔓',
+  [FlowerCategory.Succulent]: '🌵 多肉',
+  [FlowerCategory.Herbaceous]: '🌿 草本',
+  [FlowerCategory.Woody]: '🌳 木本',
+  [FlowerCategory.Hydroponic]: '💧 水培',
+  [FlowerCategory.Vine]: '🌱 藤蔓',
 }
 
 const FLOWER_PLACEMENT_LABEL_MAP: Record<FlowerPlacement, string> = {
-  [FlowerPlacement.IndoorBalcony]: '阳台',
-  [FlowerPlacement.OutdoorOpenAir]: '户外',
-  [FlowerPlacement.IndoorShade]: '室内散光',
+  [FlowerPlacement.IndoorBalcony]: '☀️ 阳台',
+  [FlowerPlacement.OutdoorOpenAir]: '🌤 户外',
+  [FlowerPlacement.IndoorShade]: '🪟 室内散光',
 }
 
 const FLOWER_DIFFICULTY_LABEL_MAP: Record<FlowerCareDifficulty, string> = {
-  [FlowerCareDifficulty.Easy]: '轻松',
-  [FlowerCareDifficulty.Medium]: '适中',
-  [FlowerCareDifficulty.Hard]: '进阶',
+  [FlowerCareDifficulty.Easy]: '🌱 新手友好',
+  [FlowerCareDifficulty.Medium]: '🌿 有点讲究',
+  [FlowerCareDifficulty.Hard]: '🌲 大神向',
 }
 
 const FLOWER_STATUS_LABEL_MAP: Record<FlowerHealthStatus, string> = {
-  'watering-needed': '缺水',
-  healthy: '正常',
-  dormant: '休眠',
-  'fertilizing-needed': '需施肥',
+  'watering-needed': '💧 渴了',
+  healthy: '✅ 精神不错',
+  dormant: '😴 在睡觉',
+  'fertilizing-needed': '🍽 饿了',
 }
 
 export function getFlowerCategoryLabel(category: FlowerCategory): string {

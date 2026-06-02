@@ -12,9 +12,9 @@ import {
   readMineFeedbackHistory,
   readPlantDoctorHistoryFromStorage,
   removeCachedImage,
+  handleCatchAndToast,
   showGentleConfirm,
   showGentleSuccess,
-  showGentleToast,
   writeMineFeedbackHistory,
   writePlantDoctorHistoryToStorage,
   writeReminderConfigToStorage,
@@ -75,7 +75,7 @@ async function handleGenerateBackup(): Promise<void> {
     await copyText(latestBackupString.value)
     showGentleSuccess('备份串已经复制好啦。')
   } catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '备份生成时刚好卡了一下。')
+    handleCatchAndToast(error, '备份生成时刚好卡了一下。')
   } finally {
     isGeneratingBackup.value = false
   }
@@ -91,7 +91,7 @@ async function handleRestoreBackup(): Promise<void> {
   try {
     parsedBackup = decodeLocalBackup(restoreBackupString.value)
   } catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '备份解析时有一点不完整。')
+    handleCatchAndToast(error, '备份解析时有一点不完整。')
     return
   }
 

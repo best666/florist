@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import ActionHintButton from './ActionHintButton.vue'
+import ActionHintButton from '../ActionHintButton.vue'
 import { useFlowerStore, useRecordStore } from '@/store'
 
 defineProps<{

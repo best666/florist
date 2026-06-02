@@ -3,8 +3,8 @@ import type { IPlantAiAdvice } from '@florist/contracts'
 import { computed } from 'vue'
 import type { LocalFlower } from '@/interfaces'
 import { formatDateTime, getFlowerDisplayName } from '@/utils'
-import SubmitBtn from './SubmitBtn.vue'
-import TagLabel from './TagLabel.vue'
+import SubmitBtn from '../app/SubmitBtn.vue'
+import TagLabel from '../app/TagLabel.vue'
 
 interface SingleFlowerAiAdvicePanelProps {
   flower: LocalFlower | null

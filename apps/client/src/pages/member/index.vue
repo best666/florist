@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app'
 import { computed } from 'vue'
-import PageHero from '@/components/PageHero.vue'
+import PageHero from '@/components/app/PageHero.vue'
 import { useMemberStore } from '@/store'
 import { useFreeTierLimits } from '@/hooks/useFreeTierLimits'
 import { THEME_SKIN_DEFINITIONS } from '@/utils'

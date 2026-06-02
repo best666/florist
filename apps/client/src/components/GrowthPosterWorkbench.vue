@@ -19,10 +19,10 @@ import {
   revokeCompressedImageUrl,
   savePosterImageToAlbum,
 } from '@/utils'
-import TagLabel from './TagLabel.vue'
-import SubmitBtn from './SubmitBtn.vue'
-import AppImage from './AppImage.vue'
-import CollapsibleSection from './CollapsibleSection.vue'
+import TagLabel from './app/TagLabel.vue'
+import SubmitBtn from './app/SubmitBtn.vue'
+import AppImage from './app/AppImage.vue'
+import CollapsibleSection from './app/CollapsibleSection.vue'
 import { computed, getCurrentInstance, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 type CanvasContext2D = UniApp.CanvasContext

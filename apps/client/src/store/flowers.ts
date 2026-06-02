@@ -57,6 +57,10 @@ function buildFlowerEntity(values: FlowerFormValues, existingFlower?: LocalFlowe
     createdAt: existingFlower?.createdAt ?? now,
     updatedAt: now,
     isDeleted: false,
+    ...(values.customCategoryId ? { customCategoryId: values.customCategoryId } : {}),
+    ...(values.customPlacementId ? { customPlacementId: values.customPlacementId } : {}),
+    ...(values.customCareDifficultyId ? { customCareDifficultyId: values.customCareDifficultyId } : {}),
+    ...(values.customCareStatusId ? { customCareStatusId: values.customCareStatusId } : {}),
   }
 }
 

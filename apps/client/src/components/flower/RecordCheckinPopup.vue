@@ -15,10 +15,10 @@ import {
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
-import ImagePicker from './ImagePicker.vue'
-import InfoPopover from './InfoPopover.vue'
-import SubmitBtn from './SubmitBtn.vue'
-import TagLabel from './TagLabel.vue'
+import ImagePicker from '../app/ImagePicker.vue'
+import InfoPopover from '../app/InfoPopover.vue'
+import SubmitBtn from '../app/SubmitBtn.vue'
+import TagLabel from '../app/TagLabel.vue'
 
 interface RecordCheckinPopupProps {
   modelValue: boolean

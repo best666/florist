@@ -13,10 +13,10 @@ import { useFlowerTaxonomyStore } from '@/store'
 import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { useCustomOptionEditor } from '@/hooks/useCustomOptionEditor'
-import ImagePicker from './ImagePicker.vue'
-import InfoPopover from './InfoPopover.vue'
-import SubmitBtn from './SubmitBtn.vue'
-import TagLabel from './TagLabel.vue'
+import ImagePicker from '../app/ImagePicker.vue'
+import InfoPopover from '../app/InfoPopover.vue'
+import SubmitBtn from '../app/SubmitBtn.vue'
+import TagLabel from '../app/TagLabel.vue'
 
 const CUSTOM_CATEGORY_TRIGGER_VALUE = '__custom-category__'
 const CUSTOM_PLACEMENT_TRIGGER_VALUE = '__custom-placement__'
@@ -578,7 +578,9 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <view class="flex items-center gap-1">
               <text class="text-sm font-700 text-app-ink dark:text-slate-100">图片相册</text>
-              <InfoPopover content="多图上传、预览、删除都会即时保存，没有网络也能正常操作。上传的图片会自动压缩优化。" />
+              <InfoPopover
+                content="多图上传、预览、删除都会即时保存，没有网络也能正常操作。上传的图片会自动压缩优化。"
+              />
             </view>
 
             <ImagePicker
@@ -1173,6 +1175,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastWateredAt)"
                   @change="handleWateredDateChange"
+                  class="max-w-90%"
                 >
                   <view
                     class="field-input-md w-auto flex items-center justify-between gap-2 overflow-hidden dark:bg-slate-900 dark:text-slate-100"
@@ -1193,6 +1196,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
                   mode="date"
                   :value="resolvePickerDateValue(formState.lastFertilizedAt)"
                   @change="handleFertilizedDateChange"
+                  class="max-w-90%"
                 >
                   <view
                     class="field-input-md w-auto flex items-center justify-between gap-2 overflow-hidden dark:bg-slate-900 dark:text-slate-100"

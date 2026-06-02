@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { MineStatisticsCard } from '@/interfaces'
-import InfoPopover from './InfoPopover.vue'
+import InfoPopover from '../app/InfoPopover.vue'
 
 interface MineStatisticsGridProps {
   readonly cards: ReadonlyArray<MineStatisticsCard>

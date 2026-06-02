@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { GrowthAlbumPhotoItem } from '@/interfaces'
-import InfoPopover from './InfoPopover.vue'
-import TagLabel from './TagLabel.vue'
-import AppImage from './AppImage.vue'
+import InfoPopover from './app/InfoPopover.vue'
+import TagLabel from './app/TagLabel.vue'
+import AppImage from './app/AppImage.vue'
 import { formatDateTime, showGentleToast } from '@/utils'
 
 interface GrowthAlbumGalleryProps {

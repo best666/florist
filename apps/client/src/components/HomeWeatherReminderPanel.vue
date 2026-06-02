@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import type { CityOption, LocalFlower, UseLocationWeatherReminderState, WeatherCareTip } from '@/interfaces'
 import { DEFAULT_CITY_OPTIONS, formatCityDisplayName } from '@/interfaces'
 import { buildFlowerWeatherContextTips, formatDateTime } from '@/utils'
-import TagLabel from './TagLabel.vue'
+import TagLabel from './app/TagLabel.vue'
 
 const showReminderSettings = ref(false)
 

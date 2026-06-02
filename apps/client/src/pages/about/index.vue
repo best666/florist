@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import InfoPopover from '@/components/InfoPopover.vue'
-import PageHero from '@/components/PageHero.vue'
+import InfoPopover from '@/components/app/InfoPopover.vue'
+import PageHero from '@/components/app/PageHero.vue'
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { ABOUT_TIPS } from '@/interfaces/page-tips'

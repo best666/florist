@@ -3,18 +3,19 @@ import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
-import MineAboutLinks from '@/components/MineAboutLinks.vue'
-import MineAuthCard from '@/components/MineAuthCard.vue'
-import MineBackupPanel from '@/components/MineBackupPanel.vue'
-import MineExtensionPanel from '@/components/MineExtensionPanel.vue'
-import MinePermissionsPanel from '@/components/MinePermissionsPanel.vue'
-import MineRecycleBinPanel from '@/components/MineRecycleBinPanel.vue'
-import MineStatisticsGrid from '@/components/MineStatisticsGrid.vue'
-import MineThemeSelector from '@/components/MineThemeSelector.vue'
+import MineAboutLinks from '@/components/mine/MineAboutLinks.vue'
+import MineAuthCard from '@/components/mine/MineAuthCard.vue'
+import MineBackupPanel from '@/components/mine/MineBackupPanel.vue'
+import MineExtensionPanel from '@/components/mine/MineExtensionPanel.vue'
+import MinePermissionsPanel from '@/components/mine/MinePermissionsPanel.vue'
+import MineRecycleBinPanel from '@/components/mine/MineRecycleBinPanel.vue'
+import MineStatisticsGrid from '@/components/mine/MineStatisticsGrid.vue'
+import MineThemeSelector from '@/components/mine/MineThemeSelector.vue'
+import TaxonomySettingsPanel from '@/components/mine/TaxonomySettingsPanel.vue'
 import UserProfilePopup from '@/components/UserProfilePopup.vue'
-import AppBottomNav from '@/components/AppBottomNav.vue'
-import CollapsibleSection from '@/components/CollapsibleSection.vue'
-import PageHero from '@/components/PageHero.vue'
+import AppBottomNav from '@/components/app/AppBottomNav.vue'
+import CollapsibleSection from '@/components/app/CollapsibleSection.vue'
+import PageHero from '@/components/app/PageHero.vue'
 import { updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -26,9 +27,9 @@ import { useAppStore, useAuthStore, useFlowerStore, useMemberStore, useRecordSto
 import {
   readPlantDoctorHistoryFromStorage,
   readReminderConfigFromStorage,
+  handleCatchAndToast,
   showGentleConfirm,
   showGentleSuccess,
-  showGentleToast,
   writeReminderConfigToStorage,
 } from '@/utils'
 
@@ -177,7 +178,7 @@ async function handleSubmitProfile(payload: {
     profilePopupVisible.value = false
     showGentleSuccess('个人资料已经更新。')
   } catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '资料保存失败，请稍后再试。')
+    handleCatchAndToast(error, '资料保存失败，请稍后再试。')
   } finally {
     isSavingProfile.value = false
   }
@@ -230,6 +231,14 @@ function goToCommunity(): void {
           <text class="text-app-muted">→</text>
         </view>
       </view>
+
+      <CollapsibleSection
+        title="养护分类管理"
+        description="点击可隐藏不需要的默认选项，或新增自定义分类。修改后新建植株和筛选都会自动更新。"
+        :default-expanded="false"
+      >
+        <TaxonomySettingsPanel />
+      </CollapsibleSection>
 
       <CollapsibleSection
         title="皮肤主题"

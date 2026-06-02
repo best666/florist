@@ -23,6 +23,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { RecordsModule } from './modules/records/records.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { TaxonomyModule } from './modules/taxonomy/taxonomy.module';
 import { UsersModule } from './modules/users/users.module';
 import { WeatherModule } from './modules/weather/weather.module';
 
@@ -53,6 +54,7 @@ import { WeatherModule } from './modules/weather/weather.module';
     SyncModule,
     SchedulerModule,
     BackupsModule,
+    TaxonomyModule,
   ],
   providers: [
     {

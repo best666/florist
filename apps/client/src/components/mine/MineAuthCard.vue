@@ -2,9 +2,9 @@
 import type { IUser } from '@florist/contracts'
 import { UserLoginType } from '@florist/contracts'
 import { computed } from 'vue'
-import TagLabel from './TagLabel.vue'
-import AppImage from './AppImage.vue'
-import InfoPopover from './InfoPopover.vue'
+import TagLabel from '../app/TagLabel.vue'
+import AppImage from '../app/AppImage.vue'
+import InfoPopover from '../app/InfoPopover.vue'
 import { ClientPlatform } from '@/interfaces'
 
 interface MineAuthCardProps {

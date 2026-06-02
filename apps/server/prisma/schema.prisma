@@ -26,34 +26,39 @@ model User {
   feedbacks         Feedback[]
   feedbackVotes     FeedbackVote[]
   feedbackComments  FeedbackComment[]
+  taxonomyItems     TaxonomyItem[]
 
   @@index([loginType, updatedAt])
   @@index([status, updatedAt])
 }
 
 model Flower {
-  id               String        @id @db.VarChar(64)
-  userId           String        @db.VarChar(64)
-  name             String        @db.VarChar(80)
-  nickname         String?       @db.VarChar(80)
-  category         String        @db.VarChar(32)
-  placement        String        @db.VarChar(32)
-  careDifficulty   String        @db.VarChar(32)
-  careStatus       String        @db.VarChar(32)
-  coverImageId     String?       @db.VarChar(64)
-  purchasedAt      DateTime?     @db.DateTime(3)
-  priceInCents     Int?
-  note             String?       @db.VarChar(300)
-  lastWateredAt    DateTime?     @db.DateTime(3)
-  lastFertilizedAt DateTime?     @db.DateTime(3)
-  createdAt        DateTime      @default(now()) @db.DateTime(3)
-  updatedAt        DateTime      @updatedAt @db.DateTime(3)
-  isDeleted        Boolean       @default(false)
-  deletedAt        DateTime?     @db.DateTime(3)
-  pendingPurgeAt   DateTime?     @db.DateTime(3)
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images           FlowerImage[]
-  records          CareRecord[]
+  id                   String        @id @db.VarChar(64)
+  userId               String        @db.VarChar(64)
+  name                 String        @db.VarChar(80)
+  nickname             String?       @db.VarChar(80)
+  category             String        @db.VarChar(32)
+  placement            String        @db.VarChar(32)
+  careDifficulty       String        @db.VarChar(32)
+  careStatus           String        @db.VarChar(32)
+  customCategoryId       String?       @db.VarChar(64)
+  customPlacementId      String?       @db.VarChar(64)
+  customCareDifficultyId String?       @db.VarChar(64)
+  customCareStatusId     String?       @db.VarChar(64)
+  coverImageId         String?       @db.VarChar(64)
+  purchasedAt          DateTime?     @db.DateTime(3)
+  priceInCents         Int?
+  note                 String?       @db.VarChar(300)
+  lastWateredAt        DateTime?     @db.DateTime(3)
+  lastFertilizedAt     DateTime?     @db.DateTime(3)
+  createdAt            DateTime      @default(now()) @db.DateTime(3)
+  updatedAt            DateTime      @updatedAt @db.DateTime(3)
+  isDeleted            Boolean       @default(false)
+  deletedAt            DateTime?     @db.DateTime(3)
+  pendingPurgeAt       DateTime?     @db.DateTime(3)
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images               FlowerImage[]
+  records              CareRecord[]
 
   @@index([userId, isDeleted, updatedAt])
   @@index([userId, category])
@@ -68,6 +73,20 @@ model FlowerImage {
   flower        Flower   @relation(fields: [flowerId], references: [id], onDelete: Cascade)
 
   @@index([flowerId])
+}
+
+model TaxonomyItem {
+  id        String   @id @db.VarChar(64)
+  userId    String   @db.VarChar(64)
+  type      String   @db.VarChar(16)
+  label     String   @db.VarChar(20)
+  baseValue String   @db.VarChar(32)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, sortOrder])
 }
 
 model CareRecord {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import TagLabel from '@/components/TagLabel.vue'
-import PageHero from '@/components/PageHero.vue'
+import TagLabel from '@/components/app/TagLabel.vue'
+import PageHero from '@/components/app/PageHero.vue'
 import ActionHintButton from '@/components/ActionHintButton.vue'
 import { FLORIST_SHOP_PRODUCTS, SHOP_CATEGORY_DEFINITIONS, getShopCategoryLabel, openExternalLink } from '@/utils'
 import { usePageTheme } from '@/hooks/usePageTheme'

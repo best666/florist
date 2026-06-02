@@ -2,11 +2,6 @@ import type { IFlower } from '@florist/contracts'
 import { http } from '@/utils/request'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
 
-type FlowerServerPayload = Omit<
-  FlowerFormValues,
-  'customCategoryId' | 'customPlacementId' | 'customCareDifficultyId' | 'customCareStatusId'
->
-
 export interface FlowerCenterResponse {
   flowers: LocalFlower[]
   recycleBin: LocalFlower[]
@@ -19,7 +14,7 @@ export function fetchFlowerCenter(): Promise<FlowerCenterResponse> {
   })
 }
 
-function buildFlowerServerPayload(payload: FlowerFormValues): FlowerServerPayload {
+function buildFlowerServerPayload(payload: FlowerFormValues): FlowerFormValues {
   return {
     name: payload.name,
     nickname: payload.nickname,
@@ -32,18 +27,22 @@ function buildFlowerServerPayload(payload: FlowerFormValues): FlowerServerPayloa
     images: payload.images,
     lastWateredAt: payload.lastWateredAt,
     lastFertilizedAt: payload.lastFertilizedAt,
+    customCategoryId: payload.customCategoryId,
+    customPlacementId: payload.customPlacementId,
+    customCareDifficultyId: payload.customCareDifficultyId,
+    customCareStatusId: payload.customCareStatusId,
   }
 }
 
 export function createFlower(payload: FlowerFormValues): Promise<LocalFlower> {
-  return http.post<LocalFlower, FlowerServerPayload>('/flowers', buildFlowerServerPayload(payload), {
+  return http.post<LocalFlower, FlowerFormValues>('/flowers', buildFlowerServerPayload(payload), {
     loadingText: '正在创建植株',
     skipErrorToast: true,
   })
 }
 
 export function updateFlower(flowerId: string, payload: FlowerFormValues): Promise<LocalFlower> {
-  return http.put<LocalFlower, FlowerServerPayload>(`/flowers/${flowerId}`, buildFlowerServerPayload(payload), {
+  return http.put<LocalFlower, FlowerFormValues>(`/flowers/${flowerId}`, buildFlowerServerPayload(payload), {
     loadingText: '正在更新植株',
     skipErrorToast: true,
   })

@@ -80,4 +80,24 @@ export class UpsertFlowerDto {
   @IsOptional()
   @IsDateString()
   public lastFertilizedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  public customCategoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  public customPlacementId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  public customCareDifficultyId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  public customCareStatusId?: string;
 }

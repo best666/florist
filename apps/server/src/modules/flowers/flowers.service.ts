@@ -56,6 +56,10 @@ function mapFlower(flower: FlowerWithImages): IFlower {
     isDeleted: flower.isDeleted,
     ...(toIsoString(flower.deletedAt) ? { deletedAt: flower.deletedAt!.toISOString() } : {}),
     ...(toIsoString(flower.pendingPurgeAt) ? { pendingPurgeAt: flower.pendingPurgeAt!.toISOString() } : {}),
+    ...(flower.customCategoryId ? { customCategoryId: flower.customCategoryId } : {}),
+    ...(flower.customPlacementId ? { customPlacementId: flower.customPlacementId } : {}),
+    ...(flower.customCareDifficultyId ? { customCareDifficultyId: flower.customCareDifficultyId } : {}),
+    ...(flower.customCareStatusId ? { customCareStatusId: flower.customCareStatusId } : {}),
   };
 }
 

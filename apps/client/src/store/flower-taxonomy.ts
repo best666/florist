@@ -24,6 +24,13 @@ interface FlowerTaxonomyState {
   customCareDifficulties: FlowerCustomOption<FlowerCareDifficulty>[]
   customCareStatuses: FlowerCustomOption<FlowerHealthStatus>[]
   flowerSelections: Record<string, FlowerCustomSelectionMeta>
+  /** 被隐藏的默认选项值集合（用户可"删除"默认选项） */
+  hiddenCategories: string[]
+  hiddenPlacements: string[]
+  hiddenCareDifficulties: string[]
+  hiddenCareStatuses: string[]
+  /** 是否已从服务器拉取过分类数据 */
+  serverTaxonomyLoaded: boolean
 }
 
 function createOptionId(prefix: 'category' | 'placement' | 'difficulty' | 'status'): string {
@@ -89,42 +96,43 @@ export const useFlowerTaxonomyStore = defineStore('flower-taxonomy', {
     customCareDifficulties: [],
     customCareStatuses: [],
     flowerSelections: {},
+    hiddenCategories: [],
+    hiddenPlacements: [],
+    hiddenCareDifficulties: [],
+    hiddenCareStatuses: [],
+    serverTaxonomyLoaded: false,
   }),
   getters: {
     categoryOptions(state) {
       return [
-        ...FLOWER_CATEGORY_OPTIONS,
-        ...state.customCategories.map((option) => ({
-          label: option.label,
-          value: option.id,
-        })),
+        ...FLOWER_CATEGORY_OPTIONS
+          .filter(o => !state.hiddenCategories.includes(o.value))
+          .map(o => ({ ...o })),
+        ...state.customCategories.map(o => ({ label: o.label, value: o.id })),
       ]
     },
     placementOptions(state) {
       return [
-        ...FLOWER_PLACEMENT_OPTIONS,
-        ...state.customPlacements.map((option) => ({
-          label: option.label,
-          value: option.id,
-        })),
+        ...FLOWER_PLACEMENT_OPTIONS
+          .filter(o => !state.hiddenPlacements.includes(o.value))
+          .map(o => ({ ...o })),
+        ...state.customPlacements.map(o => ({ label: o.label, value: o.id })),
       ]
     },
     careDifficultyOptions(state) {
       return [
-        ...FLOWER_DIFFICULTY_OPTIONS,
-        ...state.customCareDifficulties.map((option) => ({
-          label: option.label,
-          value: option.id,
-        })),
+        ...FLOWER_DIFFICULTY_OPTIONS
+          .filter(o => !state.hiddenCareDifficulties.includes(o.value))
+          .map(o => ({ ...o })),
+        ...state.customCareDifficulties.map(o => ({ label: o.label, value: o.id })),
       ]
     },
     careStatusOptions(state) {
       return [
-        ...FLOWER_STATUS_OPTIONS,
-        ...state.customCareStatuses.map((option) => ({
-          label: option.label,
-          value: option.id,
-        })),
+        ...FLOWER_STATUS_OPTIONS
+          .filter(o => !state.hiddenCareStatuses.includes(o.value))
+          .map(o => ({ ...o })),
+        ...state.customCareStatuses.map(o => ({ label: o.label, value: o.id })),
       ]
     },
   },
@@ -442,6 +450,59 @@ export const useFlowerTaxonomyStore = defineStore('flower-taxonomy', {
         this.flowerSelections[flower.id]?.customCareStatusId,
       )
       return customOption?.label ?? getFlowerHealthStatusLabel(flower.careStatus)
+    },
+
+    // —— 隐藏/显示默认选项 ——
+
+    hideCategory(value: string): void {
+      if (!this.hiddenCategories.includes(value)) this.hiddenCategories = [...this.hiddenCategories, value]
+    },
+    unhideCategory(value: string): void {
+      this.hiddenCategories = this.hiddenCategories.filter(v => v !== value)
+    },
+    hidePlacement(value: string): void {
+      if (!this.hiddenPlacements.includes(value)) this.hiddenPlacements = [...this.hiddenPlacements, value]
+    },
+    unhidePlacement(value: string): void {
+      this.hiddenPlacements = this.hiddenPlacements.filter(v => v !== value)
+    },
+    hideCareDifficulty(value: string): void {
+      if (!this.hiddenCareDifficulties.includes(value)) this.hiddenCareDifficulties = [...this.hiddenCareDifficulties, value]
+    },
+    unhideCareDifficulty(value: string): void {
+      this.hiddenCareDifficulties = this.hiddenCareDifficulties.filter(v => v !== value)
+    },
+    hideCareStatus(value: string): void {
+      if (!this.hiddenCareStatuses.includes(value)) this.hiddenCareStatuses = [...this.hiddenCareStatuses, value]
+    },
+    unhideCareStatus(value: string): void {
+      this.hiddenCareStatuses = this.hiddenCareStatuses.filter(v => v !== value)
+    },
+
+    // —— 服务器同步 ——
+
+    async fetchServerTaxonomy(): Promise<void> {
+      try {
+        const { fetchTaxonomyItems } = await import('@/api/taxonomy')
+        const [categories, placements, difficulties, statuses] = await Promise.all([
+          fetchTaxonomyItems('category' as any),
+          fetchTaxonomyItems('placement' as any),
+          fetchTaxonomyItems('difficulty' as any),
+          fetchTaxonomyItems('status' as any),
+        ])
+        // Merge server items into local (keep local items that don't exist on server)
+        const mergeById = <T extends { id: string }>(local: T[], server: T[]) => {
+          const serverIds = new Set(server.map(s => s.id))
+          return [...server, ...local.filter(l => !serverIds.has(l.id))]
+        }
+        this.customCategories = mergeById(this.customCategories, categories as any)
+        this.customPlacements = mergeById(this.customPlacements, placements as any)
+        this.customCareDifficulties = mergeById(this.customCareDifficulties, difficulties as any)
+        this.customCareStatuses = mergeById(this.customCareStatuses, statuses as any)
+        this.serverTaxonomyLoaded = true
+      } catch {
+        // Offline or server error — use local data
+      }
     },
   },
   persist: true,

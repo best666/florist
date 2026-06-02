@@ -1,0 +1,49 @@
+import type { IFlowerTaxonomyItem, TaxonomyType } from '@florist/contracts'
+import { http } from '@/utils/request'
+
+export function fetchTaxonomyItems(type?: TaxonomyType): Promise<IFlowerTaxonomyItem[]> {
+  return http.get<IFlowerTaxonomyItem[]>('/taxonomy', type ? { type } : undefined, {
+    showLoading: false,
+    skipErrorToast: true,
+  })
+}
+
+export function createTaxonomyItem(dto: {
+  type: TaxonomyType
+  label: string
+  baseValue: string
+  sortOrder?: number
+}): Promise<IFlowerTaxonomyItem> {
+  return http.post<IFlowerTaxonomyItem>('/taxonomy', dto, {
+    skipErrorToast: true,
+  })
+}
+
+export function updateTaxonomyItem(
+  id: string,
+  dto: { label?: string; baseValue?: string; sortOrder?: number },
+): Promise<IFlowerTaxonomyItem> {
+  return http.patch<IFlowerTaxonomyItem>(`/taxonomy/${id}`, dto, {
+    skipErrorToast: true,
+  })
+}
+
+export function deleteTaxonomyItem(id: string): Promise<void> {
+  return http.delete(`/taxonomy/${id}`, {
+    skipErrorToast: true,
+  })
+}
+
+export function syncTaxonomyItems(
+  items: Array<{
+    id: string
+    type: TaxonomyType
+    label: string
+    baseValue: string
+    sortOrder?: number
+  }>,
+): Promise<IFlowerTaxonomyItem[]> {
+  return http.post<IFlowerTaxonomyItem[]>('/taxonomy/sync', items, {
+    skipErrorToast: true,
+  })
+}

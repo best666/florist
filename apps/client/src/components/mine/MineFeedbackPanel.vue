@@ -10,7 +10,7 @@ import {
   showGentleToast,
   writeMineFeedbackHistory,
 } from '@/utils'
-import ImagePicker from './ImagePicker.vue'
+import ImagePicker from '../app/ImagePicker.vue'
 
 interface MineFeedbackPanelProps {
   readonly refreshToken: number

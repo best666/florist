@@ -58,3 +58,13 @@ export function showGentleConfirm(options: GentleConfirmOptions): Promise<boolea
     })
   })
 }
+
+/** 从 unknown error 中提取可读消息 */
+export function toErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback
+}
+
+/** catch 块统一处理：提取错误消息 + toast */
+export function handleCatchAndToast(error: unknown, fallback: string): void {
+  showGentleToast(toErrorMessage(error, fallback))
+}

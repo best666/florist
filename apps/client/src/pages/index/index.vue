@@ -3,18 +3,19 @@ import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement } from '@florist/
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
-import AppBottomNav from '@/components/AppBottomNav.vue'
+import AppBottomNav from '@/components/app/AppBottomNav.vue'
 import CarePromptDrawer from '@/components/CarePromptDrawer.vue'
-import CollapsibleSection from '@/components/CollapsibleSection.vue'
-import ConfirmPopup from '@/components/ConfirmPopup.vue'
-import EmptyEmpty from '@/components/EmptyEmpty.vue'
-import FlowerCard from '@/components/FlowerCard.vue'
-import FlowerDetailPopup from '@/components/FlowerDetailPopup.vue'
-import FlowerFormPopup from '@/components/FlowerFormPopup.vue'
+import CollapsibleSection from '@/components/app/CollapsibleSection.vue'
+import ConfirmPopup from '@/components/app/ConfirmPopup.vue'
+import EmptyEmpty from '@/components/app/EmptyEmpty.vue'
+import FlowerCard from '@/components/flower/FlowerCard.vue'
+import FlowerDetailPopup from '@/components/flower/FlowerDetailPopup.vue'
+import FlowerCreatePopup from '@/components/flower/FlowerCreatePopup.vue'
+import FlowerFormPopup from '@/components/flower/FlowerFormPopup.vue'
 import HomeQuickDrawer from '@/components/HomeQuickDrawer.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
-import SingleFlowerAiAdvicePanel from '@/components/SingleFlowerAiAdvicePanel.vue'
-import SubmitBtn from '@/components/SubmitBtn.vue'
+import SingleFlowerAiAdvicePanel from '@/components/flower/SingleFlowerAiAdvicePanel.vue'
+import SubmitBtn from '@/components/app/SubmitBtn.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useGardenAiAdvice } from '@/hooks/useGardenAiAdvice'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -854,9 +855,16 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         />
       </CollapsibleSection>
 
-      <FlowerFormPopup
+      <FlowerCreatePopup
+        v-if="formMode === 'create'"
         v-model="isFormVisible"
-        :mode="formMode"
+        :submitting="isSaving"
+        @submit="handleSubmitFlower"
+      />
+      <FlowerFormPopup
+        v-else
+        v-model="isFormVisible"
+        mode="edit"
         :initial-value="formInitialValue"
         :submitting="isSaving"
         @submit="handleSubmitFlower"

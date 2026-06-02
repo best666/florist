@@ -1,6 +1,6 @@
 import type { IUserAuthSession } from '@florist/contracts'
 import { useAuthStore } from '@/store'
-import { showGentleSuccess, showGentleToast } from '@/utils'
+import { handleCatchAndToast, showGentleSuccess } from '@/utils'
 
 interface UseAuthSessionActionsOptions {
   readonly onLoginSuccess?: (session: IUserAuthSession) => void | Promise<void>
@@ -28,7 +28,7 @@ export function useAuthSessionActions(options?: UseAuthSessionActionsOptions) {
       showGentleSuccess(session.isNewUser ? '登录成功，已经为你创建新的个人花园。' : '登录成功，已经切换到你的个人花园。')
     }
     catch (error) {
-      showGentleToast(error instanceof Error ? error.message : '手机号登录暂时没有接稳。')
+      handleCatchAndToast(error, '手机号登录暂时没有接稳。')
     }
   }
 
@@ -40,7 +40,7 @@ export function useAuthSessionActions(options?: UseAuthSessionActionsOptions) {
       showGentleSuccess(session.isNewUser ? '微信登录成功，已经为你创建新的个人花园。' : '微信登录成功，已经切换到你的个人花园。')
     }
     catch (error) {
-      showGentleToast(error instanceof Error ? error.message : '微信登录暂时没有接稳。')
+      handleCatchAndToast(error, '微信登录暂时没有接稳。')
     }
   }
 

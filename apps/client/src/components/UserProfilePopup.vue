@@ -2,12 +2,13 @@
 import type { IUser } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
 import {
+  handleCatchAndToast,
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
-import AppImage from './AppImage.vue'
-import SubmitBtn from './SubmitBtn.vue'
+import AppImage from './app/AppImage.vue'
+import SubmitBtn from './app/SubmitBtn.vue'
 
 interface UserProfilePopupProps {
   modelValue: boolean
@@ -85,7 +86,7 @@ async function handleChooseAvatar(): Promise<void> {
     formState.avatarUrl = avatarUrl
   }
   catch (error) {
-    showGentleToast(error instanceof Error ? error.message : '头像处理失败，请换一张图片再试。')
+    handleCatchAndToast(error, '头像处理失败，请换一张图片再试。')
   }
   finally {
     choosingAvatar.value = false

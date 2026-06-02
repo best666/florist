@@ -69,4 +69,12 @@ export class AiProxyController {
   ): Promise<IPlantHealthCheck> {
     return this.aiProxyService.getPlantHealthCheck(payload, userId);
   }
+
+  @Post('taxonomy-suggest')
+  public suggestTaxonomy(
+    @Body() payload: { plantName: string },
+    @CurrentUserId() userId: string | undefined,
+  ) {
+    return this.aiProxyService.suggestFlowerTaxonomy(payload.plantName, userId);
+  }
 }

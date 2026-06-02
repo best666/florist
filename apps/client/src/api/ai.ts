@@ -309,3 +309,20 @@ export async function fetchPlantHealthCheck(
 }
 
 export const fetchAiCareAdvice = fetchGardenAiCareAdvice
+
+export interface TaxonomySuggestion {
+  category?: string
+  placement?: string
+  careDifficulty?: string
+  careStatus?: string
+  confidence: 'high' | 'medium' | 'low'
+}
+
+/** AI 分类建议：根据植物名称推荐品类/位置/难度/状态 */
+export function suggestFlowerTaxonomy(plantName: string): Promise<TaxonomySuggestion> {
+  return http.post<TaxonomySuggestion>('/ai-proxy/taxonomy-suggest', { plantName }, {
+    showLoading: false,
+    skipErrorToast: true,
+    timeout: 8000,
+  })
+}

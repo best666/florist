@@ -104,3 +104,15 @@ class OverviewResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
+
+
+class TaxonomySuggestRequest(BaseModel):
+    plant_name: str = Field(..., min_length=1, max_length=80)
+
+
+class TaxonomySuggestResponse(BaseModel):
+    category: str = "herbaceous"
+    placement: str = "indoor_balcony"
+    care_difficulty: str = "easy"
+    care_status: str = "healthy"
+    confidence: Literal["high", "medium", "low"] = "medium"

@@ -10,6 +10,7 @@ from app.api.diagnosis import router as diagnosis_router
 from app.api.health import router as health_router
 from app.api.memory_api import router as memory_router
 from app.api.admin import router as admin_router
+from app.api.taxonomy import router as taxonomy_router
 from app.api.tools_api import router as tools_router
 
 api_router = APIRouter()
@@ -19,5 +20,6 @@ api_router.include_router(advice_router)
 api_router.include_router(diagnosis_router)
 api_router.include_router(memory_router)
 api_router.include_router(admin_router)
+api_router.include_router(taxonomy_router)
 api_router.include_router(tools_router)
 api_router.include_router(health_router)

@@ -564,6 +564,12 @@ export class AiProxyService {
         };
         break;
       }
+      case 'taxonomy-suggest': {
+        const p = payload as { plantName: string };
+        requestUrl = `${baseUrl}/taxonomy/suggest`;
+        body = { plant_name: p.plantName };
+        break;
+      }
       default:
         throw new Error(`Unknown AI scope: ${scope}`);
     }
@@ -618,7 +624,7 @@ export class AiProxyService {
   }
 
   private async resolveAiResponse<TResponse>(input: {
-    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan' | 'chat' | 'plant-health-check';
+    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan' | 'chat' | 'plant-health-check' | 'taxonomy-suggest';
     userId?: string;
     payload: unknown;
     prompt: string;
@@ -832,5 +838,27 @@ export class AiProxyService {
     } catch {
       return { passed: true };
     }
+  }
+
+  public async suggestFlowerTaxonomy(plantName: string, userId?: string): Promise<{
+    category: string
+    placement: string
+    careDifficulty: string
+    careStatus: string
+    confidence: string
+  }> {
+    return this.resolveAiResponse({
+      scope: 'taxonomy-suggest',
+      payload: { plantName },
+      prompt: `根据植物名称"${plantName}"，推断它的品类、摆放位置、养护难度和当前状态。返回JSON格式。`,
+      fallbackFactory: () => ({
+        category: 'herbaceous',
+        placement: 'indoor_balcony',
+        careDifficulty: 'easy',
+        careStatus: 'healthy',
+        confidence: 'low',
+      }),
+      ...(userId ? { userId } : {}),
+    })
   }
 }

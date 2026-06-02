@@ -4,8 +4,8 @@ import type { LocalFlower } from '@/interfaces'
 import { getFlowerDisplayName, getTimeAgo } from '@/utils'
 import { useFlowerTaxonomyStore } from '@/store'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
-import AppImage from './AppImage.vue'
-import TagLabel from './TagLabel.vue'
+import AppImage from '../app/AppImage.vue'
+import TagLabel from '../app/TagLabel.vue'
 
 interface FlowerDetailPopupProps {
   modelValue: boolean

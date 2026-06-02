@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TagLabelStatus } from '@/interfaces'
-import AppImage from './AppImage.vue'
-import TagLabel from './TagLabel.vue'
+import AppImage from '../app/AppImage.vue'
+import TagLabel from '../app/TagLabel.vue'
 
 interface FlowerCardProps {
   name: string

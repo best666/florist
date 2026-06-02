@@ -55,4 +55,12 @@ export interface IFlower {
   readonly deletedAt?: IsoDateTimeString
   /** 待清理时间。 */
   readonly pendingPurgeAt?: IsoDateTimeString
+  /** 自定义品类选项 ID */
+  readonly customCategoryId?: string
+  /** 自定义位置选项 ID */
+  readonly customPlacementId?: string
+  /** 自定义养护难度选项 ID */
+  readonly customCareDifficultyId?: string
+  /** 自定义养护状态选项 ID */
+  readonly customCareStatusId?: string
 }
