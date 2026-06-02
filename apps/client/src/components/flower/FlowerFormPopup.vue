@@ -310,8 +310,8 @@ function handleSubmit(): void {
     nickname: formState.nickname.trim(),
     note: formState.note.trim(),
     images: [...formState.images],
-    lastWateredAt: formState.lastWateredAt.trim(),
-    lastFertilizedAt: formState.lastFertilizedAt.trim(),
+    lastWateredAt: formState.lastWateredAt?.trim() || undefined,
+    lastFertilizedAt: formState.lastFertilizedAt?.trim() || undefined,
   }
 
   emit('submit', {
@@ -467,22 +467,19 @@ function cancelDifficultyEditor(): void {
   difficultyEditor.cancel()
 }
 
-function resolvePickerDateValue(value: string): string {
-  const normalizedValue = value.trim().slice(0, 10)
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
-    return normalizedValue
+function resolvePickerDateValue(value: string | undefined): string {
+  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value.trim().slice(0, 10))) {
+    return value.trim().slice(0, 10)
   }
-
   return new Date().toISOString().slice(0, 10)
 }
 
-function hasExplicitDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value.trim().slice(0, 10))
+function hasExplicitDate(value: string | undefined): boolean {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value.trim().slice(0, 10)))
 }
 
-function resolvePickerDateText(value: string): string {
-  return hasExplicitDate(value) ? value.trim().slice(0, 10) : '选填'
+function resolvePickerDateText(value: string | undefined): string {
+  return hasExplicitDate(value) && value ? value.trim().slice(0, 10) : '选填'
 }
 
 function handleWateredDateChange(event: { detail: { value: string } }): void {

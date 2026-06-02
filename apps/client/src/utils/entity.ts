@@ -19,7 +19,8 @@ export function cloneImages(images: ReadonlyArray<IImageAsset>): IImageAsset[] {
  * 标准化可选字符串：trim 后若非空则返回，否则返回 undefined。
  * 用于表单字段“不填即不写入实体”的语义。
  */
-export function normalizeOptionalString(value: string): string | undefined {
+export function normalizeOptionalString(value?: string): string | undefined {
+  if (!value) return undefined
   const normalizedValue = value.trim()
   return normalizedValue.length > 0 ? normalizedValue : undefined
 }

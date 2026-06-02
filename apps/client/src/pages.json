@@ -48,12 +48,10 @@
       "path": "pages/user-agreement/index",
       "type": "page"
     },
-    // #ifdef H5
     {
       "path": "pages/community/index",
       "type": "page"
     }
-    // #endif
   ],
   "subPackages": []
 }

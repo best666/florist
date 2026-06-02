@@ -1,7 +1,8 @@
-import type { IUserAuthSession } from '@florist/contracts';
+import type { IUser, IUserAuthSession } from '@florist/contracts';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { AuthService } from './auth.service';
+import { BindPhoneDto } from './dto/bind-phone.dto';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
 import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
@@ -34,6 +35,14 @@ export class AuthController {
   @Post('h5/phone/code')
   public requestH5PhoneCode(@Body() payload: RequestH5PhoneCodeDto) {
     return this.authService.requestH5PhoneCode(payload);
+  }
+
+  @Post('bind-phone')
+  public bindPhone(
+    @CurrentUserId() userId: string | undefined,
+    @Body() payload: BindPhoneDto,
+  ): Promise<IUser> {
+    return this.authService.bindPhone(payload.phoneNumber, userId);
   }
 
   @Get('session')

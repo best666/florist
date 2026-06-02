@@ -1,6 +1,6 @@
 import type { IImageAsset } from '@florist/contracts'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { createFlower, fetchFlowerCenter, recycleFlower, updateFlower } from '@/api'
+import { createFlower, fetchFlowerCenter, recycleFlower, syncFlowersBatch, updateFlower } from '@/api/flowers'
 import type { FlowerFormValues, LocalFlower } from '@/interfaces'
 import {
   cloneImages,
@@ -76,9 +76,34 @@ async function releaseFlowerImages(images: ReadonlyArray<IImageAsset>): Promise<
   )
 }
 
+/**
+ * 将服务器数据与本地数据合并，而不是直接覆盖。
+ * - 两端都有同一 ID 的植株 → 保留 updatedAt 较新的版本
+ * - 仅服务器有的 → 添加到本地
+ * - 仅本地有的 → 保留在本地
+ */
 function hydrateFlowerCenter(state: FlowerState, center: FlowerState): void {
-  state.flowers = sortFlowers(center.flowers)
-  state.recycleBin = sortFlowers(center.recycleBin)
+  const serverMap = new Map<string, LocalFlower>()
+  for (const f of center.flowers) serverMap.set(f.id, f)
+  for (const f of center.recycleBin) serverMap.set(f.id, f)
+
+  const mergedMap = new Map<string, LocalFlower>()
+
+  // 先放入所有本地植株
+  for (const f of state.flowers) mergedMap.set(f.id, f)
+  for (const f of state.recycleBin) mergedMap.set(f.id, f)
+
+  // 用服务器数据覆盖/补充：服务器较新则取代本地，服务器独有则新增
+  for (const [id, serverFlower] of serverMap) {
+    const localFlower = mergedMap.get(id)
+    if (!localFlower || serverFlower.updatedAt >= localFlower.updatedAt) {
+      mergedMap.set(id, serverFlower)
+    }
+  }
+
+  const merged = [...mergedMap.values()]
+  state.flowers = sortFlowers(merged.filter((f) => !f.isDeleted))
+  state.recycleBin = sortFlowers(merged.filter((f) => f.isDeleted))
 }
 
 // 离线优先架构入口：未登录或非会员时走纯本地加密缓存，不调服务端
@@ -122,11 +147,32 @@ export const useFlowerStore = defineStore('flowers', {
       flowerCenterRequest = (async () => {
         try {
           const center = await fetchFlowerCenter()
-          hydrateFlowerCenter(this, {
-            flowers: center.flowers,
-            recycleBin: center.recycleBin,
-            initialized: true,
-          })
+
+          // 找出本地有但服务器没有的植株，推送到服务器
+          const serverIds = new Set([
+            ...center.flowers.map((f) => f.id),
+            ...center.recycleBin.map((f) => f.id),
+          ])
+          const localOnly = [
+            ...this.flowers.filter((f) => !serverIds.has(f.id)),
+            ...this.recycleBin.filter((f) => !serverIds.has(f.id)),
+          ]
+
+          if (localOnly.length > 0) {
+            const mergedCenter = await syncFlowersBatch(localOnly)
+            hydrateFlowerCenter(this, {
+              flowers: mergedCenter.flowers,
+              recycleBin: mergedCenter.recycleBin,
+              initialized: true,
+            })
+          } else {
+            hydrateFlowerCenter(this, {
+              flowers: center.flowers,
+              recycleBin: center.recycleBin,
+              initialized: true,
+            })
+          }
+
           flowerCenterLastLoadedAt = Date.now()
         } catch {
           await this.cleanupRecycleBin()
@@ -190,7 +236,14 @@ export const useFlowerStore = defineStore('flowers', {
         this.flowers = sortFlowers([...this.flowers, nextFlower])
         flowerCenterLastLoadedAt = Date.now()
         return nextFlower
-      } catch {
+      } catch (error) {
+        // 业务校验错误（400）直接抛出，不静默回退到本地
+        const err = error as { statusCode?: number; code?: string }
+        if (err.statusCode === 400 || err.code === 'Business') {
+          throw error
+        }
+
+        // 网络错误才回退到本地存储
         await this.cleanupRecycleBin()
 
         const existingFlower = flowerId

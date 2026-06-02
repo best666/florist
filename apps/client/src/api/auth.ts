@@ -1,4 +1,4 @@
-import type { IUserAuthSession } from '@florist/contracts'
+import type { IUser, IUserAuthSession } from '@florist/contracts'
 import { http } from '@/utils/request'
 
 export interface H5PhoneLoginPayload {
@@ -56,6 +56,14 @@ export function requestH5PhoneCode(payload: H5PhoneCodePayload): Promise<H5Phone
 export function loginWithWechatMiniProgram(payload: WechatMiniProgramLoginPayload): Promise<IUserAuthSession> {
   return http.post<IUserAuthSession, WechatMiniProgramLoginPayload>('/auth/wechat/login', payload, {
     loadingText: '正在连接微信登录',
+    skipErrorToast: true,
+  })
+}
+
+/** 为当前登录用户绑定手机号，实现跨端账号统一 */
+export function bindPhoneToAccount(phoneNumber: string): Promise<IUser> {
+  return http.post<IUser>('/auth/bind-phone', { phoneNumber }, {
+    loadingText: '正在绑定手机号',
     skipErrorToast: true,
   })
 }

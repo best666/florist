@@ -28,16 +28,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-/* ---- fetch: 静态资源缓存优先，API 请求走网络 ---- */
+/* ---- fetch: 导航走网络优先，静态资源缓存优先，API 不缓存 ---- */
 self.addEventListener('fetch', (event) => {
   const { pathname } = new URL(event.request.url)
+
+  // SW 自身或 HMR 请求：仅走网络
+  if (pathname === '/sw.js' || pathname.startsWith('/__vite') || pathname.startsWith('/@')) {
+    return
+  }
 
   // API 请求：仅走网络，不缓存
   if (pathname.startsWith('/api/')) {
     return
   }
 
-  // 静态资源：缓存优先，网络兜底
+  // HTML 导航请求：网络优先（确保总是获取最新版本）
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request)),
+    )
+    return
+  }
+
+  // 静态资源（JS/CSS/图片/字体）：缓存优先，网络兜底
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request).then((response) => {

@@ -1,6 +1,6 @@
 import { RecordActionType, type IImageAsset } from '@florist/contracts'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { createRecord, fetchRecordCenter, undoRecord as undoRecordApi } from '@/api'
+import { createRecord, fetchRecordCenter, syncRecordsBatch, undoRecord as undoRecordApi } from '@/api/records'
 import type { LocalRecord, RecordFormValues, RecordUndoLog } from '@/interfaces'
 import {
   cloneImages,
@@ -57,8 +57,24 @@ async function releaseRecordImages(images: ReadonlyArray<IImageAsset>): Promise<
   )
 }
 
+/**
+ * 将服务器记录与本地记录合并，而不是直接覆盖。
+ * - 两端都有同一 ID 的记录 → 保留服务器版本（记录创建后不可变）
+ * - 仅服务器有的 → 添加到本地
+ * - 仅本地有的 → 保留在本地
+ */
 function hydrateRecordCenter(state: RecordState, center: RecordState): void {
-  state.records = sortRecords(center.records)
+  const serverRecordMap = new Map<string, LocalRecord>()
+  for (const r of center.records) serverRecordMap.set(r.id, r)
+
+  const mergedMap = new Map<string, LocalRecord>()
+  for (const r of state.records) mergedMap.set(r.id, r)
+
+  for (const [id, serverRecord] of serverRecordMap) {
+    mergedMap.set(id, serverRecord)
+  }
+
+  state.records = sortRecords([...mergedMap.values()])
   state.undoLogs = [...center.undoLogs].sort((leftLog, rightLog) =>
     rightLog.revertedAt.localeCompare(leftLog.revertedAt),
   )
@@ -118,11 +134,26 @@ export const useRecordStore = defineStore('records', {
       recordCenterRequest = (async () => {
         try {
           const center = await fetchRecordCenter()
-          hydrateRecordCenter(this, {
-            records: center.records,
-            undoLogs: center.undoLogs,
-            initialized: true,
-          })
+
+          // 找出本地有但服务器没有的记录，推送到服务器
+          const serverIds = new Set(center.records.map((r) => r.id))
+          const localOnly = this.records.filter((r) => !serverIds.has(r.id))
+
+          if (localOnly.length > 0) {
+            const mergedCenter = await syncRecordsBatch(localOnly)
+            hydrateRecordCenter(this, {
+              records: mergedCenter.records,
+              undoLogs: mergedCenter.undoLogs,
+              initialized: true,
+            })
+          } else {
+            hydrateRecordCenter(this, {
+              records: center.records,
+              undoLogs: center.undoLogs,
+              initialized: true,
+            })
+          }
+
           recordCenterLastLoadedAt = Date.now()
         } catch {
           // 离线时保持本地加密缓存即可。

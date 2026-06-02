@@ -138,13 +138,14 @@ watch(
         <view class="mt-3 text-sm leading-7 text-app-muted">
           登录后即可使用植物管理、打卡记录、成长相册和云端备份等全部功能。
         </view>
-        <button class="btn-panel mt-5 bg-[var(--color-mint)]/20 text-[var(--color-sage)]" hover-class="opacity-92" :loading="switchingSession"
+        <button class="btn-panel mt-5 bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]" hover-class="opacity-92" :loading="switchingSession"
           @tap="openLoginPopup">
           {{ runtimePlatform === ClientPlatform.MpWeixin ? '使用微信登录' : '手机号登录' }}
         </button>
       </view>
     </view>
     <AuthLoginPopup v-model="loginPopupVisible" :platform="runtimePlatform" :loading="switchingSession"
-      @submit-h5="handleH5Login" @login-wechat="handleWechatLogin" />
+      @submitH5="handleH5Login" @loginWechat="handleWechatLogin" />
+
   </view>
 </template>

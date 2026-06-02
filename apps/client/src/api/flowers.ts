@@ -54,3 +54,13 @@ export function recycleFlower(flowerId: string): Promise<IFlower> {
     skipErrorToast: true,
   })
 }
+
+/** 批量同步本地植株到服务器（登录后首次同步） */
+export function syncFlowersBatch(items: ReadonlyArray<LocalFlower>): Promise<FlowerCenterResponse> {
+  // 剔除仅本地使用的字段（emoji 等），避免服务端校验报错
+  const cleanItems = items.map(({ emoji: _, ...rest }) => rest)
+  return http.post<FlowerCenterResponse>('/flowers/sync/batch', { items: cleanItems }, {
+    showLoading: false,
+    skipErrorToast: true,
+  })
+}

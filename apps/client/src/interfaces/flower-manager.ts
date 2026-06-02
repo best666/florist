@@ -41,8 +41,8 @@ export interface FlowerFormValues {
   coverImageId: string | undefined
   note: string
   images: IImageAsset[]
-  lastWateredAt: string
-  lastFertilizedAt: string
+  lastWateredAt: string | undefined
+  lastFertilizedAt: string | undefined
 }
 
 export interface LocalFlower {
@@ -172,7 +172,7 @@ export function createDefaultFlowerFormValues(): FlowerFormValues {
     coverImageId: undefined,
     note: '',
     images: [],
-    lastWateredAt: '',
-    lastFertilizedAt: '',
+    lastWateredAt: undefined,
+    lastFertilizedAt: undefined,
   }
 }

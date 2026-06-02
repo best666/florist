@@ -32,11 +32,7 @@ watch(
   () => props.modelValue,
   (visible) => {
     if (!visible) return
-    Object.assign(formState, {
-      ...createDefaultFlowerFormValues(),
-      lastWateredAt: '',
-      lastFertilizedAt: '',
-    })
+    Object.assign(formState, createDefaultFlowerFormValues())
     formError.value = ''
     aiSuggestion.value = null
   },
@@ -89,7 +85,8 @@ async function handleAiSuggest(): Promise<void> {
     aiSuggestion.value = suggestion
     if (suggestion.category) formState.category = suggestion.category as FlowerCategory
     if (suggestion.placement) formState.placement = suggestion.placement as FlowerPlacement
-    if (suggestion.careDifficulty) formState.careDifficulty = suggestion.careDifficulty as FlowerCareDifficulty
+    if (suggestion.careDifficulty)
+      formState.careDifficulty = suggestion.careDifficulty as FlowerCareDifficulty
     if (suggestion.careStatus) formState.careStatus = suggestion.careStatus as typeof formState.careStatus
   } catch {
     showGentleToast('AI 暂时无法识别，已使用默认设置')
@@ -104,7 +101,11 @@ function handleClose(): void {
 </script>
 
 <template>
-  <view v-if="props.modelValue" class="fixed inset-0 z-70 flex items-end overflow-hidden bg-slate-900/34 backdrop-blur-[6rpx]" @tap="handleClose">
+  <view
+    v-if="props.modelValue"
+    class="fixed inset-0 z-70 flex items-end overflow-hidden bg-slate-900/34 backdrop-blur-[6rpx]"
+    @tap="handleClose"
+  >
     <view
       class="relative max-h-[90vh] w-full overflow-y-auto rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-8 pt-5 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)]"
       @tap.stop
@@ -115,13 +116,18 @@ function handleClose(): void {
       <!-- 标题 -->
       <view class="flex items-center gap-1">
         <text class="block text-[44rpx] font-900 leading-tight text-app-ink">新增一盆小可爱</text>
-        <InfoPopover content="先写上名字就可以创建啦，品类和状态会自动设置，创建后随时可以编辑调整。" icon="help" />
+        <InfoPopover
+          content="先写上名字就可以创建啦，品类和状态会自动设置，创建后随时可以编辑调整。"
+          icon="help"
+        />
       </view>
       <CloseButton @click="handleClose" />
 
       <!-- 名称 -->
       <view class="mt-6">
-        <text class="block text-2xs font-700 tracking-[0.04em] text-app-muted">植株名称</text>
+        <text class="block text-2xs font-700 tracking-[0.04em] text-app-muted"
+          >植株标准名称（用于分类检索）</text
+        >
         <input
           v-model="formState.name"
           class="field-input-md mt-2 w-full px-4 text-sm text-app-ink"
@@ -143,14 +149,19 @@ function handleClose(): void {
         >
           ✨ AI 智能推荐分类
         </button>
-        <text v-if="aiSuggestionLabel" class="mt-2 block text-2xs leading-5 text-[var(--color-sage)]">
+        <text
+          v-if="aiSuggestionLabel"
+          class="mt-2 block text-2xs leading-5 text-[var(--color-sage)]"
+        >
           {{ aiSuggestionLabel }}
         </text>
       </view>
 
       <!-- 昵称 -->
       <view class="mt-5">
-        <text class="block text-2xs font-700 tracking-[0.04em] text-app-muted">昵称（可选）</text>
+        <text class="block text-2xs font-700 tracking-[0.04em] text-app-muted">
+          昵称（自己喜欢的名字，可选）
+        </text>
         <input
           v-model="formState.nickname"
           class="field-input-md mt-2 w-full px-4 text-sm text-app-ink"
@@ -177,12 +188,21 @@ function handleClose(): void {
       </view>
 
       <!-- 错误 -->
-      <text v-if="formError" class="mt-4 block text-sm text-[var(--color-blush)]">
+      <text
+        v-if="formError"
+        class="mt-4 block text-sm text-[var(--color-blush)]"
+      >
         {{ formError }}
       </text>
 
       <!-- 提交 -->
-      <SubmitBtn class="mt-6" text="创建植株" loading-text="创建中..." :loading="props.submitting" @click="handleSubmit" />
+      <SubmitBtn
+        class="mt-6"
+        text="创建植株"
+        loading-text="创建中..."
+        :loading="props.submitting"
+        @click="handleSubmit"
+      />
     </view>
   </view>
 </template>

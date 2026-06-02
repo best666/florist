@@ -146,6 +146,10 @@ export class AuthService {
     });
   }
 
+  public async bindPhone(phoneNumber: string, userId?: string) {
+    return this.usersService.bindPhoneToUser(phoneNumber, userId);
+  }
+
   public async getSession(userId?: string): Promise<IUserAuthSession> {
     const resolvedUserId = await this.usersService.resolveCurrentUserId(userId);
     return this.usersService.buildUserSession(resolvedUserId, false);

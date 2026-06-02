@@ -126,15 +126,15 @@ function handleSubmit(): void {
             <text class="block text-[38rpx] font-800 leading-tight text-app-ink">
               编辑资料
             </text>
-            <text class="mt-2 block text-[26rpx] leading-6 text-app-muted">
+            <text class="mt-2 block w-full text-[26rpx] leading-6 text-app-muted break-all">
               可以更新昵称、个性签名和头像，这些信息会跟随当前账号保存。
             </text>
           </view>
         </view>
       </view>
 
-      <view class="flex flex-col gap-4">
-        <button class="flex items-center gap-4 rounded-[28rpx] border-none bg-[#FBF6EE] px-4 py-4 text-left"
+      <view class="flex flex-col gap-4 overflow-hidden">
+        <button class="flex min-w-0 items-center gap-4 rounded-[28rpx] border-none bg-[#FBF6EE] px-4 py-4 text-left"
           hover-class="opacity-92" @tap="handleChooseAvatar">
           <view class="relative h-[128rpx] w-[128rpx] shrink-0">
             <view
@@ -158,7 +158,7 @@ function handleSubmit(): void {
         <view class="rounded-[28rpx] bg-[#F6F7FB] px-4 py-4">
           <text class="block text-[28rpx] font-700 text-app-ink">昵称</text>
           <input v-model="formState.nickname"
-            class="mt-3 h-[96rpx] rounded-[24rpx] bg-[var(--color-surface)] px-4 text-[28rpx] text-app-ink" :maxlength="40"
+            class="mt-3 h-[80rpx] rounded-[24rpx] bg-[var(--color-surface)] px-4 text-[28rpx] text-app-ink" :maxlength="40"
             placeholder="给这片花园起一个称呼" />
         </view>
 

@@ -32,3 +32,11 @@ export function undoRecord(recordId: string): Promise<UndoRecordResponse> {
     skipErrorToast: true,
   })
 }
+
+/** 批量同步本地记录到服务器（登录后首次同步） */
+export function syncRecordsBatch(items: ReadonlyArray<LocalRecord>): Promise<RecordCenterResponse> {
+  return http.post<RecordCenterResponse>('/records/sync/batch', { items }, {
+    showLoading: false,
+    skipErrorToast: true,
+  })
+}

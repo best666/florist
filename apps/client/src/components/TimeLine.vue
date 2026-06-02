@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<TimeLineProps>(), {
 })
 
 const toneDotClassMap: Record<SoftTone, string> = {
-  mint: 'bg-[var(--color-mint)]/30 text-[var(--color-sage)] dark:bg-emerald-300 dark:text-emerald-900',
+  mint: 'bg-[var(--color-mint)]/30 text-white dark:bg-emerald-300 dark:text-emerald-900',
   blush: 'bg-[var(--color-blush)]/30 text-[var(--color-ink)] dark:bg-rose-300 dark:text-rose-900',
   cream: 'bg-[var(--color-cream)]/50 text-[var(--color-gold)] dark:bg-amber-200 dark:text-amber-900',
   slate: 'bg-[var(--color-muted)]/20 text-[var(--color-ink)] dark:bg-slate-300 dark:text-slate-900',
@@ -34,20 +34,29 @@ function resolveDotClass(item: TimelineItem): string {
 
 <template>
   <view class="flex flex-col gap-3 rounded-[30rpx] dark:bg-slate-900">
-    <view v-if="normalizedItems.length === 0"
-      class="surface-soft py-4 text-center text-sm text-app-muted dark:text-app-muted">
+    <view
+      v-if="normalizedItems.length === 0"
+      class="surface-soft py-4 text-center text-sm text-app-muted dark:text-app-muted"
+    >
       {{ props.emptyText }}
     </view>
 
-    <view v-for="(item, index) in normalizedItems" :key="item.id" class="app-fade-up flex gap-3">
+    <view
+      v-for="(item, index) in normalizedItems"
+      :key="item.id"
+      class="app-fade-up flex gap-3"
+    >
       <view class="flex w-10 flex-col items-center">
         <view
           class="flex h-8 w-8 items-center justify-center rounded-full text-2xs font-700 shadow-[0_10rpx_24rpx_rgba(148,163,184,0.18)]"
-          :class="resolveDotClass(item)">
+          :class="resolveDotClass(item)"
+        >
           {{ item.dotLabel || index + 1 }}
         </view>
-        <view v-if="index !== normalizedItems.length - 1"
-          class="mt-2 min-h-10 w-[2px] flex-1 rounded-full bg-linear-to-b from-app-mint via-app-cream to-white dark:to-slate-900" />
+        <view
+          v-if="index !== normalizedItems.length - 1"
+          class="mt-2 min-h-10 w-[2px] flex-1 rounded-full bg-linear-to-b from-app-mint via-app-cream to-white dark:to-slate-900"
+        />
       </view>
 
       <view class="flex-1 pb-4">
@@ -61,18 +70,37 @@ function resolveDotClass(item: TimelineItem): string {
                 {{ item.timestamp }}
               </text>
             </view>
-            <TagLabel v-if="item.status" :status="item.status" :show-dot="false" />
+            <TagLabel
+              v-if="item.status"
+              :status="item.status"
+              :show-dot="false"
+            />
           </view>
 
-          <text v-if="item.description" class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">
+          <text
+            v-if="item.description"
+            class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300"
+          >
             {{ item.description }}
           </text>
 
-          <view v-if="item.tags?.length" class="mt-3 flex flex-wrap gap-2">
-            <TagLabel v-for="tag in item.tags" :key="tag" :text="tag" tone="slate" />
+          <view
+            v-if="item.tags?.length"
+            class="mt-3 flex flex-wrap gap-2"
+          >
+            <TagLabel
+              v-for="tag in item.tags"
+              :key="tag"
+              :text="tag"
+              tone="slate"
+            />
           </view>
 
-          <slot name="item" :item="item" :index="index" />
+          <slot
+            name="item"
+            :item="item"
+            :index="index"
+          />
         </view>
       </view>
     </view>

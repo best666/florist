@@ -16,7 +16,8 @@ import UserProfilePopup from '@/components/UserProfilePopup.vue'
 import AppBottomNav from '@/components/app/AppBottomNav.vue'
 import CollapsibleSection from '@/components/app/CollapsibleSection.vue'
 import PageHero from '@/components/app/PageHero.vue'
-import { updateCurrentUser } from '@/api'
+import SubmitBtn from '@/components/app/SubmitBtn.vue'
+import { bindPhoneToAccount, requestH5PhoneCode, updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { usePageTheme } from '@/hooks/usePageTheme'
@@ -51,6 +52,63 @@ const plantDoctorHistoryCount = ref(0)
 const loginPopupVisible = ref(false)
 const profilePopupVisible = ref(false)
 const isSavingProfile = ref(false)
+
+// ── 手机号绑定（跨端账号统一） ──
+const bindPhoneVisible = ref(false)
+const bindPhoneNumber = ref('')
+const bindPhoneCode = ref('')
+const bindPhoneRequestingCode = ref(false)
+const bindPhoneSubmitting = ref(false)
+const bindPhoneCountdown = ref(0)
+let bindPhoneTimer: ReturnType<typeof setInterval> | null = null
+
+const showBindPhoneEntry = computed(() =>
+  isAuthenticated.value && !currentUser.value?.phoneMasked,
+)
+
+async function handleRequestBindPhoneCode(): Promise<void> {
+  if (!/^1\d{10}$/.test(bindPhoneNumber.value.trim())) {
+    showGentleSuccess('请先输入正确的 11 位手机号。')
+    return
+  }
+  bindPhoneRequestingCode.value = true
+  try {
+    const result = await requestH5PhoneCode({ phoneNumber: bindPhoneNumber.value.trim() })
+    if (result.verificationCode) bindPhoneCode.value = result.verificationCode
+    let seconds = result.cooldownSeconds
+    bindPhoneCountdown.value = seconds
+    bindPhoneTimer = setInterval(() => {
+      seconds -= 1
+      bindPhoneCountdown.value = Math.max(seconds, 0)
+      if (seconds <= 0 && bindPhoneTimer) { clearInterval(bindPhoneTimer); bindPhoneTimer = null }
+    }, 1000)
+    showGentleSuccess(result.verificationCode ? '开发环境已自动填入验证码' : '验证码已发送')
+  } catch (error) {
+    handleCatchAndToast(error, '验证码发送失败')
+  } finally {
+    bindPhoneRequestingCode.value = false
+  }
+}
+
+async function handleSubmitBindPhone(): Promise<void> {
+  if (!bindPhoneNumber.value.trim() || !bindPhoneCode.value.trim()) {
+    showGentleSuccess('请填写手机号和验证码')
+    return
+  }
+  bindPhoneSubmitting.value = true
+  try {
+    const user = await bindPhoneToAccount(bindPhoneNumber.value.trim())
+    authStore.patchCurrentUser(user)
+    bindPhoneVisible.value = false
+    bindPhoneNumber.value = ''
+    bindPhoneCode.value = ''
+    showGentleSuccess('手机号已绑定，现在可以在 H5 和微信小程序之间同步数据了。')
+  } catch (error) {
+    handleCatchAndToast(error, '手机号绑定失败')
+  } finally {
+    bindPhoneSubmitting.value = false
+  }
+}
 
 const runtimePlatform = computed(() => appStore.runtimePlatform ?? ClientPlatform.H5)
 const totalPlantCount = computed(() => activeFlowers.value.length + recycleBinFlowers.value.length)
@@ -212,6 +270,74 @@ function goToCommunity(): void {
         @edit-profile="openProfilePopup"
         @logout="handleLogoutToLocalMode"
       />
+
+      <!-- 手机号绑定入口（跨端账号统一） -->
+      <view
+        v-if="showBindPhoneEntry"
+        class="card-soft rounded-[28rpx] bg-[var(--color-surface)] px-5 py-4 dark:bg-slate-900"
+      >
+        <view v-if="!bindPhoneVisible" class="flex items-center justify-between gap-3">
+          <view class="min-w-0 flex-1">
+            <text class="block text-sm font-800 text-app-ink dark:text-slate-100">绑定手机号</text>
+            <text class="mt-1 block text-2xs leading-5 text-app-muted dark:text-slate-400">
+              绑定后可在 H5 和微信小程序之间同步全部数据
+            </text>
+          </view>
+          <button
+            class="btn-chip btn-chip-wide bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
+            hover-class="opacity-92"
+            @tap="bindPhoneVisible = true"
+          >
+            去绑定
+          </button>
+        </view>
+        <view v-else class="flex flex-col gap-3">
+          <text class="block text-sm font-700 text-app-ink dark:text-slate-100">绑定手机号</text>
+          <input
+            v-model="bindPhoneNumber"
+            class="h-[80rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink dark:bg-slate-800 dark:text-slate-100"
+            type="number"
+            :maxlength="11"
+            placeholder="请输入手机号"
+          />
+          <view class="flex items-stretch gap-3">
+            <input
+              v-model="bindPhoneCode"
+              class="h-[80rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink dark:bg-slate-800 dark:text-slate-100"
+              type="number"
+              :maxlength="12"
+              placeholder="请输入验证码"
+            />
+            <button
+              class="btn-base h-[80rpx] min-h-[80rpx] min-w-[220rpx] flex-none justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
+              :class="bindPhoneCountdown > 0 ? 'bg-slate-100 text-app-muted/70 dark:bg-slate-800 dark:text-slate-300' : 'bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]'"
+              :disabled="bindPhoneCountdown > 0 || bindPhoneRequestingCode"
+              hover-class="opacity-92"
+              @tap="handleRequestBindPhoneCode"
+            >
+              {{ bindPhoneRequestingCode ? '发送中...' : bindPhoneCountdown > 0 ? `${bindPhoneCountdown}s 后重试` : '获取验证码' }}
+            </button>
+          </view>
+          <view class="flex gap-3">
+            <button
+              class="btn-pill-md flex-1 bg-slate-100 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              hover-class="opacity-92"
+              @tap="bindPhoneVisible = false"
+            >
+              取消
+            </button>
+            <view class="flex-1">
+              <SubmitBtn
+                text="确认绑定"
+                :loading="bindPhoneSubmitting"
+                variant="mint"
+                size="md"
+                @click="handleSubmitBindPhone"
+              />
+            </view>
+          </view>
+        </view>
+      </view>
 
       <MineStatisticsGrid :cards="statisticsCards" />
 

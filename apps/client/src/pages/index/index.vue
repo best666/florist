@@ -452,6 +452,9 @@ async function handleSubmitFlower(values: FlowerFormValues): Promise<void> {
     isFormVisible.value = false
     editingFlowerId.value = null
     showGentleSuccess(formMode.value === 'edit' ? '档案已更新' : '新植株已住进花园')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '保存失败，请稍后再试'
+    showGentleToast(message)
   } finally {
     isSaving.value = false
   }
