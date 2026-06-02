@@ -5,6 +5,37 @@ import type {
   SingleFlowerAiAdviceState,
 } from '@/interfaces'
 import { debounce, throttle } from '@/utils'
+import { getEncryptedStorage, setEncryptedStorage } from '@/utils/storage'
+
+const DAILY_USAGE_KEY = 'ai-advice-daily-usage'
+const DAILY_LIMIT_FREE = 1
+
+interface DailyUsage {
+  date: string
+  count: number
+}
+
+function getTodayStr(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getDailyUsage(): DailyUsage {
+  const raw = getEncryptedStorage<DailyUsage>(DAILY_USAGE_KEY)
+  const today = getTodayStr()
+
+  if (raw && raw.date === today) {
+    return raw
+  }
+
+  return { date: today, count: 0 }
+}
+
+function incrementDailyUsage(): DailyUsage {
+  const usage = getDailyUsage()
+  usage.count += 1
+  setEncryptedStorage(DAILY_USAGE_KEY, usage)
+  return usage
+}
 
 export function useSingleFlowerAiAdvice() {
   const state = reactive<SingleFlowerAiAdviceState>({
@@ -32,6 +63,9 @@ export function useSingleFlowerAiAdvice() {
       state.advice = advice
       state.latestMessage = advice.gentleFallbackMessage ?? ''
       state.disabled = false
+
+      // 记录每日使用次数（仅在成功获取非缓存结果时）
+      incrementDailyUsage()
     }
     catch (error) {
       if (currentToken !== requestToken) {
@@ -80,6 +114,17 @@ export function useSingleFlowerAiAdvice() {
     throttledRefresh(context)
   }
 
+  /** 检查普通用户今日是否还有使用次数 */
+  function canUseToday(isVip: boolean): boolean {
+    if (isVip) return true
+    return getDailyUsage().count < DAILY_LIMIT_FREE
+  }
+
+  /** 获取今日已使用次数 */
+  function todayUsedCount(): number {
+    return getDailyUsage().count
+  }
+
   onBeforeUnmount(() => {
     debouncedFetch.cancel()
     throttledRefresh.cancel()
@@ -89,5 +134,7 @@ export function useSingleFlowerAiAdvice() {
     state,
     scheduleFetch,
     refreshNow,
+    canUseToday,
+    todayUsedCount,
   }
 }

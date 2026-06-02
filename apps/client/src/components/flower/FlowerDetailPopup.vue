@@ -5,6 +5,7 @@ import { getFlowerDisplayName, getTimeAgo } from '@/utils'
 import { useAuthStore, useFlowerTaxonomyStore } from '@/store'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import AppImage from '../app/AppImage.vue'
+import FloatingActionButton from '../app/FloatingActionButton.vue'
 
 interface FlowerDetailPopupProps {
   modelValue: boolean
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   preview: [flower: LocalFlower]
   delete: [flower: LocalFlower]
   'cover-tap': [flower: LocalFlower]
+  'ai-advice': [flower: LocalFlower]
 }>()
 
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
@@ -81,6 +83,12 @@ const coverHint = computed(() => {
   if (!props.flower) return ''
   return props.flower.images.length > 0 ? '点击更换封面' : '点击上传封面'
 })
+
+function handleFabClick(): void {
+  if (props.flower) {
+    emit('ai-advice', props.flower)
+  }
+}
 </script>
 
 <template>
@@ -254,6 +262,16 @@ const coverHint = computed(() => {
           </view>
         </view>
       </scroll-view>
+
+      <!-- 悬浮 AI 建议按钮（可拖拽） -->
+      <FloatingActionButton
+        icon="✦"
+        text="AI 建议"
+        color="mint"
+        :initial-right="20"
+        :initial-bottom="20"
+        @click="handleFabClick"
+      />
     </view>
   </view>
 </template>

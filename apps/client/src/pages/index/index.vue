@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement } from '@florist/contracts'
+import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement, MemberBenefitType } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
@@ -77,11 +77,13 @@ const isTaxonomyDrawerVisible = ref(false)
 const isCarePromptVisible = ref(false)
 const selectedDetailFlower = ref<LocalFlower | null>(null)
 const isDetailPopupVisible = ref(false)
+const isAiAdviceExpanded = ref(false)
 
 const {
   state: singleFlowerAiState,
-  scheduleFetch: scheduleSingleFlowerAiFetch,
   refreshNow: refreshSingleFlowerAiNow,
+  canUseToday: canUseSingleFlowerAiToday,
+  todayUsedCount: singleFlowerAiTodayCount,
 } = useSingleFlowerAiAdvice()
 
 const filterState = reactive<FlowerFilterState>({
@@ -189,41 +191,12 @@ const filteredFlowers = computed(() =>
 )
 
 const selectedAdviceFlower = computed<LocalFlower | null>(() => {
-  if (selectedAdviceFlowerId.value) {
-    const targetFlower = activeFlowers.value.find((flower) => flower.id === selectedAdviceFlowerId.value)
-
-    if (targetFlower) {
-      return targetFlower
-    }
-  }
-
-  return filteredFlowers.value[0] ?? activeFlowers.value[0] ?? null
+  if (!selectedAdviceFlowerId.value) return null
+  return activeFlowers.value.find((flower) => flower.id === selectedAdviceFlowerId.value) ?? null
 })
 
-watch(
-  [
-    () => weatherReminderState.weather?.fetchedAt ?? '',
-    () => selectedAdviceFlower.value?.id ?? '',
-    () => sortedRecords.value.map((record) => `${record.id}:${record.createdAt}`).join('|'),
-    () => isOffline.value,
-  ],
-  ([weatherKey, flowerId]) => {
-    if (!weatherKey || !flowerId || !selectedAdviceFlower.value || !weatherReminderState.weather) {
-      scheduleSingleFlowerAiFetch(null)
-      return
-    }
+const singleFlowerAiTodayUsedCount = computed(() => singleFlowerAiTodayCount())
 
-    scheduleSingleFlowerAiFetch({
-      flower: selectedAdviceFlower.value,
-      weather: weatherReminderState.weather,
-      records: sortedRecords.value,
-      isOffline: isOffline.value,
-    })
-  },
-  {
-    immediate: true,
-  },
-)
 
 const flowerGridClass = computed(() => 'grid-cols-3')
 
@@ -403,6 +376,41 @@ function handleDetailNavigate(flower: LocalFlower, page: string): void {
   })
 }
 
+function handleDetailAiAdvice(flower: LocalFlower): void {
+  isDetailPopupVisible.value = false
+  selectedAdviceFlowerId.value = flower.id
+  isAiAdviceExpanded.value = true
+
+  // 稍等一帧让面板展开，然后触发生成
+  uni.showLoading({ title: '正在生成 AI 建议...', mask: true })
+
+  const isVip = memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
+
+  if (!canUseSingleFlowerAiToday(isVip)) {
+    uni.hideLoading()
+    showGentleToast('今日 AI 建议次数已用完，明天再来吧。开通会员可享无限次使用。')
+    return
+  }
+
+  if (!weatherReminderState.weather) {
+    uni.hideLoading()
+    showGentleToast('获取天气信息后再试，暂时无法生成 AI 建议。')
+    return
+  }
+
+  refreshSingleFlowerAiNow({
+    flower,
+    weather: weatherReminderState.weather,
+    records: sortedRecords.value,
+    isOffline: isOffline.value,
+  })
+
+  // loading 状态由 hook 管理，组件会响应
+  setTimeout(() => {
+    uni.hideLoading()
+  }, 600)
+}
+
 function handleCloseForm(): void {
   isFormVisible.value = false
 }
@@ -482,8 +490,15 @@ function handleReminderTextInput(reminderText: string): void {
   })
 }
 
-function handleRefreshSingleFlowerAiAdvice(): void {
+function handleGenerateSingleFlowerAiAdvice(): void {
   if (!selectedAdviceFlower.value || !weatherReminderState.weather) {
+    return
+  }
+
+  const isVip = memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
+
+  if (!canUseSingleFlowerAiToday(isVip)) {
+    showGentleToast('今日 AI 建议次数已用完，明天再来吧。开通会员可享无限次使用。')
     return
   }
 
@@ -836,19 +851,21 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         :tag-text="selectedAdviceFlower ? getFlowerDisplayName(selectedAdviceFlower) : '未选择'"
         tag-tone="cream"
         tag-icon="✦"
+        :expanded="isAiAdviceExpanded"
+        @update:expanded="isAiAdviceExpanded = $event"
       >
         <SingleFlowerAiAdvicePanel
+          :flowers="activeFlowers"
+          :selected-flower-id="selectedAdviceFlowerId"
           :flower="selectedAdviceFlower"
           :advice="singleFlowerAiState.advice"
           :loading="singleFlowerAiState.loading"
-          :message="
-            singleFlowerAiState.latestMessage ||
-            (selectedAdviceFlower
-              ? `${getFlowerDisplayName(selectedAdviceFlower)} 的专属建议会结合天气、摆放位置和历史养护记录来写。`
-              : '')
-          "
+          :message="singleFlowerAiState.latestMessage"
           :disabled="singleFlowerAiState.disabled"
-          @refresh="handleRefreshSingleFlowerAiAdvice"
+          :is-vip="false"
+          :today-used-count="singleFlowerAiTodayUsedCount"
+          @update:selected-flower-id="selectedAdviceFlowerId = $event"
+          @generate="handleGenerateSingleFlowerAiAdvice"
         />
       </CollapsibleSection>
 
@@ -903,6 +920,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         @album="handleDetailNavigate($event, 'album')"
         @preview="handlePreviewFlower"
         @delete="handleDeleteFlower"
+        @ai-advice="handleDetailAiAdvice"
       />
 
       <TaxonomyEditDrawer v-model="isTaxonomyDrawerVisible" />
