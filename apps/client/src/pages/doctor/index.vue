@@ -102,8 +102,8 @@ const selectedFlower = computed<LocalFlower | null>(() => {
 const quotaText = computed(() => {
   const quota = plantDoctorState.quota
   return quota.exceeded
-    ? `今日免费次数已用完（${quota.freeLimit}/${quota.freeLimit}）`
-    : `今日还可免费识别 ${quota.remainingCount} 次`
+    ? `今日识别次数已用完（${quota.freeLimit}/${quota.freeLimit}）`
+    : `今日还可识别 ${quota.remainingCount} 次`
 })
 const selectedFlowerCategoryLabel = computed(() => (
   selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCategoryLabel(selectedFlower.value) : '未绑定类别'

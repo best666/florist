@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import ActionHintButton from '../ActionHintButton.vue'
 import { useFlowerStore, useRecordStore } from '@/store'
 
 defineProps<{
@@ -29,24 +28,10 @@ const visualizedStats = computed(() => {
   }))
 })
 
-function handleOpenShop(): void {
-  uni.navigateTo({ url: '/pages/shop/index' })
-}
 </script>
 
 <template>
   <view class="grid gap-3">
-    <ActionHintButton
-      title="打开极简商城"
-      hint="外链种草入口，不做站内交易和营销干扰。"
-      icon="↗"
-      @click="handleOpenShop"
-    />
-
-    <view class="surface-soft rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-4 text-sm leading-6 text-app-muted">
-      精选园艺好物推荐，发现更多养花灵感和实用工具。
-    </view>
-
     <view class="mt-1 flex flex-col gap-4">
       <view
         v-for="item in visualizedStats"

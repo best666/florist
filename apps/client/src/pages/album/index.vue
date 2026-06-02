@@ -28,7 +28,6 @@ const { sortedRecords } = storeToRefs(recordStore)
 const selectedFlowerId = ref('')
 const pageMessage = ref('')
 const canAccessAlbum = computed(() => true)
-const isMemberUnlocked = computed(() => true)
 
 function createCareDayCount(flower: LocalFlower | null): number {
   if (!flower) {
@@ -293,8 +292,7 @@ onShow(async () => {
           :selected-flower="selectedFlower"
           :care-days="careDays"
           :album-items="albumItems"
-          :is-member-unlocked="isMemberUnlocked"
-        />
+                  />
       </template>
     </view>
 

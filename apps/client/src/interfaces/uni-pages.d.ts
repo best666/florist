@@ -13,7 +13,6 @@ type _LocationUrl =
   "/pages/mine/index" |
   "/pages/privacy/index" |
   "/pages/record/index" |
-  "/pages/shop/index" |
   "/pages/user-agreement/index";
 
 interface NavigateToOptions {

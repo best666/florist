@@ -30,7 +30,6 @@ type UserWithAdminData = User & {
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const APP_CONFIG_KEYS = {
   adSlots: 'admin:ad-slots',
-  productLinks: 'admin:product-links',
 } as const;
 
 function buildDefaultBenefits(): ReadonlyArray<MemberBenefitType> {
@@ -72,18 +71,8 @@ export interface AdminAdSlotConfig {
   readonly note?: string;
 }
 
-export interface AdminProductLinkConfig {
-  readonly id: string;
-  readonly title: string;
-  readonly url: string;
-  readonly enabled: boolean;
-  readonly badge?: string;
-  readonly note?: string;
-}
-
 export interface AdminOperationConfigs {
   readonly adSlots: ReadonlyArray<AdminAdSlotConfig>;
-  readonly productLinks: ReadonlyArray<AdminProductLinkConfig>;
 }
 
 export interface AdminUserListItem {
@@ -182,33 +171,6 @@ const DEFAULT_AD_SLOTS: ReadonlyArray<AdminAdSlotConfig> = [
     targetUrl: 'https://shop.example.com/florist/fertilizer-box',
     enabled: false,
     note: '可用于会员续费联动投放',
-  },
-];
-
-const DEFAULT_PRODUCT_LINKS: ReadonlyArray<AdminProductLinkConfig> = [
-  {
-    id: 'fertilizer-box',
-    title: '通用营养液套装',
-    url: 'https://shop.example.com/florist/fertilizer-box',
-    enabled: true,
-    badge: '热销',
-    note: '面向新手用户的低门槛商品',
-  },
-  {
-    id: 'soil-kit',
-    title: '多肉专用换盆土组合',
-    url: 'https://shop.example.com/florist/soil-kit',
-    enabled: true,
-    badge: '推荐',
-    note: '适配春秋换盆场景',
-  },
-  {
-    id: 'grow-light',
-    title: '室内补光灯',
-    url: 'https://shop.example.com/florist/grow-light',
-    enabled: false,
-    badge: '待启用',
-    note: '适合阴面房间和雨季场景',
   },
 ];
 
@@ -487,51 +449,30 @@ export class AdminService {
   }
 
   public async upsertOperationConfigs(payload: UpsertOperationConfigDto): Promise<AdminOperationConfigs> {
-    await this.prisma.$transaction([
-      this.prisma.appConfig.upsert({
-        where: { key: APP_CONFIG_KEYS.adSlots },
-        update: { value: toJsonValue(payload.adSlots) },
-        create: {
-          key: APP_CONFIG_KEYS.adSlots,
-          value: toJsonValue(payload.adSlots),
-        },
-      }),
-      this.prisma.appConfig.upsert({
-        where: { key: APP_CONFIG_KEYS.productLinks },
-        update: { value: toJsonValue(payload.productLinks) },
-        create: {
-          key: APP_CONFIG_KEYS.productLinks,
-          value: toJsonValue(payload.productLinks),
-        },
-      }),
-    ]);
+    await this.prisma.appConfig.upsert({
+      where: { key: APP_CONFIG_KEYS.adSlots },
+      update: { value: toJsonValue(payload.adSlots) },
+      create: {
+        key: APP_CONFIG_KEYS.adSlots,
+        value: toJsonValue(payload.adSlots),
+      },
+    });
 
     return this.getOperationConfigs();
   }
 
   private async getOperationConfigs(): Promise<AdminOperationConfigs> {
-    const [adSlotConfig, productLinkConfig] = await this.prisma.$transaction([
-      this.prisma.appConfig.upsert({
-        where: { key: APP_CONFIG_KEYS.adSlots },
-        update: {},
-        create: {
-          key: APP_CONFIG_KEYS.adSlots,
-          value: toJsonValue(DEFAULT_AD_SLOTS),
-        },
-      }),
-      this.prisma.appConfig.upsert({
-        where: { key: APP_CONFIG_KEYS.productLinks },
-        update: {},
-        create: {
-          key: APP_CONFIG_KEYS.productLinks,
-          value: toJsonValue(DEFAULT_PRODUCT_LINKS),
-        },
-      }),
-    ]);
+    const adSlotConfig = await this.prisma.appConfig.upsert({
+      where: { key: APP_CONFIG_KEYS.adSlots },
+      update: {},
+      create: {
+        key: APP_CONFIG_KEYS.adSlots,
+        value: toJsonValue(DEFAULT_AD_SLOTS),
+      },
+    });
 
     return {
       adSlots: this.parseConfigArray<AdminAdSlotConfig>(adSlotConfig.value, DEFAULT_AD_SLOTS),
-      productLinks: this.parseConfigArray<AdminProductLinkConfig>(productLinkConfig.value, DEFAULT_PRODUCT_LINKS),
     };
   }
 

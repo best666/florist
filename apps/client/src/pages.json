@@ -45,10 +45,6 @@
       "type": "page"
     },
     {
-      "path": "pages/shop/index",
-      "type": "page"
-    },
-    {
       "path": "pages/user-agreement/index",
       "type": "page"
     },

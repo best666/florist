@@ -16,20 +16,20 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ 'update:visible': [value: boolean] }>()
 
-const freeTier = useFreeTierLimits()
+const limits = useFreeTierLimits()
 const question = ref('')
 const loading = ref(false)
 const response = ref<IAiChatResponse | null>(null)
 const errorMessage = ref('')
 
 const canAsk = computed(() =>
-  !freeTier.consultationExceeded.value && question.value.trim().length >= 3 && !loading.value,
+  !limits.consultationExceeded.value && question.value.trim().length >= 3 && !loading.value,
 )
 
 const remainingText = computed(() =>
-  freeTier.consultationExceeded.value
-    ? `今日 AI 咨询次数已用完（${freeTier.consultationRemaining.value} 次剩余）`
-    : `今日还可咨询 ${freeTier.consultationRemaining.value} 次`,
+  limits.consultationExceeded.value
+    ? `今日 AI 咨询次数已用完`
+    : `今日还可咨询 ${limits.consultationRemaining.value} 次`,
 )
 
 watch(() => props.visible, (v) => {
@@ -54,7 +54,7 @@ async function handleSubmit(): Promise<void> {
       ...(props.flowers ? { flowers: props.flowers } : {}),
     })
     response.value = result
-    freeTier.recordConsultationUse()
+    limits.recordConsultationUse()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'AI 暂时没有回应，稍后再试试。'
   } finally {
@@ -120,7 +120,7 @@ function handleClose(): void {
           class="field-textarea min-h-[100rpx] flex-1 rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3 text-sm leading-6 text-app-ink"
           :maxlength="200"
           auto-height
-          :disabled="freeTier.consultationExceeded.value"
+          :disabled="limits.consultationExceeded.value"
           placeholder="例如：我的龟背竹最近叶子有点发黄，该怎么办？"
         />
         <button

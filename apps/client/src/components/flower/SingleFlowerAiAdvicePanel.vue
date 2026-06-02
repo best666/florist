@@ -14,7 +14,6 @@ interface SingleFlowerAiAdvicePanelProps {
   loading: boolean
   message: string
   disabled: boolean
-  isVip: boolean
   todayUsedCount: number
 }
 
@@ -40,7 +39,7 @@ const pickerIndex = computed(() => {
   return props.flowers.findIndex((f) => f.id === props.selectedFlowerId)
 })
 
-const dailyLimitReached = computed(() => !props.isVip && props.todayUsedCount >= DAILY_LIMIT_FREE)
+const dailyLimitReached = computed(() => props.todayUsedCount >= DAILY_LIMIT_FREE)
 
 const buttonText = computed(() => {
   if (props.loading) return '正在生成...'
@@ -113,11 +112,10 @@ function handleGenerate(): void {
 
     <!-- 每日使用次数提示 -->
     <view
-      v-if="!props.isVip"
       class="mb-4 flex items-center gap-2 rounded-[16rpx] bg-amber-50/80 px-3 py-2 dark:bg-amber-500/10"
     >
       <text class="text-2xs text-amber-700 dark:text-amber-200">
-        普通用户每日可用 {{ DAILY_LIMIT_FREE }} 次，今日已用 {{ props.todayUsedCount }} 次
+        每日可用 {{ DAILY_LIMIT_FREE }} 次，今日已用 {{ props.todayUsedCount }} 次
       </text>
     </view>
 
@@ -125,7 +123,7 @@ function handleGenerate(): void {
       v-if="dailyLimitReached"
       class="mb-4 rounded-[22rpx] bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-700 dark:bg-amber-500/14 dark:text-amber-100"
     >
-      今日 AI 建议次数已用完，明天再来吧。开通会员可享无限次使用。
+      今日 AI 建议次数已用完，明天再来吧。
     </view>
 
     <!-- 状态标签 -->

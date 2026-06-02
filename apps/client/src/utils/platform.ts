@@ -144,7 +144,7 @@ export async function openExternalLink(url: string): Promise<boolean> {
 
     void showGentleConfirm({
       title: '链接已经帮你复制好',
-      content: '小程序里不能直接跳去外部商城，你可以把链接粘贴到浏览器或微信对话框里继续打开。',
+      content: '小程序里不能直接跳转外部链接，你可以把链接粘贴到浏览器或微信对话框里继续打开。',
       confirmText: '知道了',
       showCancel: false,
     })

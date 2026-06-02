@@ -33,7 +33,7 @@ function createQuotaStatus(cache: PlantDoctorUsageCache | null): PlantDoctorUsag
     usedCount,
     freeLimit: DAILY_FREE_AI_WEATHER_ADVICE_LIMIT,
     remainingCount: Math.max(DAILY_FREE_AI_WEATHER_ADVICE_LIMIT - usedCount, 0),
-    isMemberUnlimited: false,
+    isMemberUnlimited: true,
     exceeded: usedCount >= DAILY_FREE_AI_WEATHER_ADVICE_LIMIT,
   }
 }
@@ -68,7 +68,7 @@ function writeUsageCache(cache: PlantDoctorUsageCache): void {
  * AI 天气建议（诊断 + 出差方案）：2 次/天
  */
 export function usePlantDoctorCenter() {
-  const freeTier = useFreeTierLimits()
+  const limits = useFreeTierLimits()
 
   const state = reactive<PlantDoctorCenterState>({
     history: readHistory(),
@@ -77,7 +77,7 @@ export function usePlantDoctorCenter() {
   })
 
   function refreshQuota(): PlantDoctorUsageQuota {
-    freeTier.refreshFromStorage()
+    limits.refreshFromStorage()
     state.quota = createQuotaStatus(readUsageCache())
     return state.quota
   }
@@ -103,7 +103,7 @@ export function usePlantDoctorCenter() {
     }
 
     writeUsageCache(nextCache)
-    freeTier.recordWeatherAdviceUse()
+    limits.recordWeatherAdviceUse()
     state.quota = createQuotaStatus(nextCache)
     return state.quota
   }

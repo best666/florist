@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement, MemberBenefitType } from '@florist/contracts'
+import { FlowerCareDifficulty, FlowerCategory, FlowerPlacement } from '@florist/contracts'
 import { onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
@@ -31,7 +31,7 @@ import {
   type TimelineItem,
   createDefaultFlowerFormValues,
 } from '@/interfaces'
-import { useAuthStore, useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
+import { useAuthStore, useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { HOME_TIPS } from '@/interfaces/page-tips'
@@ -43,7 +43,6 @@ const themeClass = usePageTheme()
 const authStore = useAuthStore()
 const flowerStore = useFlowerStore()
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
-const memberStore = useMemberStore()
 const recordStore = useRecordStore()
 const { activeFlowers, recycleBinFlowers } = storeToRefs(flowerStore)
 const { sortedRecords } = storeToRefs(recordStore)
@@ -277,12 +276,6 @@ const quickDrawerActions = computed(() => [
     hint: '会员、备份、权限和反馈都放在这里。',
     icon: '◌',
   },
-  {
-    key: 'shop',
-    title: '极简商城',
-    hint: '外链种草入口，不打断首页主流程。',
-    icon: '↗',
-  },
 ])
 
 const recycleTimelineItems = computed<ReadonlyArray<TimelineItem>>(() =>
@@ -422,11 +415,9 @@ function handleDetailAiAdvice(flower: LocalFlower): void {
   // 稍等一帧让面板展开，然后触发生成
   uni.showLoading({ title: '正在生成 AI 建议...', mask: true })
 
-  const isVip = memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
-
-  if (!canUseSingleFlowerAiToday(isVip)) {
+  if (!canUseSingleFlowerAiToday()) {
     uni.hideLoading()
-    showGentleToast('今日 AI 建议次数已用完，明天再来吧。开通会员可享无限次使用。')
+    showGentleToast('今日 AI 建议次数已用完，明天再来吧。')
     return
   }
 
@@ -533,10 +524,8 @@ function handleGenerateSingleFlowerAiAdvice(): void {
     return
   }
 
-  const isVip = memberStore.hasBenefit(MemberBenefitType.UnlimitedAiAdvice)
-
-  if (!canUseSingleFlowerAiToday(isVip)) {
-    showGentleToast('今日 AI 建议次数已用完，明天再来吧。开通会员可享无限次使用。')
+  if (!canUseSingleFlowerAiToday()) {
+    showGentleToast('今日 AI 建议次数已用完，明天再来吧。')
     return
   }
 
@@ -552,14 +541,6 @@ function handleOpenGrowthAlbum(): void {
   if (!authStore.isAuthenticated) {
     showGentleToast('请先登录后再查看成长相册，云端图片需要登录后才能访问。')
     uni.navigateTo({ url: '/pages/mine/index' })
-    return
-  }
-
-  if (!memberStore.hasCloudGardenAccess) {
-    showGentleToast('成长相册仅对会员开放，开通后才能查看和管理植物图片。')
-    uni.navigateTo({
-      url: '/pages/member/index',
-    })
     return
   }
 
@@ -595,12 +576,6 @@ function handleOpenMine(): void {
   })
 }
 
-function handleOpenShop(): void {
-  uni.navigateTo({
-    url: '/pages/shop/index',
-  })
-}
-
 function handleSelectQuickDrawerAction(actionKey: string): void {
   if (actionKey === 'album') {
     handleOpenGrowthAlbum()
@@ -617,9 +592,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
     return
   }
 
-  if (actionKey === 'shop') {
-    handleOpenShop()
-  }
 }
 </script>
 
@@ -916,7 +888,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           :loading="singleFlowerAiState.loading"
           :message="singleFlowerAiState.latestMessage"
           :disabled="singleFlowerAiState.disabled"
-          :is-vip="false"
           :today-used-count="singleFlowerAiTodayUsedCount"
           @update:selected-flower-id="selectedAdviceFlowerId = $event"
           @generate="handleGenerateSingleFlowerAiAdvice"

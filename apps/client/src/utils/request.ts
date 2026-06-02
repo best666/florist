@@ -347,8 +347,12 @@ function registerDefaultInterceptors(): void {
 
   responseInterceptors.push(async response => {
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      // 优先使用后端返回的错误消息，没有则根据状态码生成友好提示
+      const backendMessage = isRecord(response.data) && typeof response.data.message === 'string'
+        ? response.data.message
+        : null
       throw createRequestError(
-        resolveMessageByStatus(response.statusCode),
+        backendMessage || resolveMessageByStatus(response.statusCode),
         RequestErrorCode.Http,
         {
           statusCode: response.statusCode,

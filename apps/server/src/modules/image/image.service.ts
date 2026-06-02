@@ -1,13 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { MemberBenefitType } from '@florist/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
 import { RequestMonitorService } from '../../common/services/request-monitor.service';
 import type { ServerEnvConfig } from '../../config/server-env';
-import { MembersService } from '../members/members.service';
 import { UsersService } from '../users/users.service';
 import { CompressImageDto } from './dto/compress-image.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
@@ -163,7 +161,6 @@ export class ImageService {
     private readonly runtimeCacheService: RuntimeCacheService,
     private readonly requestMonitorService: RequestMonitorService,
     private readonly usersService: UsersService,
-    private readonly membersService: MembersService,
   ) {
     this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
   }
@@ -224,14 +221,6 @@ export class ImageService {
 
   public async uploadImage(payload: UploadImageDto, userIdInput?: string): Promise<UploadImageResponse> {
     const userId = await this.usersService.resolveCurrentUserId(userIdInput);
-
-    if (payload.scope === 'flower' || payload.scope === 'record') {
-      const memberAccess = await this.membersService.checkMemberBenefit(MemberBenefitType.CloudBackup, userId);
-
-      if (!memberAccess.allowed) {
-        throw new BadRequestException('当前账号还未开通会员，植物相册与云端图片上传暂不可用');
-      }
-    }
 
     const parsedImage = parseDataUrl(payload.dataUrl);
     const cropMode = resolveCropMode(payload);

@@ -114,9 +114,8 @@ export function useSingleFlowerAiAdvice() {
     throttledRefresh(context)
   }
 
-  /** 检查普通用户今日是否还有使用次数 */
-  function canUseToday(isVip: boolean): boolean {
-    if (isVip) return true
+  /** 检查今日是否还有使用次数 */
+  function canUseToday(): boolean {
     return getDailyUsage().count < DAILY_LIMIT_FREE
   }
 

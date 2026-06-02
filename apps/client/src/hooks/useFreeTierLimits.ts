@@ -27,7 +27,7 @@ function createInitialUsage(): FreeTierUsage {
 }
 
 /**
- * 统一免费用户限额追踪
+ * 统一使用限额追踪（所有用户均适用）
  *
  * - AI 天气建议（诊断 + 出差方案）：2 次/天
  * - AI 养护咨询（花园建议 + 单株咨询）：1 次/天

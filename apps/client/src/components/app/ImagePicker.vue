@@ -2,7 +2,7 @@
 import type { IImageAsset } from '@florist/contracts'
 import { computed, ref } from 'vue'
 import AppImage from './AppImage.vue'
-import { useAppStore, useAuthStore, useMemberStore } from '@/store'
+import { useAppStore, useAuthStore } from '@/store'
 import { usePreparedImageAssets, removePreparedImageAsset } from '@/hooks/usePreparedImageAssets'
 import { showGentleToast } from '@/utils'
 
@@ -55,7 +55,6 @@ const emit = defineEmits<{
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const memberStore = useMemberStore()
 const { chooseUploadedImageAssets, chooseCachedImageAssets } = usePreparedImageAssets()
 const isUploading = ref(false)
 
@@ -74,11 +73,6 @@ function checkGate(): boolean {
 
   if (!authStore.isAuthenticated) {
     showGentleToast('请先登录后再使用云端图片上传。')
-    return false
-  }
-
-  if (!memberStore.hasCloudGardenAccess) {
-    showGentleToast('云端图片上传仅对会员开放，开通后即可使用。')
     return false
   }
 

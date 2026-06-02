@@ -383,13 +383,6 @@ export const ADMIN_CONSOLE_HTML = String.raw`<!doctype html>
                   <textarea id="ad-slots-input">' + escapeHtml(JSON.stringify(operationConfigs.adSlots, null, 2)) + '</textarea>\
                 </section>\
                 <section class="panel">\
-                  <div class="row-header"><h2>商品链接配置</h2><span class="muted">可用于商城、会员页或推荐位</span></div>\
-                  <textarea id="product-links-input">' + escapeHtml(JSON.stringify(operationConfigs.productLinks, null, 2)) + '</textarea>\
-                  <div class="button-row" style="margin-top:12px;">\
-                    <button class="primary" id="save-configs">保存配置</button>\
-                  </div>\
-                </section>\
-                <section class="panel">\
                   <div class="row-header"><h2>AI 额度监控</h2><span class="muted">今日聚合视图</span></div>\
                   <div class="metric-list">\
                     <div class="metric-item"><div class="label">日期</div><div class="value" style="font-size:20px;">' + escapeHtml(monitoring.aiQuota.dateKey) + '</div></div>\
@@ -447,10 +440,9 @@ export const ADMIN_CONSOLE_HTML = String.raw`<!doctype html>
           try {
             renderStatus('保存配置中...');
             const adSlots = JSON.parse(document.getElementById('ad-slots-input').value);
-            const productLinks = JSON.parse(document.getElementById('product-links-input').value);
             await request('/api/admin/configs/operation', {
               method: 'PUT',
-              body: JSON.stringify({ adSlots, productLinks }),
+              body: JSON.stringify({ adSlots }),
             });
             await fetchDashboard();
             renderDashboard();

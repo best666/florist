@@ -218,15 +218,13 @@ export const useMemberStore = defineStore('member', {
       }
     },
 
-    hasBenefit(benefit: MemberBenefitType): boolean {
-      this.syncMembershipStatus()
-      // 限时免费阶段：所有用户均为免费层，无会员专属权益
-      return false
+    hasBenefit(_benefit: MemberBenefitType): boolean {
+      // 所有功能对所有用户开放，仅保留必要的次数限制
+      return true
     },
 
-    canUseBenefit(benefit: MemberBenefitType, message: string) {
-      this.syncMembershipStatus()
-      return { allowed: false, requiredBenefit: benefit, message }
+    canUseBenefit(_benefit: MemberBenefitType, _message: string) {
+      return { allowed: true }
     },
 
     setTheme(themeSkinId: ThemeSkinId): boolean {

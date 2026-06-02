@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
             class="btn-base h-[92rpx] min-h-[92rpx] min-w-[220rpx] flex-none justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
             :class="
               canRequestVerificationCode
-                ? 'bg-[var(--color-mint)]/20 text-[var(--color-sage)]'
+                ? 'bg-[var(--color-mint)]/20 text-white/88'
                 : 'bg-slate-100 text-app-muted/70'
             "
             :disabled="!canRequestVerificationCode"

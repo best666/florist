@@ -6,7 +6,6 @@ import type {
   LocalFlower,
 } from '@/interfaces'
 import {
-  buildPosterWatermarkText,
   compressImageSafely,
   FREE_GROWTH_POSTER_TEMPLATES,
   getFlowerDisplayName,
@@ -31,7 +30,6 @@ interface GrowthPosterWorkbenchProps {
   selectedFlower: LocalFlower | null
   careDays: number
   albumItems: ReadonlyArray<GrowthAlbumPhotoItem>
-  isMemberUnlocked: boolean
 }
 
 const props = defineProps<GrowthPosterWorkbenchProps>()
@@ -44,8 +42,7 @@ const isGeneratingPoster = ref(false)
 const isSavingPoster = ref(false)
 const pageMessage = ref('')
 
-const freeTemplates = computed(() => FREE_GROWTH_POSTER_TEMPLATES)
-const memberTemplates = computed(() => MEMBER_GROWTH_POSTER_TEMPLATES)
+const allTemplates = computed(() => [...FREE_GROWTH_POSTER_TEMPLATES, ...MEMBER_GROWTH_POSTER_TEMPLATES])
 const selectedTemplate = computed(() => resolveGrowthPosterTemplate(selectedTemplateId.value))
 const posterSourceImagePaths = computed<ReadonlyArray<string>>(() =>
   [...props.albumItems]
@@ -84,7 +81,7 @@ async function canvasToTempFilePath(width: number, height: number): Promise<stri
         destWidth: width,
         destHeight: height,
         fileType: 'png',
-        quality: props.isMemberUnlocked ? 1 : 0.88,
+        quality: 1,
         success: (result) => resolve(result.tempFilePath),
         fail: () => reject(new Error('海报导出失败，请稍后再试。')),
       },
@@ -217,28 +214,9 @@ function drawPosterLayout(
     18,
   )
 
-  if (!props.isMemberUnlocked) {
-    drawWrappedText(
-      context,
-      buildPosterWatermarkText(flowerName),
-      width - 350,
-      height - 68,
-      24,
-      20,
-      '#A9A2A0',
-      16,
-    )
-  }
 }
 
 function handleSelectTemplate(templateId: GrowthPosterTemplateId): void {
-  const nextTemplate = resolveGrowthPosterTemplate(templateId)
-
-  if (nextTemplate.memberOnly && !props.isMemberUnlocked) {
-    pageMessage.value = '这套海报是会员专属模板，开通后可以解锁无水印和高清导出。'
-    return
-  }
-
   selectedTemplateId.value = templateId
   pageMessage.value = ''
 }
@@ -265,18 +243,13 @@ async function generatePoster(): Promise<void> {
     return
   }
 
-  if (selectedTemplate.value.memberOnly && !props.isMemberUnlocked) {
-    pageMessage.value = '会员专属模板还没解锁，先试试上面的免费模板也很可爱。'
-    return
-  }
-
   isGeneratingPoster.value = true
 
   try {
     await nextTick()
     await releasePosterImage()
 
-    const outputSize = getGrowthPosterOutputSize(props.isMemberUnlocked)
+    const outputSize = getGrowthPosterOutputSize(true)
     const context = getCanvasContext()
     drawPosterLayout(
       context,
@@ -294,15 +267,13 @@ async function generatePoster(): Promise<void> {
 
     const rawPosterPath = await canvasToTempFilePath(outputSize.width, outputSize.height)
     const compressedPoster = await compressImageSafely(rawPosterPath, {
-      maxSizeInBytes: props.isMemberUnlocked ? 2.4 * 1024 * 1024 : 1.2 * 1024 * 1024,
-      initialQuality: props.isMemberUnlocked ? 0.94 : 0.84,
+      maxSizeInBytes: 2.4 * 1024 * 1024,
+      initialQuality: 0.94,
       minQuality: 0.52,
     })
 
     posterImagePath.value = compressedPoster.filePath
-    pageMessage.value = props.isMemberUnlocked
-      ? '高清海报已经准备好了，可以直接保存。'
-      : '海报已经生成好啦，免费版会带轻水印并做普通清晰度导出。'
+    pageMessage.value = '高清海报已经准备好了，可以直接保存。'
   } catch (error) {
     pageMessage.value =
       error instanceof Error ? error.message : '海报这次没有顺利拼出来，换几张清晰一点的图片再试试。'
@@ -335,14 +306,8 @@ async function handleSavePoster(): Promise<void> {
   }
 }
 
-function handleOpenMemberPosterBenefits(): void {
-  uni.navigateTo({
-    url: '/pages/member/index',
-  })
-}
-
 watch(
-  () => [props.selectedFlower?.id, props.albumItems.length, props.isMemberUnlocked] as const,
+  () => [props.selectedFlower?.id, props.albumItems.length] as const,
   () => {
     pageMessage.value = ''
     void releasePosterImage()
@@ -369,69 +334,30 @@ onBeforeUnmount(() => {
     tag-tone="cream"
     tag-icon="★"
   >
-    <template #header-extra>
-      <button
-        class="h-9 rounded-full flex items-center justify-center border-none bg-app-blush px-4 text-2xs font-700 text-app-ink"
-        hover-class="opacity-92"
-        @tap="handleOpenMemberPosterBenefits"
+    <view class="mt-4 grid gap-3 md:grid-cols-2">
+      <view
+        v-for="template in allTemplates"
+        :key="template.id"
+        class="rounded-[28rpx] px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.1)] transition-all duration-300"
+        :class="
+          selectedTemplate.id === template.id
+            ? 'ring-2 ring-[#86D6C1] bg-[var(--color-surface)] dark:bg-slate-800'
+            : 'bg-app-ivory/90 dark:bg-slate-800'
+        "
+        @tap="handleSelectTemplate(template.id)"
       >
-        会员权益
-      </button>
-    </template>
-    <view class="mt-4 grid gap-3">
-      <view class="grid gap-3 md:grid-cols-2">
-        <view
-          v-for="template in freeTemplates"
-          :key="template.id"
-          class="rounded-[28rpx] px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.1)] transition-all duration-300"
-          :class="
-            selectedTemplate.id === template.id
-              ? 'ring-2 ring-[#86D6C1] bg-[var(--color-surface)] dark:bg-slate-800'
-              : 'bg-app-ivory/90 dark:bg-slate-800'
-          "
-          @tap="handleSelectTemplate(template.id)"
-        >
-          <view class="flex items-start justify-between gap-3">
-            <view>
-              <text class="block text-sm font-800 text-app-ink dark:text-slate-100">{{ template.name }}</text>
-              <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">{{
-                template.subtitle
-              }}</text>
-            </view>
-            <TagLabel
-              :text="template.badgeText"
-              tone="mint"
-              icon="✓"
-            />
+        <view class="flex items-start justify-between gap-3">
+          <view>
+            <text class="block text-sm font-800 text-app-ink dark:text-slate-100">{{ template.name }}</text>
+            <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">{{
+              template.subtitle
+            }}</text>
           </view>
-        </view>
-      </view>
-
-      <view class="grid gap-3 md:grid-cols-2">
-        <view
-          v-for="template in memberTemplates"
-          :key="template.id"
-          class="rounded-[28rpx] px-4 py-4 shadow-[0_14rpx_32rpx_rgba(148,163,184,0.1)] transition-all duration-300"
-          :class="
-            selectedTemplate.id === template.id
-              ? 'ring-2 ring-[#E88AB5] bg-[var(--color-surface)] dark:bg-slate-800'
-              : 'bg-app-ivory/90 dark:bg-slate-800'
-          "
-          @tap="handleSelectTemplate(template.id)"
-        >
-          <view class="flex items-start justify-between gap-3">
-            <view>
-              <text class="block text-sm font-800 text-app-ink dark:text-slate-100">{{ template.name }}</text>
-              <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">{{
-                template.subtitle
-              }}</text>
-            </view>
-            <TagLabel
-              :text="template.badgeText"
-              tone="cream"
-              icon="★"
-            />
-          </view>
+          <TagLabel
+            :text="template.badgeText"
+            tone="mint"
+            icon="✓"
+          />
         </view>
       </view>
     </view>
@@ -439,10 +365,10 @@ onBeforeUnmount(() => {
 
   <CollapsibleSection
     title="海报预览"
-    description="海报会自动选取最近的 4 张照片拼接排版，并标注植株名称和累计养护天数。会员支持高清无水印导出。"
-    :tag-text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'"
-    :tag-tone="isMemberUnlocked ? 'mint' : 'slate'"
-    :tag-icon="isMemberUnlocked ? '✓' : '△'"
+    description="海报会自动选取最近的 4 张照片拼接排版，并标注植株名称和累计养护天数。"
+    tag-text="高清无水印"
+    tag-tone="mint"
+    tag-icon="✓"
     default-expanded
   >
     <view
