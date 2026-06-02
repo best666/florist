@@ -96,10 +96,12 @@ declare global {
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useCustomOptionEditor: typeof import('../hooks/useCustomOptionEditor').useCustomOptionEditor
+  const useElementRect: typeof import('../hooks/useElementRect').useElementRect
   const useEncryptedStorage: typeof import('../hooks/useEncryptedStorage').useEncryptedStorage
   const useFreeTierLimits: typeof import('../hooks/useFreeTierLimits').useFreeTierLimits
   const useGardenAiAdvice: typeof import('../hooks/useGardenAiAdvice').useGardenAiAdvice
   const useId: typeof import('vue').useId
+  const useInfoPopoverLayer: typeof import('../hooks/useInfoPopoverLayer').useInfoPopoverLayer
   const useLocationWeatherReminder: typeof import('../hooks/useLocationWeatherReminder').useLocationWeatherReminder
   const useModel: typeof import('vue').useModel
   const useNetworkStatus: typeof import('../hooks/useNetworkStatus').useNetworkStatus
@@ -222,6 +224,7 @@ declare module 'vue' {
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useCustomOptionEditor: UnwrapRef<typeof import('../hooks/useCustomOptionEditor')['useCustomOptionEditor']>
+    readonly useElementRect: UnwrapRef<typeof import('../hooks/useElementRect')['useElementRect']>
     readonly useEncryptedStorage: UnwrapRef<typeof import('../hooks/useEncryptedStorage')['useEncryptedStorage']>
     readonly useFreeTierLimits: UnwrapRef<typeof import('../hooks/useFreeTierLimits')['useFreeTierLimits']>
     readonly useGardenAiAdvice: UnwrapRef<typeof import('../hooks/useGardenAiAdvice')['useGardenAiAdvice']>

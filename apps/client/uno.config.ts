@@ -1,11 +1,7 @@
 import type { Preset } from 'unocss'
 import { presetApplet, presetRemRpx } from 'unocss-applet'
 import { presetLegacyCompat } from '@unocss/preset-legacy-compat'
-import {
-  defineConfig,
-  presetIcons,
-  transformerVariantGroup,
-} from 'unocss'
+import { defineConfig, presetIcons, transformerVariantGroup } from 'unocss'
 
 export default defineConfig({
   presets: [
@@ -25,8 +21,8 @@ export default defineConfig({
         /* CSS 变量和页面背景由 global.css + .theme-* 类管理 */
 
         @keyframes fade-up {
-          from { opacity: 0; transform: translateY(18rpx); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to   { opacity: 1; }
         }
 
         @keyframes float-soft {
@@ -50,22 +46,32 @@ export default defineConfig({
     },
   ],
   shortcuts: {
-    'page-shell': 'min-h-screen bg-[var(--color-ivory)] px-[var(--space-page-x)] py-[var(--space-page-y)] text-[var(--color-ink)]',
-    'card-soft': 'rounded-[var(--radius-card)] border border-[var(--color-cream)]/40 bg-[var(--color-surface)] p-[var(--space-card)] shadow-[var(--shadow-soft)]',
+    'page-shell':
+      'min-h-screen bg-[var(--color-ivory)] px-[var(--space-page-x)] py-[var(--space-page-y)] text-[var(--color-ink)]',
+    'card-soft':
+      'rounded-[var(--radius-card)] border border-[var(--color-cream)]/40 bg-[var(--color-surface)] p-[var(--space-card)] shadow-[var(--shadow-soft)]',
     'hero-shell': 'overflow-hidden rounded-[var(--radius-panel)] px-5 py-5 shadow-[var(--shadow-hero)]',
-    'badge-soft': 'inline-flex items-center rounded-[var(--radius-pill)] border border-[var(--color-cream)]/30 bg-[var(--color-surface)]/70 px-3 py-1.5 text-2xs font-700 tracking-[0.04em] text-[var(--color-ink)]',
-    'surface-soft': 'rounded-[var(--radius-control)] border border-[var(--color-cream)]/30 bg-[var(--color-cream)]/40 shadow-[var(--shadow-soft)]',
-    'info-soft': 'rounded-[var(--radius-card)] border border-[var(--color-gold)]/30 bg-[var(--color-cream)]/60 px-4 py-4 text-sm leading-6 shadow-[var(--shadow-soft)] text-[var(--color-ink)]',
-    'btn-base': 'flex items-center justify-center text-center align-middle whitespace-nowrap border-none leading-none transition-all duration-180 active:translate-y-[2rpx] active:scale-[0.985]',
+    'badge-soft':
+      'inline-flex items-center rounded-[var(--radius-pill)] border border-[var(--color-cream)]/30 bg-[var(--color-surface)]/70 px-3 py-1.5 text-2xs font-700 tracking-[0.04em] text-[var(--color-ink)]',
+    'surface-soft':
+      'rounded-[var(--radius-control)] border border-[var(--color-cream)]/30 bg-[var(--color-cream)]/40 shadow-[var(--shadow-soft)]',
+    'info-soft':
+      'rounded-[var(--radius-card)] border border-[var(--color-gold)]/30 bg-[var(--color-cream)]/60 px-4 py-4 text-sm leading-6 shadow-[var(--shadow-soft)] text-[var(--color-ink)]',
+    'btn-base':
+      'flex items-center justify-center text-center align-middle whitespace-nowrap border-none leading-none transition-all duration-180 active:translate-y-[2rpx] active:scale-[0.985]',
     'btn-pill-sm': 'btn-base h-[72rpx] min-h-[72rpx] rounded-full px-4 text-2xs font-700',
     'btn-pill-md': 'btn-base h-[80rpx] min-h-[80rpx] rounded-full px-5 text-sm font-700',
-    'btn-chip': 'btn-base h-[76rpx] min-h-[76rpx] flex-none rounded-full px-5 text-2xs font-700 tracking-[0.01em]',
+    'btn-chip':
+      'btn-base h-[76rpx] min-h-[76rpx] flex-none rounded-full px-5 text-2xs font-700 tracking-[0.01em]',
     'btn-chip-wide': 'btn-chip min-w-[148rpx] justify-center',
-    'btn-segment': 'btn-base h-[76rpx] min-h-[76rpx] min-w-0 rounded-full px-4 text-2xs font-700 text-center leading-none whitespace-nowrap overflow-hidden',
+    'btn-segment':
+      'btn-base h-[76rpx] min-h-[76rpx] min-w-0 rounded-full px-4 text-2xs font-700 text-center leading-none whitespace-nowrap overflow-hidden',
     'btn-panel': 'btn-base h-[88rpx] min-h-[88rpx] rounded-[24rpx] px-5 text-sm font-800',
-    'bottom-nav-shell': 'flex w-full max-w-[760rpx] items-center gap-2 rounded-full border border-[var(--color-cream)]/40 bg-[var(--color-surface)]/78 p-2 shadow-[var(--shadow-lift)]',
+    'bottom-nav-shell':
+      'flex w-full max-w-[760rpx] items-center gap-2 rounded-full border border-[var(--color-cream)]/40 bg-[var(--color-surface)]/78 p-2 shadow-[var(--shadow-lift)]',
     'bottom-nav-item': 'btn-base min-w-0 flex-1 flex-col rounded-full px-2 py-3 text-center',
-    'field-input': 'w-full rounded-[22rpx] border border-[var(--color-cream)]/40 bg-[var(--color-surface)] px-4 text-sm leading-[1.25] text-[var(--color-ink)]',
+    'field-input':
+      'w-full rounded-[22rpx] border border-[var(--color-cream)]/40 bg-[var(--color-surface)] px-4 text-sm leading-[1.25] text-[var(--color-ink)]',
     'field-input-md': 'field-input h-[88rpx] min-h-[88rpx]',
     'field-input-sm': 'field-input h-[80rpx] min-h-[80rpx] rounded-[18rpx] px-3 text-sm',
     'field-textarea': 'field-input min-h-[160rpx] px-4 py-3 leading-6',

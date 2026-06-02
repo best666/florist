@@ -275,14 +275,14 @@ export function syncNativeThemeColors(themeSkinId: ThemeSkinId): void {
   const theme = resolveThemeSkin(themeSkinId)
   const bgColor = theme.variables.ivory
 
+  // setNavigationBarColor / setBackgroundColor 是小程序原生 API，
+  // H5 端主题颜色由 useTheme.ts 通过 CSS 变量 + DOM 直接注入
+  // #ifdef MP-WEIXIN
   uni.setNavigationBarColor({
     frontColor: '#000000',
     backgroundColor: bgColor,
   })
 
-  // H5 端背景渐变由 useTheme.ts 通过 DOM 直接设置 uni-page-body
-  // 避免 uni.setBackgroundColor 的纯色覆盖 CSS 渐变
-  // #ifdef MP-WEIXIN
   uni.setBackgroundColor({
     backgroundColor: bgColor,
   })

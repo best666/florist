@@ -17,7 +17,7 @@ const featureList = [
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[40rpx]">
       <PageHero
         badge="关于我们"
         title="养花人是一款把照护过程慢慢沉淀下来的花园工具"

@@ -6,7 +6,7 @@ const themeClass = usePageTheme()
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[40rpx]">
       <view
         class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]">
         <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted">用户协议</view>

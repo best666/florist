@@ -4,6 +4,7 @@ import { UserLoginType } from '@florist/contracts'
 import { computed } from 'vue'
 import TagLabel from './TagLabel.vue'
 import AppImage from './AppImage.vue'
+import InfoPopover from './InfoPopover.vue'
 import { ClientPlatform } from '@/interfaces'
 
 interface MineAuthCardProps {
@@ -87,6 +88,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
             >
               {{ authTitle }}
             </text>
+            <InfoPopover :content="authSubtitle" icon="help" />
             <button
               v-if="props.isAuthenticated"
               class="mx-0 flex h-[38rpx] min-h-[38rpx] w-[38rpx] min-w-[38rpx] items-center justify-center rounded-full border-none bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
@@ -96,9 +98,6 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
               ✎
             </button>
           </view>
-          <text class="mt-2 block text-[26rpx] leading-6 text-app-muted">
-            {{ authSubtitle }}
-          </text>
           <text
             v-if="props.isAuthenticated && authSignature"
             class="mt-2 block text-[24rpx] leading-5 text-[#8C725B]"

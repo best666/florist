@@ -533,7 +533,6 @@ function handleOpenHistoryImage(imageUrl: string): void {
               <text class="block text-base font-800 text-app-ink dark:text-slate-100">识别结果</text>
               <InfoPopover content="建议先按最轻的一步处理，再观察半天到一天。循序渐进比一下子上很多动作更稳妥。" />
             </view>
-            </text>
           </view>
           <TagLabel :text="diagnosisResult.confidenceLabel"
             :tone="diagnosisResult.severity === 'high' ? 'cream' : 'mint'" />
@@ -578,7 +577,6 @@ function handleOpenHistoryImage(imageUrl: string): void {
               <text class="block text-base font-800 text-app-ink dark:text-slate-100">出差养护方案</text>
               <InfoPopover content="结合天气、摆放位置和出差天数，生成无人托管期间的照顾计划：出门前准备、行程中的注意事项、回家后的检查要点。" />
             </view>
-            </text>
           </view>
           <TagLabel :text="selectedFlower ? selectedFlowerStatusLabel : '请先选植株'"
             :tone="selectedFlower ? 'mint' : 'slate'" />

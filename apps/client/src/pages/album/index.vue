@@ -194,7 +194,7 @@ onShow(async () => {
 <template>
   <view
     class="page-shell safe-pb bg-linear-to-b from-[var(--color-ivory)] via-[var(--color-cream)] to-[var(--color-ivory)]" :class="themeClass">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[172rpx]">
       <PageHero
         badge="成长相册 + 海报生成保存"
         title="把它从第一张照片到现在的模样，轻轻串成一条成长线"

@@ -29,7 +29,7 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[40rpx]">
       <PageHero
         badge="限时免费"
         title="当前所有功能免费开放中"

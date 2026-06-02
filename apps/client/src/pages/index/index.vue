@@ -572,7 +572,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
     class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100"
     :class="themeClass"
   >
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[172rpx]">
       <view
         class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-mint)] via-[var(--color-cream)] to-[var(--color-gold)]"
       >

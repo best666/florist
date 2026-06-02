@@ -193,7 +193,7 @@ onShow(() => {
 
 <template>
   <view class="page-shell safe-pb min-h-screen bg-app-ivory" :class="themeClass">
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[160rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[192rpx]">
       <!-- Hero -->
       <view class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-mint)] via-[var(--color-cream)] to-[var(--color-blush)]">
         <view class="flex items-start justify-between gap-4">

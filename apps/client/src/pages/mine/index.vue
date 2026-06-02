@@ -193,7 +193,7 @@ function goToCommunity(): void {
     class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory"
     :class="themeClass"
   >
-    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[140rpx]">
+    <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[172rpx]">
       <PageHero
         badge="我的花园"
         title="把照护数据、提醒和备份，都安静收在这里"

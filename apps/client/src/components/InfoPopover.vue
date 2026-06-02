@@ -1,45 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useElementRect } from '@/hooks/useElementRect'
+import { computed, ref } from 'vue'
 
 interface InfoPopoverProps {
   content: string
   icon?: 'info' | 'help'
 }
 
-withDefaults(defineProps<InfoPopoverProps>(), {
-  icon: 'info',
-})
+const props = withDefaults(defineProps<InfoPopoverProps>(), { icon: 'info' })
 
 const visible = ref(false)
-const arrowStyle = ref<Record<string, string>>({})
-const cardStyle = ref<Record<string, string>>({})
-const iconRef = ref<any>(null)
-const uid = `tip-${Math.random().toString(36).slice(2, 8)}`
-const { getRect } = useElementRect()
 
-async function open(): Promise<void> {
+const iconClass = computed(() =>
+  props.icon === 'help'
+    ? 'bg-[var(--color-mint)]/25 text-[var(--color-sage)]'
+    : 'bg-[var(--color-cream)]/60 text-app-muted',
+)
+
+const iconText = computed(() => (props.icon === 'help' ? '?' : 'i'))
+
+function open(): void {
   visible.value = true
-  const rect = await getRect(iconRef.value, `#${uid}`)
-  if (!rect) return
-
-  const cx = rect.left + rect.width / 2
-  const arrowTop = rect.bottom + 6
-
-  arrowStyle.value = {
-    left: `${cx}px`,
-    top: `${arrowTop}px`,
-    transform: 'translateX(-50%)',
-    fontSize: '28rpx',
-    lineHeight: '1',
-    zIndex: '1',
-  }
-
-  cardStyle.value = {
-    left: '50%',
-    top: `${arrowTop + 24}px`,
-    transform: 'translateX(-50%)',
-  }
 }
 
 function close(): void {
@@ -49,33 +29,36 @@ function close(): void {
 
 <template>
   <text
-    :id="uid"
-    ref="iconRef"
     class="inline-flex h-5 w-5 flex-none cursor-pointer items-center justify-center rounded-full text-2xs font-700 leading-none"
-    :class="icon === 'help'
-      ? 'bg-[var(--color-mint)]/25 text-[var(--color-sage)]'
-      : 'bg-[var(--color-cream)]/60 text-app-muted'"
+    :class="iconClass"
     @tap.stop="open"
   >
-    {{ icon === 'help' ? '?' : 'i' }}
+    {{ iconText }}
   </text>
 
-  <view v-if="visible" class="fixed inset-0 z-50" @tap="close">
-    <text
-      class="absolute text-[var(--color-surface)] dark:text-slate-800"
-      :style="arrowStyle"
-    >▲</text>
+  <view
+    v-if="visible"
+    class="fixed left-0 right-0 top-0 bottom-0"
+    style="z-index: 999"
+  >
     <view
-      class="absolute w-[560rpx] max-w-[88vw] rounded-[20rpx] bg-[var(--color-surface)] px-5 py-4 shadow-[0_12rpx_40rpx_rgba(15,23,42,0.18)] dark:bg-slate-800"
-      :style="cardStyle"
-      @tap.stop
+      class="absolute left-0 right-0 top-0 bottom-0"
+      style="background: rgba(0, 0, 0, 0.1)"
+      @tap="close"
+    />
+    <view
+      class="absolute w-[580rpx] max-w-full rounded-[24rpx] border border-[var(--color-cream)]/60 bg-white px-5 py-4 shadow-[0_12rpx_40rpx_rgba(15,23,42,0.20)] dark:border-slate-600 dark:bg-slate-800"
+      style="left: 50%; top: 40%; transform: translate(-50%, -50%)"
     >
-      <text class="text-sm leading-7 text-app-muted dark:text-slate-200">{{ content }}</text>
+      <view class="text-xs leading-6 text-app-muted dark:text-slate-200">
+        {{ content }}
+      </view>
       <view class="mt-3 text-center">
         <text
-          class="inline-block rounded-full bg-[var(--color-mint)]/20 px-5 py-1.5 text-2xs font-700 text-[var(--color-sage)]"
+          class="inline-block rounded-full bg-[var(--color-mint)]/20 px-5 py-2 text-2xs font-700 text-[var(--color-sage)]"
           @tap.stop="close"
-        >知道了</text>
+          >知道了</text
+        >
       </view>
     </view>
   </view>
