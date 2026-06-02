@@ -67,7 +67,7 @@ const coverImage = computed(() => {
       @tap.stop="() => {}"
     >
       <button
-        class="absolute right-2 top-2 z-10 h-8 w-8 flex items-center justify-center rounded-full border-none bg-[#FFF5E9] text-lg text-[#C28652] shadow-[0_8rpx_18rpx_rgba(233,161,90,0.14)] dark:bg-slate-800 dark:text-[#F3C58E]"
+        class="btn-base absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-[#FFF5E9] text-lg text-[#C28652] shadow-[0_8rpx_18rpx_rgba(233,161,90,0.14)] dark:bg-slate-800 dark:text-[#F3C58E]"
         hover-class="opacity-92"
         @tap="closePopup"
       >
@@ -176,28 +176,28 @@ const coverImage = computed(() => {
           <!-- 操作按钮 -->
           <view class="flex flex-wrap gap-2">
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="btn-base surface-soft app-pressable h-9 rounded-full bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('edit', props.flower)"
             >
               编辑档案
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="btn-base surface-soft app-pressable h-9 rounded-full bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('record', props.flower)"
             >
               去打卡
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="btn-base surface-soft app-pressable h-9 rounded-full bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               hover-class="opacity-92"
               @tap="emit('album', props.flower)"
             >
               成长相册
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
+              class="btn-base surface-soft app-pressable h-9 rounded-full bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-app-muted dark:bg-slate-800 dark:text-slate-200"
               :class="props.flower.images.length === 0 ? 'opacity-50 shadow-none' : ''"
               :disabled="props.flower.images.length === 0"
               hover-class="opacity-92"
@@ -206,7 +206,7 @@ const coverImage = computed(() => {
               预览图片
             </button>
             <button
-              class="surface-soft app-pressable h-9 rounded-full border-none bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-rose-500 dark:bg-slate-800"
+              class="btn-base surface-soft app-pressable h-9 rounded-full bg-[var(--color-surface)]/78 px-4 text-2xs font-700 text-rose-500 dark:bg-slate-800"
               hover-class="opacity-92"
               @tap="emit('delete', props.flower)"
             >

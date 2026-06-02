@@ -86,7 +86,7 @@ function handleClose(): void {
           <text class="mt-1 block text-xs text-app-muted">{{ remainingText }}</text>
         </view>
         <button
-          class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-app-muted"
+          class="btn-base h-10 w-10 rounded-full bg-slate-100 text-lg text-app-muted"
           hover-class="opacity-92"
           @tap="handleClose"
         >

@@ -799,7 +799,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           :image-src="getFlowerCoverImage(flower)"
           :emoji="flower.emoji || '🪴'"
           :status="flower.careStatus"
-          :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower)"
+          :status-text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(flower).replace(/^\S+\s*/, '')"
           @tap="
             () => {
               selectedDetailFlower = flower

@@ -160,7 +160,18 @@ function handleClose(): void {
       <!-- 图片 -->
       <view class="mt-5">
         <text class="block text-2xs font-700 tracking-[0.04em] text-app-muted">照片（可选）</text>
-        <ImagePicker v-model:images="formState.images" v-model:cover-image-id="formState.coverImageId" :max-count="6" />
+        <ImagePicker
+          v-model="formState.images"
+          v-model:cover-image-id="formState.coverImageId"
+          :max-count="6"
+          upload-mode="cloud"
+          asset-prefix="image"
+          scope="flower"
+          crop-mode="card"
+          :support-cover="true"
+          add-text="添加图片"
+          error-text="这张图片先休息一下"
+        />
       </view>
 
       <!-- 错误 -->
@@ -169,9 +180,7 @@ function handleClose(): void {
       </text>
 
       <!-- 提交 -->
-      <SubmitBtn class="mt-6 h-[96rpx]" :loading="props.submitting" @tap="handleSubmit">
-        创建植株
-      </SubmitBtn>
+      <SubmitBtn class="mt-6" text="创建植株" loading-text="创建中..." :loading="props.submitting" @click="handleSubmit" />
     </view>
   </view>
 </template>

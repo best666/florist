@@ -68,7 +68,7 @@ export const useMemberStore = defineStore('member', {
     isMemberActive: () => true,
     hasCloudGardenAccess: () => true,
     hasAdFree: () => true,
-    hasCloudBackup: () => true,
+    hasCloudBackup: (state) => state.initializedUserId !== null,
     currentStatusLabel(): string {
       const cache = syncExpiredMemberCache(this.memberCache)
 

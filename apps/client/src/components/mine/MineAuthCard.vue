@@ -59,7 +59,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       <view class="min-w-0 flex flex-1 items-center gap-4">
         <button
           v-if="props.isAuthenticated"
-          class="h-[104rpx] min-h-[104rpx] w-[104rpx] min-w-[104rpx] overflow-hidden rounded-full border-none bg-[#F7F1E7] p-0 shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]"
+          class="btn-base h-[104rpx] min-h-[104rpx] w-[104rpx] min-w-[104rpx] overflow-hidden rounded-full bg-[#F7F1E7] p-0 shadow-[0_10rpx_24rpx_rgba(148,163,184,0.14)]"
           hover-class="opacity-92"
           @tap="emit('edit-profile')"
         >
@@ -91,7 +91,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
             <InfoPopover :content="authSubtitle" icon="help" />
             <button
               v-if="props.isAuthenticated"
-              class="mx-0 flex h-[38rpx] min-h-[38rpx] w-[38rpx] min-w-[38rpx] items-center justify-center rounded-full border-none bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
+              class="btn-base mx-0 h-[38rpx] min-h-[38rpx] w-[38rpx] min-w-[38rpx] rounded-full bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
               hover-class="opacity-92"
               @tap="emit('edit-profile')"
             >
@@ -129,7 +129,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
         class="flex items-center justify-end"
       >
         <button
-          class="h-[64rpx] min-h-[64rpx] rounded-full border-none bg-transparent px-3 text-[24rpx] text-[#9A8D80]"
+          class="btn-base h-[64rpx] min-h-[64rpx] rounded-full bg-transparent px-3 text-[24rpx] text-[#9A8D80]"
           hover-class="opacity-80"
           :loading="props.loading"
           @tap="emit('logout')"

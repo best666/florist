@@ -19,7 +19,7 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
     <button
       v-for="theme in themeSkins"
       :key="theme.id"
-      class="rounded-[20rpx] border-none px-3 py-3 text-center"
+      class="btn-base flex-col rounded-[20rpx] px-3 py-3"
       :class="
         currentThemeId === theme.id
           ? 'bg-linear-to-br from-[var(--color-gold)]/30 to-[var(--color-mint)]/30'

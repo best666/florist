@@ -6,14 +6,14 @@ import type {
   IAiTripCarePlan,
   IPlantAiAdvice,
   IPlantHealthCheck,
-} from '@florist/contracts';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
-import { RequestMonitorService } from '../../common/services/request-monitor.service';
-import type { ServerEnvConfig } from '../../config/server-env';
-import { ImageService } from '../image/image.service';
-import { UsersService } from '../users/users.service';
+} from '@florist/contracts'
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { RuntimeCacheService } from '../../common/services/runtime-cache.service'
+import { RequestMonitorService } from '../../common/services/request-monitor.service'
+import type { ServerEnvConfig } from '../../config/server-env'
+import { ImageService } from '../image/image.service'
+import { UsersService } from '../users/users.service'
 import {
   RequestAiChatDto,
   RequestCareAdviceDto,
@@ -21,44 +21,44 @@ import {
   RequestPlantHealthCheckDto,
   RequestSinglePlantCareAdviceDto,
   RequestTripCarePlanDto,
-} from './dto/request-care-advice.dto';
+} from './dto/request-care-advice.dto'
 
 function createGeneratedAt(): string {
-  return new Date().toISOString();
+  return new Date().toISOString()
 }
 
 function normalizeFlowerName(
   flower: Pick<RequestSinglePlantCareAdviceDto['flower'], 'name' | 'nickname'>,
 ): string {
-  const nickname = flower.nickname?.trim();
-  return nickname && nickname.length > 0 ? nickname : flower.name;
+  const nickname = flower.nickname?.trim()
+  return nickname && nickname.length > 0 ? nickname : flower.name
 }
 
 function resolveSeverityScore(score: number): 'low' | 'medium' | 'high' {
   if (score >= 3) {
-    return 'high';
+    return 'high'
   }
 
   if (score >= 2) {
-    return 'medium';
+    return 'medium'
   }
 
-  return 'low';
+  return 'low'
 }
 
 function buildPlantDiagnosisFallback(payload: RequestPlantDiagnosisDto): IAiPlantDiagnosis {
-  const flowerName = payload.flower ? normalizeFlowerName(payload.flower) : '这盆植物';
-  const temperature = payload.weather?.temperature ?? 24;
-  const humidity = payload.weather?.humidity ?? 60;
-  const placement = payload.flower?.placement ?? 'indoor_balcony';
-  const careStatus = payload.flower?.careStatus ?? 'healthy';
+  const flowerName = payload.flower ? normalizeFlowerName(payload.flower) : '这盆植物'
+  const temperature = payload.weather?.temperature ?? 24
+  const humidity = payload.weather?.humidity ?? 60
+  const placement = payload.flower?.placement ?? 'indoor_balcony'
+  const careStatus = payload.flower?.careStatus ?? 'healthy'
   const score = [
     humidity >= 80 ? 1 : 0,
     temperature >= 32 || temperature <= 8 ? 1 : 0,
     placement === 'indoor_shade' ? 1 : 0,
     careStatus === 'watering-needed' ? 1 : 0,
-  ].reduce((sum, current) => sum + current, 0);
-  const severity = resolveSeverityScore(score);
+  ].reduce((sum, current) => sum + current, 0)
+  const severity = resolveSeverityScore(score)
 
   if (humidity >= 80 && placement !== 'outdoor_open_air') {
     return {
@@ -95,7 +95,7 @@ function buildPlantDiagnosisFallback(payload: RequestPlantDiagnosisDto): IAiPlan
       ],
       generatedAt: createGeneratedAt(),
       gentleFallbackMessage: '这次用了本地兜底识别，更适合拿来做“先排查什么”的参考，不建议直接当成唯一结论。',
-    };
+    }
   }
 
   if (temperature >= 32 && placement === 'outdoor_open_air') {
@@ -133,7 +133,7 @@ function buildPlantDiagnosisFallback(payload: RequestPlantDiagnosisDto): IAiPlan
       ],
       generatedAt: createGeneratedAt(),
       gentleFallbackMessage: '这次先按高温场景做了保守识别，真正处理前，最好再近距离看一遍叶背和虫点。',
-    };
+    }
   }
 
   return {
@@ -170,28 +170,29 @@ function buildPlantDiagnosisFallback(payload: RequestPlantDiagnosisDto): IAiPlan
     ],
     generatedAt: createGeneratedAt(),
     gentleFallbackMessage: '这次识别没有调用到上游模型，所以我先给你一份更稳妥的排查版建议。',
-  };
+  }
 }
 
 function buildTripCarePlanFallback(payload: RequestTripCarePlanDto): IAiTripCarePlan {
-  const flowerName = normalizeFlowerName(payload.flower);
-  const weatherAlerts = buildExtremeWeatherAlerts(payload.weather).map(alert => alert.title);
+  const flowerName = normalizeFlowerName(payload.flower)
+  const weatherAlerts = buildExtremeWeatherAlerts(payload.weather).map((alert) => alert.title)
   const riskScore = [
     payload.travelDays >= 7 ? 1 : 0,
     payload.travelDays >= 10 ? 1 : 0,
     payload.weather.temperature >= 32 || payload.weather.temperature <= 8 ? 1 : 0,
     payload.weather.precipitationProbability >= 75 ? 1 : 0,
-  ].reduce((sum, current) => sum + current, 0);
-  const riskLevel = resolveSeverityScore(riskScore);
+  ].reduce((sum, current) => sum + current, 0)
+  const riskLevel = resolveSeverityScore(riskScore)
 
   return {
     targetFlowerId: payload.flower.id,
     targetFlowerName: flowerName,
     cityName: payload.weather.cityName,
     travelDays: payload.travelDays,
-    summary: payload.travelDays <= 3
-      ? `${flowerName} 这次出差时间不算长，重点是出门前把环境稳住，不要因为不放心而猛浇一轮。`
-      : `${flowerName} 这次要独自待 ${payload.travelDays} 天，更适合提前做减负和稳态托管，核心是控水、避晒和防闷。`,
+    summary:
+      payload.travelDays <= 3
+        ? `${flowerName} 这次出差时间不算长，重点是出门前把环境稳住，不要因为不放心而猛浇一轮。`
+        : `${flowerName} 这次要独自待 ${payload.travelDays} 天，更适合提前做减负和稳态托管，核心是控水、避晒和防闷。`,
     riskLevel,
     weatherAlerts,
     beforeTripActions: [
@@ -221,20 +222,20 @@ function buildTripCarePlanFallback(payload: RequestTripCarePlanDto): IAiTripCare
     ],
     generatedAt: createGeneratedAt(),
     gentleFallbackMessage: '这是本地兜底生成的无人托管方案，已经按天气和出差时长尽量帮你收紧风险了。',
-  };
+  }
 }
 
 function buildExtremeWeatherAlerts(
   weather: RequestCareAdviceDto['weather'] | RequestSinglePlantCareAdviceDto['weather'],
 ): IAiExtremeWeatherAlert[] {
-  const alerts: IAiExtremeWeatherAlert[] = [];
+  const alerts: IAiExtremeWeatherAlert[] = []
 
   if (weather.precipitationProbability >= 85 || weather.weatherText.includes('暴雨')) {
     alerts.push({
       type: 'storm',
       title: '暴雨天先别忙着补水',
       description: '今天雨势偏重，先观察盆土透气和积水情况，别让根系一直闷着。',
-    });
+    })
   }
 
   if (weather.temperature <= 8) {
@@ -242,7 +243,7 @@ function buildExtremeWeatherAlerts(
       type: 'low-temperature',
       title: '低温天动作放轻一点',
       description: '气温偏低时，浇水和换盆都要更克制，先保暖再谈折腾。',
-    });
+    })
   }
 
   if (weather.temperature >= 35) {
@@ -250,7 +251,7 @@ function buildExtremeWeatherAlerts(
       type: 'high-temperature',
       title: '高温天以避晒和通风为主',
       description: '中午前后先别施肥，暴晒位植物也尽量缓一缓，避免叶片烫伤。',
-    });
+    })
   }
 
   if (weather.humidity >= 85 && weather.temperature >= 18 && weather.temperature <= 28) {
@@ -258,7 +259,7 @@ function buildExtremeWeatherAlerts(
       type: 'humid-south',
       title: '回南天气要防闷根',
       description: '空气又湿又黏，盆土不干就先别浇，通风比勤快补水更重要。',
-    });
+    })
   }
 
   if (weather.temperature <= 2) {
@@ -266,40 +267,42 @@ function buildExtremeWeatherAlerts(
       type: 'frost',
       title: '霜冻风险要先避开',
       description: '今晚可能很冷，怕冻的植物先往室内挪一挪，别让嫩叶直接受寒。',
-    });
+    })
   }
 
-  return alerts;
+  return alerts
 }
 
 function buildSeasonalText(
   weather: RequestCareAdviceDto['weather'] | RequestSinglePlantCareAdviceDto['weather'],
 ): string {
   if (weather.season.includes('夏')) {
-    return '现在更适合少量多次观察，重点放在避晒、通风和盆土升温上。';
+    return '现在更适合少量多次观察，重点放在避晒、通风和盆土升温上。'
   }
 
   if (weather.season.includes('冬')) {
-    return '现在养护节奏要慢一点，先保温，再决定是否补水或修剪。';
+    return '现在养护节奏要慢一点，先保温，再决定是否补水或修剪。'
   }
 
   if (weather.season.includes('春')) {
-    return '现在是比较适合恢复生长的季节，可以温柔增加观察频率，但别一下子用力过猛。';
+    return '现在是比较适合恢复生长的季节，可以温柔增加观察频率，但别一下子用力过猛。'
   }
 
-  return '这个季节适合保持稳定节奏，先看叶色、盆土和新芽，再决定今天动哪一步。';
+  return '这个季节适合保持稳定节奏，先看叶色、盆土和新芽，再决定今天动哪一步。'
 }
 
 function buildFallbackAdvice(payload: RequestCareAdviceDto): IAiAdvice {
-  const wateringNeededCount = payload.flowers.filter(flower => flower.careStatus === 'watering-needed').length;
-  const outdoorCount = payload.flowers.filter(flower => flower.placement === 'outdoor_open_air').length;
+  const wateringNeededCount = payload.flowers.filter(
+    (flower) => flower.careStatus === 'watering-needed',
+  ).length
+  const outdoorCount = payload.flowers.filter((flower) => flower.placement === 'outdoor_open_air').length
   const recentlyWateredCount = payload.flowers.filter((flower) => {
     if (!flower.lastWateredAt) {
-      return false;
+      return false
     }
 
-    return Date.now() - new Date(flower.lastWateredAt).getTime() <= 24 * 60 * 60 * 1000;
-  }).length;
+    return Date.now() - new Date(flower.lastWateredAt).getTime() <= 24 * 60 * 60 * 1000
+  }).length
 
   const warningTips = [
     payload.weather.precipitationProbability >= 60
@@ -311,7 +314,7 @@ function buildFallbackAdvice(payload: RequestCareAdviceDto): IAiAdvice {
     wateringNeededCount > 0
       ? `当前还有 ${wateringNeededCount} 盆植物偏缺水，适合优先巡查。`
       : '目前没有明显缺水植株，可以按日常节奏温柔巡园。',
-  ];
+  ]
 
   return {
     dailyAdvice: `${payload.weather.cityName} 今天 ${payload.weather.weatherText}，气温 ${Math.round(payload.weather.temperature)}°C。先做一次轻量巡园，再决定是否浇水或擦叶。`,
@@ -320,13 +323,13 @@ function buildFallbackAdvice(payload: RequestCareAdviceDto): IAiAdvice {
     wateringCycleDays: recentlyWateredCount > 0 || payload.weather.precipitationProbability >= 60 ? 3 : 2,
     fertilizingCycleDays: payload.weather.temperature >= 32 ? 14 : 10,
     generatedAt: createGeneratedAt(),
-  };
+  }
 }
 
 function buildSinglePlantFallbackAdvice(payload: RequestSinglePlantCareAdviceDto): IPlantAiAdvice {
-  const flowerName = normalizeFlowerName(payload.flower);
-  const latestRecord = payload.flower.records[0];
-  const extremeWeatherAlerts = buildExtremeWeatherAlerts(payload.weather);
+  const flowerName = normalizeFlowerName(payload.flower)
+  const latestRecord = payload.flower.records[0]
+  const extremeWeatherAlerts = buildExtremeWeatherAlerts(payload.weather)
   const focusActions = [
     payload.flower.careStatus === 'watering-needed'
       ? '先摸摸盆土，真的偏干再慢慢补水。'
@@ -337,15 +340,15 @@ function buildSinglePlantFallbackAdvice(payload: RequestSinglePlantCareAdviceDto
     latestRecord
       ? `它最近一次养护是 ${latestRecord.actionType}，今天先别把节奏一下子拉太满。`
       : '它最近还没有明确养护记录，今天先从最基础的观察开始就够了。',
-  ];
+  ]
   const forbiddenActions = [
-    extremeWeatherAlerts.some(alert => alert.type === 'storm')
+    extremeWeatherAlerts.some((alert) => alert.type === 'storm')
       ? '今天别因为下雨就顺手再补一轮水。'
       : '在没看盆土前，先别按固定习惯机械浇水。',
-    extremeWeatherAlerts.some(alert => alert.type === 'high-temperature')
+    extremeWeatherAlerts.some((alert) => alert.type === 'high-temperature')
       ? '正午先别施肥，也别急着大修剪。'
       : '一次别同时做太多动作，留点缓冲更稳。',
-  ];
+  ]
 
   return {
     targetFlowerId: payload.flower.id,
@@ -356,7 +359,7 @@ function buildSinglePlantFallbackAdvice(payload: RequestSinglePlantCareAdviceDto
     dailyAdvice: `${payload.weather.cityName} 今天 ${payload.weather.weatherText}，${flowerName} 所在环境是${payload.flower.placement}。先看看叶片和盆土，再决定是否补水或调整位置。`,
     seasonalAdvice: buildSeasonalText(payload.weather),
     warningTips: [
-      ...extremeWeatherAlerts.map(alert => alert.title),
+      ...extremeWeatherAlerts.map((alert) => alert.title),
       payload.flower.note
         ? `你之前给它留过备注：“${payload.flower.note.slice(0, 28)}${payload.flower.note.length > 28 ? '…' : ''}”，今天也可以顺手对照一下。`
         : '今天以稳定为主，不需要把所有步骤一次做满。',
@@ -367,16 +370,16 @@ function buildSinglePlantFallbackAdvice(payload: RequestSinglePlantCareAdviceDto
     focusActions,
     forbiddenActions,
     extremeWeatherAlerts,
-    gentleFallbackMessage: '这是本地兜底生成的建议，已经尽量按你家这盆植物今天的天气和状态来组织啦。',
-  };
+    gentleFallbackMessage: 'AI建议只供参考，具体需要根据植株真实状态来哦！',
+  }
 }
 
 interface OpenAiCompatibleResponse {
   choices?: Array<{
     message?: {
-      content?: string;
-    };
-  }>;
+      content?: string
+    }
+  }>
 }
 
 function stripJsonCodeFence(content: string): string {
@@ -384,7 +387,7 @@ function stripJsonCodeFence(content: string): string {
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/i, '')
     .replace(/```$/i, '')
-    .trim();
+    .trim()
 }
 
 function buildCareAdvicePrompt(payload: RequestCareAdviceDto): string {
@@ -394,7 +397,7 @@ function buildCareAdvicePrompt(payload: RequestCareAdviceDto): string {
     '输出必须是纯 JSON，字段必须严格匹配 IAiAdvice。',
     '文案要温柔、简洁、可执行，warningTips 保持 3 条。',
     `输入数据: ${JSON.stringify(payload)}`,
-  ].join('\n');
+  ].join('\n')
 }
 
 function buildSinglePlantPrompt(payload: RequestSinglePlantCareAdviceDto): string {
@@ -403,7 +406,7 @@ function buildSinglePlantPrompt(payload: RequestSinglePlantCareAdviceDto): strin
     '请只输出纯 JSON，字段严格匹配 IPlantAiAdvice。',
     'summary、focusActions、forbiddenActions 要具体，适合直接展示给新手。',
     `输入数据: ${JSON.stringify(payload)}`,
-  ].join('\n');
+  ].join('\n')
 }
 
 function buildDiagnosisPrompt(payload: RequestPlantDiagnosisDto): string {
@@ -412,7 +415,7 @@ function buildDiagnosisPrompt(payload: RequestPlantDiagnosisDto): string {
     '请基于图片与上下文做保守识别，只输出纯 JSON，字段严格匹配 IAiPlantDiagnosis。',
     '不要夸大结论，优先给出排查方向和温和处理步骤。',
     `输入数据: ${JSON.stringify(payload)}`,
-  ].join('\n');
+  ].join('\n')
 }
 
 function buildTripPlanPrompt(payload: RequestTripCarePlanDto): string {
@@ -421,7 +424,7 @@ function buildTripPlanPrompt(payload: RequestTripCarePlanDto): string {
     '请返回纯 JSON，字段严格匹配 IAiTripCarePlan。',
     '强调低风险、少折腾、适合个人开发产品直接展示。',
     `输入数据: ${JSON.stringify(payload)}`,
-  ].join('\n');
+  ].join('\n')
 }
 
 function buildChatPrompt(payload: RequestAiChatDto): string {
@@ -442,7 +445,9 @@ function buildChatPrompt(payload: RequestAiChatDto): string {
     '输出必须是纯 JSON，格式: {"answer": "你的回复内容"}',
     contextLines.length > 0 ? `参考上下文: ${contextLines.join('; ')}` : '',
     `用户问题: ${payload.question}`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n')
 }
 
 function buildChatFallback(payload: RequestAiChatDto): IAiChatResponse {
@@ -469,128 +474,133 @@ export class AiProxyService {
   ) {}
 
   private resolveShouldUseAgent(): boolean {
-    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
     // Agent 配置了非默认值即视为可用
-    return !appConfig.aiAgentUrl.includes('example.com')
-      && !appConfig.aiAgentApiKey.includes('change-me');
+    return !appConfig.aiAgentUrl.includes('example.com') && !appConfig.aiAgentApiKey.includes('change-me')
   }
 
   private resolveShouldUseFallback(): boolean {
-    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
-    return appConfig.aiProxyBaseUrl.includes('example.com')
-      || appConfig.aiProxyApiKey.includes('replace-with-local-key');
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
+    return (
+      appConfig.aiProxyBaseUrl.includes('example.com') ||
+      appConfig.aiProxyApiKey.includes('replace-with-local-key')
+    )
   }
 
   /** 调用 AI Agent 的结构化端点 */
-  private async requestAgent<TResponse>(scope: string, payload: unknown, userId?: string): Promise<TResponse> {
-    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
-    const baseUrl = appConfig.aiAgentUrl.replace(/\/$/, '');
-    const resolvedUserId = userId ?? 'anonymous';
+  private async requestAgent<TResponse>(
+    scope: string,
+    payload: unknown,
+    userId?: string,
+  ): Promise<TResponse> {
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
+    const baseUrl = appConfig.aiAgentUrl.replace(/\/$/, '')
+    const resolvedUserId = userId ?? 'anonymous'
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-API-Key': appConfig.aiAgentApiKey,
-    };
+    }
 
-    let requestUrl: string;
-    let body: unknown;
+    let requestUrl: string
+    let body: unknown
 
     switch (scope) {
       case 'care-advice': {
-        const p = payload as RequestCareAdviceDto;
-        requestUrl = `${baseUrl}/advice/daily`;
+        const p = payload as RequestCareAdviceDto
+        requestUrl = `${baseUrl}/advice/daily`
         body = {
           user_id: resolvedUserId,
           city_name: p.weather.cityName,
           force_refresh: false,
-        };
-        break;
+        }
+        break
       }
       case 'plant-care-advice': {
-        const p = payload as RequestSinglePlantCareAdviceDto;
-        requestUrl = `${baseUrl}/advice/analyze`;
+        const p = payload as RequestSinglePlantCareAdviceDto
+        requestUrl = `${baseUrl}/advice/analyze`
         body = {
           user_id: resolvedUserId,
           focus: `single_plant:${p.flower.id}`,
-        };
-        break;
+        }
+        break
       }
       case 'plant-diagnosis': {
-        const p = payload as RequestPlantDiagnosisDto;
-        requestUrl = `${baseUrl}/diagnosis/plant`;
+        const p = payload as RequestPlantDiagnosisDto
+        requestUrl = `${baseUrl}/diagnosis/plant`
         body = {
           user_id: resolvedUserId,
           plant_id: p.flower?.id ?? null,
-          symptoms: p.flower
-            ? `${p.flower.name}（状态: ${p.flower.careStatus}）`
-            : '未知植物异常',
+          symptoms: p.flower ? `${p.flower.name}（状态: ${p.flower.careStatus}）` : '未知植物异常',
           image_data_url: p.imageDataUrl,
-          weather: p.weather ? {
-            temperature: p.weather.temperature,
-            humidity: p.weather.humidity,
-            weather_text: p.weather.weatherText,
-          } : null,
-        };
-        break;
+          weather: p.weather
+            ? {
+                temperature: p.weather.temperature,
+                humidity: p.weather.humidity,
+                weather_text: p.weather.weatherText,
+              }
+            : null,
+        }
+        break
       }
       case 'trip-care-plan': {
-        const p = payload as RequestTripCarePlanDto;
-        requestUrl = `${baseUrl}/advice/trip-plan`;
+        const p = payload as RequestTripCarePlanDto
+        requestUrl = `${baseUrl}/advice/trip-plan`
         body = {
           user_id: resolvedUserId,
           plant_id: p.flower.id,
           travel_days: p.travelDays,
           city_name: p.weather.cityName,
-        };
-        break;
+        }
+        break
       }
       case 'chat': {
-        const p = payload as RequestAiChatDto;
-        requestUrl = `${baseUrl}/chat`;
+        const p = payload as RequestAiChatDto
+        requestUrl = `${baseUrl}/chat`
         body = {
           user_id: resolvedUserId,
           message: p.question,
           city_name: p.weather?.cityName ?? null,
           attachments: [],
-        };
-        break;
+        }
+        break
       }
       case 'plant-health-check': {
-        const p = payload as RequestPlantHealthCheckDto;
-        requestUrl = `${baseUrl}/advice/analyze`;
+        const p = payload as RequestPlantHealthCheckDto
+        requestUrl = `${baseUrl}/advice/analyze`
         body = {
           user_id: resolvedUserId,
           focus: 'health_overview',
-        };
-        break;
+        }
+        break
       }
       case 'taxonomy-suggest': {
-        const p = payload as { plantName: string };
-        requestUrl = `${baseUrl}/taxonomy/suggest`;
-        body = { plant_name: p.plantName };
-        break;
+        const p = payload as { plantName: string }
+        requestUrl = `${baseUrl}/taxonomy/suggest`
+        body = { plant_name: p.plantName }
+        break
       }
       default:
-        throw new Error(`Unknown AI scope: ${scope}`);
+        throw new Error(`Unknown AI scope: ${scope}`)
     }
 
     const response = await fetch(requestUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
-    });
+    })
 
     if (!response.ok) {
-      throw new Error(`AI Agent 返回错误: ${response.status}`);
+      throw new Error(`AI Agent 返回错误: ${response.status}`)
     }
 
-    return response.json() as Promise<TResponse>;
+    return response.json() as Promise<TResponse>
   }
 
   /** 直接调 AI（保留向后兼容，Agent 不可用时降级） */
   private async requestDirectAi<TResponse>(scope: string, prompt: string): Promise<TResponse> {
-    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
-    const requestUrl = `${appConfig.aiProxyBaseUrl.replace(/\/$/, '')}/chat/completions`;
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
+    const requestUrl = `${appConfig.aiProxyBaseUrl.replace(/\/$/, '')}/chat/completions`
 
     const response = await fetch(requestUrl, {
       method: 'POST',
@@ -607,50 +617,57 @@ export class AiProxyService {
         ],
         metadata: { scope, app: 'florist' },
       }),
-    });
+    })
 
     if (!response.ok) {
-      throw new Error('AI 中转服务不可用');
+      throw new Error('AI 中转服务不可用')
     }
 
-    const result = await response.json() as OpenAiCompatibleResponse;
-    const rawContent = result.choices?.[0]?.message?.content;
+    const result = (await response.json()) as OpenAiCompatibleResponse
+    const rawContent = result.choices?.[0]?.message?.content
 
     if (!rawContent) {
-      throw new Error('AI 返回内容为空');
+      throw new Error('AI 返回内容为空')
     }
 
-    return JSON.parse(stripJsonCodeFence(rawContent)) as TResponse;
+    return JSON.parse(stripJsonCodeFence(rawContent)) as TResponse
   }
 
   private async resolveAiResponse<TResponse>(input: {
-    scope: 'care-advice' | 'plant-care-advice' | 'plant-diagnosis' | 'trip-care-plan' | 'chat' | 'plant-health-check' | 'taxonomy-suggest';
-    userId?: string;
-    payload: unknown;
-    prompt: string;
-    fallbackFactory: () => TResponse;
+    scope:
+      | 'care-advice'
+      | 'plant-care-advice'
+      | 'plant-diagnosis'
+      | 'trip-care-plan'
+      | 'chat'
+      | 'plant-health-check'
+      | 'taxonomy-suggest'
+    userId?: string
+    payload: unknown
+    prompt: string
+    fallbackFactory: () => TResponse
   }): Promise<TResponse> {
-    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
-    const resolvedUserId = await this.usersService.resolveCurrentUserId(input.userId);
-    const requestHash = this.requestMonitorService.createPayloadHash(input.scope, input.payload);
-    const cacheKey = `ai:${input.scope}:${resolvedUserId}:${requestHash}`;
-    const startedAt = Date.now();
-    let upstreamProvider = 'local-fallback';
+    const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
+    const resolvedUserId = await this.usersService.resolveCurrentUserId(input.userId)
+    const requestHash = this.requestMonitorService.createPayloadHash(input.scope, input.payload)
+    const cacheKey = `ai:${input.scope}:${resolvedUserId}:${requestHash}`
+    const startedAt = Date.now()
+    let upstreamProvider = 'local-fallback'
 
     try {
       const { value, cacheHit } = await this.runtimeCacheService.remember<TResponse>(
         cacheKey,
         appConfig.aiCacheTtlMs,
         async () => {
-          const useAgent = this.resolveShouldUseAgent();
-          const useDirectAi = !this.resolveShouldUseFallback();
+          const useAgent = this.resolveShouldUseAgent()
+          const useDirectAi = !this.resolveShouldUseFallback()
 
           // 优先：AI Agent
           if (useAgent) {
             try {
-              const result = await this.requestAgent<TResponse>(input.scope, input.payload, resolvedUserId);
-              upstreamProvider = 'ai-agent';
-              return result;
+              const result = await this.requestAgent<TResponse>(input.scope, input.payload, resolvedUserId)
+              upstreamProvider = 'ai-agent'
+              return result
             } catch {
               // Agent 失败 → 降级到直接 AI
             }
@@ -659,20 +676,20 @@ export class AiProxyService {
           // 其次：直接 AI（兼容旧配置）
           if (useDirectAi) {
             try {
-              await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1);
-              const result = await this.requestDirectAi<TResponse>(input.scope, input.prompt);
-              upstreamProvider = appConfig.aiProxyModel;
-              return result;
+              await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1)
+              const result = await this.requestDirectAi<TResponse>(input.scope, input.prompt)
+              upstreamProvider = appConfig.aiProxyModel
+              return result
             } catch {
               // 直接 AI 失败 → 降级到本地 fallback
             }
           }
 
           // 最后：本地 fallback
-          upstreamProvider = 'local-fallback';
-          return input.fallbackFactory();
+          upstreamProvider = 'local-fallback'
+          return input.fallbackFactory()
         },
-      );
+      )
 
       await this.requestMonitorService.logProxyRequest({
         scope: 'ai-proxy',
@@ -685,9 +702,9 @@ export class AiProxyService {
         durationMs: Date.now() - startedAt,
         quotaCost: cacheHit || upstreamProvider === 'local-fallback' ? 0 : 1,
         upstreamProvider,
-      });
+      })
 
-      return value;
+      return value
     } catch (error) {
       await this.requestMonitorService.logProxyRequest({
         scope: 'ai-proxy',
@@ -701,9 +718,9 @@ export class AiProxyService {
         quotaCost: 0,
         upstreamProvider,
         errorMessage: error instanceof Error ? error.message : 'unknown error',
-      });
+      })
 
-      return input.fallbackFactory();
+      return input.fallbackFactory()
     }
   }
 
@@ -714,7 +731,7 @@ export class AiProxyService {
       prompt: buildCareAdvicePrompt(payload),
       fallbackFactory: () => buildFallbackAdvice(payload),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
   public async getSinglePlantCareAdvice(
@@ -727,18 +744,18 @@ export class AiProxyService {
       prompt: buildSinglePlantPrompt(payload),
       fallbackFactory: () => buildSinglePlantFallbackAdvice(payload),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
   public async getPlantDiagnosis(
     payload: RequestPlantDiagnosisDto,
     userId?: string,
   ): Promise<IAiPlantDiagnosis> {
-    const compressedImage = await this.imageService.compressForDiagnosis(payload.imageDataUrl);
+    const compressedImage = await this.imageService.compressForDiagnosis(payload.imageDataUrl)
     const normalizedPayload: RequestPlantDiagnosisDto = {
       ...payload,
       imageDataUrl: compressedImage.dataUrl,
-    };
+    }
 
     return this.resolveAiResponse({
       scope: 'plant-diagnosis',
@@ -746,20 +763,17 @@ export class AiProxyService {
       prompt: buildDiagnosisPrompt(normalizedPayload),
       fallbackFactory: () => buildPlantDiagnosisFallback(normalizedPayload),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
-  public async getTripCarePlan(
-    payload: RequestTripCarePlanDto,
-    userId?: string,
-  ): Promise<IAiTripCarePlan> {
+  public async getTripCarePlan(payload: RequestTripCarePlanDto, userId?: string): Promise<IAiTripCarePlan> {
     return this.resolveAiResponse({
       scope: 'trip-care-plan',
       payload,
       prompt: buildTripPlanPrompt(payload),
       fallbackFactory: () => buildTripCarePlanFallback(payload),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
   public async getAiChat(payload: RequestAiChatDto, userId?: string): Promise<IAiChatResponse> {
@@ -769,7 +783,7 @@ export class AiProxyService {
       prompt: buildChatPrompt(payload),
       fallbackFactory: () => buildChatFallback(payload),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
   public async getPlantHealthCheck(
@@ -790,7 +804,7 @@ export class AiProxyService {
         generatedAt: new Date().toISOString(),
       }),
       ...(userId ? { userId } : {}),
-    });
+    })
   }
 
   /**
@@ -801,7 +815,7 @@ export class AiProxyService {
     // 优先走 Agent 专用审核端点
     if (this.resolveShouldUseAgent()) {
       try {
-        const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app');
+        const appConfig = this.configService.getOrThrow<ServerEnvConfig>('app')
         const response = await fetch(`${appConfig.aiAgentUrl.replace(/\/$/, '')}/tools/moderate`, {
           method: 'POST',
           headers: {
@@ -809,10 +823,10 @@ export class AiProxyService {
             'X-API-Key': appConfig.aiAgentApiKey,
           },
           body: JSON.stringify({ content }),
-        });
+        })
 
         if (response.ok) {
-          return response.json() as Promise<{ passed: boolean; reason?: string }>;
+          return response.json() as Promise<{ passed: boolean; reason?: string }>
         }
       } catch {
         // Agent 审核失败 → 降级
@@ -825,7 +839,7 @@ export class AiProxyService {
       '合规标准：不包含侮辱性/攻击性语言、不包含广告/垃圾信息、内容与植物养护或应用体验相关。',
       '格式: {"passed": true} 或 {"passed": false, "reason": "不合规原因（简短中文）"}',
       `用户内容: "${content}"`,
-    ].join('\n');
+    ].join('\n')
 
     try {
       const result = await this.resolveAiResponse<{ passed: boolean; reason?: string }>({
@@ -833,14 +847,17 @@ export class AiProxyService {
         payload: { content },
         prompt,
         fallbackFactory: () => ({ passed: true }),
-      });
-      return result;
+      })
+      return result
     } catch {
-      return { passed: true };
+      return { passed: true }
     }
   }
 
-  public async suggestFlowerTaxonomy(plantName: string, userId?: string): Promise<{
+  public async suggestFlowerTaxonomy(
+    plantName: string,
+    userId?: string,
+  ): Promise<{
     category: string
     placement: string
     careDifficulty: string

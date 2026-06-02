@@ -54,7 +54,7 @@ async function handleRestoreFlower(flowerId: string): Promise<void> {
           </text>
         </view>
         <button
-          class="h-[76rpx] rounded-full border-none bg-[var(--color-mint)]/20 px-4 text-2xs font-800 text-[var(--color-sage)]"
+          class="btn-base h-[76rpx] rounded-full bg-[var(--color-mint)]/20 px-4 text-2xs font-800 text-[var(--color-sage)]"
           hover-class="opacity-92"
           @tap="handleRestoreFlower(flower.id)"
         >

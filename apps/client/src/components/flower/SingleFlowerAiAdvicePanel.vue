@@ -27,9 +27,8 @@ const flowerName = computed(() => (props.flower ? getFlowerDisplayName(props.flo
   <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
     <view class="flex items-start justify-between gap-3">
       <view>
-        <text class="block text-base font-800 text-app-ink dark:text-slate-100"> 单株 AI 养护建议 </text>
         <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-          只围绕 {{ flowerName }} 这一盆来想，语气轻一点，动作也会更具体一点。
+          只围绕 {{ flowerName }} 这一盆的专属建议：
         </text>
       </view>
       <TagLabel

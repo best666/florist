@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TagLabelStatus } from '@/interfaces'
 import AppImage from '../app/AppImage.vue'
-import TagLabel from '../app/TagLabel.vue'
 
 interface FlowerCardProps {
   name: string
@@ -29,6 +29,18 @@ const emit = defineEmits<{
 function handleTap(): void {
   emit('tap')
 }
+
+const dotColor = computed(() => {
+  switch (props.status) {
+    case 'healthy':
+      return 'bg-emerald-400 shadow-[0_0_6rpx_rgba(52,211,153,0.5)]'
+    case 'watering-needed':
+    case 'fertilizing-needed':
+      return 'bg-amber-400 shadow-[0_0_6rpx_rgba(251,191,36,0.5)]'
+    default:
+      return 'bg-slate-400'
+  }
+})
 </script>
 
 <template>
@@ -53,8 +65,16 @@ function handleTap(): void {
         {{ props.emoji }}
       </view>
       <view class="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-[#32404a]/20 to-transparent" />
-      <view class="absolute left-2 top-2">
-        <TagLabel :status="props.status" :text="props.statusText || ''" />
+      <view class="absolute left-2 top-2 flex items-center gap-1">
+        <view
+          class="h-2 w-2 flex-none rounded-full"
+          :class="dotColor"
+        />
+        <text
+          v-if="props.statusText"
+          class="text-3xs leading-none text-white/90 text-shadow-sm"
+          >{{ props.statusText }}</text
+        >
       </view>
     </view>
 
