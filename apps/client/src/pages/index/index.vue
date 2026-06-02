@@ -16,6 +16,7 @@ import HomeQuickDrawer from '@/components/HomeQuickDrawer.vue'
 import HomeWeatherReminderPanel from '@/components/HomeWeatherReminderPanel.vue'
 import SingleFlowerAiAdvicePanel from '@/components/flower/SingleFlowerAiAdvicePanel.vue'
 import SubmitBtn from '@/components/app/SubmitBtn.vue'
+import TaxonomyEditDrawer from '@/components/TaxonomyEditDrawer.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useGardenAiAdvice } from '@/hooks/useGardenAiAdvice'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -72,6 +73,7 @@ const {
 const selectedAdviceFlowerId = ref<string | null>(null)
 const isQuickDrawerVisible = ref(false)
 const isFilterExpanded = ref(false)
+const isTaxonomyDrawerVisible = ref(false)
 const isCarePromptVisible = ref(false)
 const selectedDetailFlower = ref<LocalFlower | null>(null)
 const isDetailPopupVisible = ref(false)
@@ -640,7 +642,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
             class="h-2 w-14 rounded-full bg-linear-to-r"
             :class="card.accentClass"
           />
-          <text class="mt-3 block text-2xs tracking-[0.08em] text-app-muted/80 dark:text-app-muted">
+          <text class="block text-2xs tracking-[0.08em] text-app-muted/80 dark:text-app-muted">
             {{ card.label }}
           </text>
           <text class="mt-1 block text-xl font-800 text-app-ink dark:text-slate-100">
@@ -682,6 +684,13 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         :expanded="isFilterExpanded"
         @update:expanded="isFilterExpanded = $event"
       >
+        <template #header-extra>
+          <text
+            class="cursor-pointer rounded-full bg-[var(--color-mint)]/25 px-3 py-1.5 text-2xs font-700 text-white dark:bg-emerald-500/25 dark:text-emerald-100"
+            @tap.stop="isTaxonomyDrawerVisible = true"
+            >编辑分类</text
+          >
+        </template>
         <scroll-view
           scroll-x
           class="mt-4 whitespace-nowrap"
@@ -889,11 +898,14 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         v-model="isDetailPopupVisible"
         :flower="selectedDetailFlower"
         @edit="handleEditFlower"
+        @cover-tap="handleEditFlower"
         @record="handleDetailNavigate($event, 'record')"
         @album="handleDetailNavigate($event, 'album')"
         @preview="handlePreviewFlower"
         @delete="handleDeleteFlower"
       />
+
+      <TaxonomyEditDrawer v-model="isTaxonomyDrawerVisible" />
 
       <CarePromptDrawer
         v-model="isCarePromptVisible"

@@ -2,10 +2,9 @@
 import { computed } from 'vue'
 import type { LocalFlower } from '@/interfaces'
 import { getFlowerDisplayName, getTimeAgo } from '@/utils'
-import { useFlowerTaxonomyStore } from '@/store'
+import { useAuthStore, useFlowerTaxonomyStore } from '@/store'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import AppImage from '../app/AppImage.vue'
-import TagLabel from '../app/TagLabel.vue'
 
 interface FlowerDetailPopupProps {
   modelValue: boolean
@@ -21,12 +20,23 @@ const emit = defineEmits<{
   album: [flower: LocalFlower]
   preview: [flower: LocalFlower]
   delete: [flower: LocalFlower]
+  'cover-tap': [flower: LocalFlower]
 }>()
 
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
+const authStore = useAuthStore()
 
 function closePopup(): void {
   emit('update:modelValue', false)
+}
+
+function handleCoverTap(): void {
+  if (!props.flower) return
+  if (!authStore.isAuthenticated) {
+    uni.showToast({ title: '请先登录后上传封面', icon: 'none', duration: 2000 })
+    return
+  }
+  emit('cover-tap', props.flower)
 }
 
 const { handleTouchEnd, handleTouchMove, handleTouchStart, maskMotionStyle, panelMotionStyle } =
@@ -50,6 +60,26 @@ const coverImage = computed(() => {
     if (found) return found.url
   }
   return props.flower.images[0]?.url ?? ''
+})
+
+const statusDotColor = computed(() => {
+  if (!props.flower) return 'bg-slate-400'
+  switch (props.flower.careStatus) {
+    case 'healthy': return 'bg-emerald-400 shadow-[0_0_6rpx_rgba(52,211,153,0.5)]'
+    case 'watering-needed':
+    case 'fertilizing-needed': return 'bg-amber-400 shadow-[0_0_6rpx_rgba(251,191,36,0.5)]'
+    default: return 'bg-slate-400'
+  }
+})
+
+const statusLabel = computed(() => {
+  if (!props.flower) return ''
+  return flowerTaxonomyStore.resolveFlowerCareStatusLabel(props.flower).replace(/^\S+\s*/, '')
+})
+
+const coverHint = computed(() => {
+  if (!props.flower) return ''
+  return props.flower.images.length > 0 ? '点击更换封面' : '点击上传封面'
 })
 </script>
 
@@ -90,8 +120,12 @@ const coverImage = computed(() => {
         class="max-h-[68vh] w-full overflow-x-hidden pr-1"
       >
         <view class="flex flex-col gap-4 pb-4">
-          <!-- 封面图 -->
-          <view class="relative overflow-hidden rounded-[24rpx] bg-app-cream">
+          <!-- 封面图：点击上传/替换 -->
+          <view
+            class="relative overflow-hidden rounded-[24rpx] bg-app-cream app-pressable"
+            hover-class="opacity-90"
+            @tap="handleCoverTap"
+          >
             <AppImage
               :src="coverImage"
               mode="aspectFill"
@@ -99,6 +133,10 @@ const coverImage = computed(() => {
               error-text="暂无封面图"
             />
             <view class="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-[#32404a]/50 to-transparent" />
+            <!-- 封面提示 -->
+            <view class="absolute right-3 top-3 rounded-full bg-black/30 px-2.5 py-1 backdrop-blur-[4rpx]">
+              <text class="text-3xs text-white/80">{{ coverHint }}</text>
+            </view>
             <view class="absolute bottom-3 left-4 right-4">
               <view class="flex items-end justify-between gap-3">
                 <view class="min-w-0 flex-1">
@@ -106,10 +144,11 @@ const coverImage = computed(() => {
                     {{ getFlowerDisplayName(props.flower) }}
                   </text>
                 </view>
-                <TagLabel
-                  :status="props.flower.careStatus"
-                  :text="flowerTaxonomyStore.resolveFlowerCareStatusLabel(props.flower)"
-                />
+                <!-- 状态圆点 + 文字 -->
+                <view class="flex flex-none items-center gap-1 rounded-full bg-black/25 px-2 py-1 backdrop-blur-[4rpx]">
+                  <view class="h-2 w-2 flex-none rounded-full" :class="statusDotColor" />
+                  <text class="text-3xs leading-none text-white/90">{{ statusLabel }}</text>
+                </view>
               </view>
             </view>
           </view>

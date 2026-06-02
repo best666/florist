@@ -83,12 +83,13 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
         </view>
         <view class="min-w-0 flex-1 pt-1">
           <view class="flex items-center gap-[6rpx]">
-            <text
-              class="block max-w-[360rpx] truncate text-[34rpx] font-800 leading-tight text-app-ink"
-            >
+            <text class="block max-w-[360rpx] truncate text-[34rpx] font-800 leading-tight text-app-ink">
               {{ authTitle }}
             </text>
-            <InfoPopover :content="authSubtitle" icon="help" />
+            <InfoPopover
+              :content="authSubtitle"
+              icon="help"
+            />
             <button
               v-if="props.isAuthenticated"
               class="btn-base mx-0 h-[38rpx] min-h-[38rpx] w-[38rpx] min-w-[38rpx] rounded-full bg-[#EEF2FF] px-0 text-[20rpx] text-[#4D63B4]"
@@ -117,7 +118,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       />
       <button
         v-if="!props.isAuthenticated"
-        class="btn-panel surface-soft min-h-[92rpx] bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
+        class="btn-panel surface-soft min-h-[92rpx] bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
         hover-class="opacity-92"
         :loading="props.loading"
         @tap="emit('login')"

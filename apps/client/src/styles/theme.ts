@@ -49,10 +49,10 @@ export const HERO_GRADIENT = 'bg-linear-to-br from-[var(--color-blush)] via-[var
 
 /** Tag 色调映射 */
 export const TAG_TONES = {
-  mint:  { bg: 'bg-[var(--color-mint)]/10',  text: 'text-[var(--color-ink)]' },
-  blush: { bg: 'bg-[var(--color-blush)]/10', text: 'text-[var(--color-ink)]' },
-  cream: { bg: 'bg-[var(--color-cream)]/20', text: 'text-[var(--color-ink)]' },
-  slate: { bg: 'bg-[var(--color-muted)]/8',  text: 'text-[var(--color-ink)]' },
+  mint:  { bg: 'bg-[var(--color-mint)]/10',  text: 'text-emerald-700' },
+  blush: { bg: 'bg-[var(--color-blush)]/10', text: 'text-rose-600' },
+  cream: { bg: 'bg-[var(--color-cream)]/20', text: 'text-amber-700' },
+  slate: { bg: 'bg-[var(--color-muted)]/8',  text: 'text-slate-500' },
 } as const
 
 export type TagTone = keyof typeof TAG_TONES

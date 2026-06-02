@@ -39,10 +39,10 @@ const props = withDefaults(defineProps<TagLabelProps>(), {
 })
 
 const toneClassMap: Record<SoftTone, string> = {
-  mint: 'bg-[var(--color-mint)]/10 text-[var(--color-ink)] dark:bg-emerald-500/12 dark:text-emerald-200',
-  blush: 'bg-[var(--color-blush)]/10 text-[var(--color-ink)] dark:bg-rose-500/12 dark:text-rose-200',
-  cream: 'bg-[var(--color-cream)]/20 text-[var(--color-ink)] dark:bg-amber-500/10 dark:text-amber-100',
-  slate: 'bg-[var(--color-muted)]/8 text-[var(--color-ink)] dark:bg-slate-700/40 dark:text-slate-100',
+  mint: 'bg-[var(--color-mint)]/25 text-[var(--color-ink)] dark:bg-emerald-500/25 dark:text-emerald-100',
+  blush: 'bg-[var(--color-blush)]/25 text-[var(--color-ink)] dark:bg-rose-500/25 dark:text-rose-100',
+  cream: 'bg-[var(--color-cream)]/45 text-[var(--color-ink)] dark:bg-amber-500/20 dark:text-amber-100',
+  slate: 'bg-[var(--color-muted)]/20 text-[var(--color-ink)] dark:bg-slate-700/40 dark:text-slate-100',
 }
 
 const statusMetaMap: Record<Exclude<TagLabelStatus, 'custom'>, { text: string; tone: SoftTone }> = {
@@ -101,13 +101,13 @@ const sizeClass = computed(() =>
   >
     <view
       v-if="hasLeadingIcon"
-      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[var(--color-surface)]/65 text-[20rpx] leading-none"
+      class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)]/70 text-[var(--color-ink)] text-[28rpx] leading-none"
     >
       {{ props.icon }}
     </view>
     <view
       v-else-if="props.showDot"
-      class="h-1.5 w-1.5 rounded-full bg-current opacity-70"
+      class="h-1.5 w-1.5 rounded-full bg-current opacity-60"
     />
     <text class="leading-none whitespace-nowrap">{{ resolvedLabel }}</text>
   </view>
