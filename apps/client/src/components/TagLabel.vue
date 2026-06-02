@@ -39,13 +39,13 @@ const props = withDefaults(defineProps<TagLabelProps>(), {
 })
 
 const toneClassMap: Record<SoftTone, string> = {
-  mint: 'bg-[var(--color-mint)]/20 text-[var(--color-sage)] dark:bg-emerald-500/18 dark:text-emerald-200',
-  blush: 'bg-[var(--color-blush)]/20 text-[var(--color-ink)] dark:bg-rose-500/18 dark:text-rose-200',
-  cream: 'bg-[var(--color-cream)]/40 text-[var(--color-gold)] dark:bg-amber-500/16 dark:text-amber-100',
-  slate: 'bg-[var(--color-muted)]/15 text-[var(--color-ink)] dark:bg-slate-700/55 dark:text-slate-100',
+  mint: 'bg-[var(--color-mint)]/10 text-[var(--color-ink)] dark:bg-emerald-500/12 dark:text-emerald-200',
+  blush: 'bg-[var(--color-blush)]/10 text-[var(--color-ink)] dark:bg-rose-500/12 dark:text-rose-200',
+  cream: 'bg-[var(--color-cream)]/20 text-[var(--color-ink)] dark:bg-amber-500/10 dark:text-amber-100',
+  slate: 'bg-[var(--color-muted)]/8 text-[var(--color-ink)] dark:bg-slate-700/40 dark:text-slate-100',
 }
 
-const statusMetaMap: Record<Exclude<TagLabelStatus, 'custom'>, { text: string, tone: SoftTone }> = {
+const statusMetaMap: Record<Exclude<TagLabelStatus, 'custom'>, { text: string; tone: SoftTone }> = {
   'watering-needed': {
     text: '缺水',
     tone: 'blush',
@@ -86,20 +86,29 @@ const resolvedTone = computed<SoftTone>(() => {
 
 const badgeClass = computed(() => toneClassMap[resolvedTone.value])
 const hasLeadingIcon = computed(() => props.icon.trim().length > 0)
-const sizeClass = computed(() => (
-  props.size === 'md'
-    ? 'min-h-[60rpx] gap-2 px-3.5 py-2 text-xs'
-    : 'gap-1.5 px-3 py-1.5 text-2xs'
-))
+const sizeClass = computed(() =>
+  props.size === 'md' ? 'min-h-[60rpx] gap-2 px-3.5 py-2 text-xs' : 'gap-1.5 px-3 py-1.5 text-2xs',
+)
 </script>
 
 <template>
-  <view :class="['badge-soft whitespace-nowrap shadow-[0_8rpx_18rpx_rgba(148,163,184,0.08)]', sizeClass, badgeClass]">
-    <view v-if="hasLeadingIcon"
-      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[var(--color-surface)]/65 text-[20rpx] leading-none">
+  <view
+    :class="[
+      'badge-soft whitespace-nowrap shadow-[0_8rpx_18rpx_rgba(148,163,184,0.08)]',
+      sizeClass,
+      badgeClass,
+    ]"
+  >
+    <view
+      v-if="hasLeadingIcon"
+      class="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[var(--color-surface)]/65 text-[20rpx] leading-none"
+    >
       {{ props.icon }}
     </view>
-    <view v-else-if="props.showDot" class="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+    <view
+      v-else-if="props.showDot"
+      class="h-1.5 w-1.5 rounded-full bg-current opacity-70"
+    />
     <text class="leading-none whitespace-nowrap">{{ resolvedLabel }}</text>
   </view>
 </template>

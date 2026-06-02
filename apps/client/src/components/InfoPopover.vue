@@ -12,8 +12,8 @@ const visible = ref(false)
 
 const iconClass = computed(() =>
   props.icon === 'help'
-    ? 'bg-[var(--color-mint)]/25 text-[var(--color-sage)]'
-    : 'bg-[var(--color-cream)]/60 text-app-muted',
+    ? 'bg-[var(--color-gold)]/10 text-[var(--color-ink)] dark:bg-amber-500/10 dark:text-amber-200'
+    : 'bg-[var(--color-cream)]/60 text-app-muted dark:bg-slate-700/60 dark:text-slate-200',
 )
 
 const iconText = computed(() => (props.icon === 'help' ? '?' : 'i'))
@@ -55,7 +55,7 @@ function close(): void {
       </view>
       <view class="mt-3 text-center">
         <text
-          class="inline-block rounded-full bg-[var(--color-mint)]/20 px-5 py-2 text-2xs font-700 text-[var(--color-sage)]"
+          class="inline-block rounded-full bg-[var(--color-mint)]/12 px-5 py-2 text-2xs font-700 text-[var(--color-ink)] dark:bg-[var(--color-mint)]/12 dark:text-[var(--color-mint)]"
           @tap.stop="close"
           >知道了</text
         >

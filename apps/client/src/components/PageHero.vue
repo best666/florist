@@ -27,12 +27,20 @@ withDefaults(defineProps<PageHeroProps>(), {
   >
     <view class="flex items-start justify-between gap-4">
       <view class="flex-1">
-        <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
+        <view
+          class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100"
+        >
           {{ badge }}
         </view>
-        <view class="mt-3 flex items-center gap-2 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
+        <view
+          class="mt-3 flex items-center gap-2 text-title font-900 leading-tight text-app-ink dark:text-slate-50"
+        >
           {{ title }}
-          <InfoPopover v-if="tip" :content="tip" :icon="tipIcon" />
+          <InfoPopover
+            v-if="tip"
+            :content="tip"
+            :icon="tipIcon"
+          />
         </view>
       </view>
       <view

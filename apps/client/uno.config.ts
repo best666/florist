@@ -20,7 +20,10 @@ export default defineConfig({
         /* 动画和工具类由 UnoCSS preflight 注入 */
         /* CSS 变量和页面背景由 global.css + .theme-* 类管理 */
 
-        @keyframes fade-up {
+        /* 所有原生 button 默认文字居中 */
+button { display: flex; align-items: center; justify-content: center; text-align: center; }
+
+@keyframes fade-up {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
@@ -75,6 +78,10 @@ export default defineConfig({
     'field-input-md': 'field-input h-[88rpx] min-h-[88rpx]',
     'field-input-sm': 'field-input h-[80rpx] min-h-[80rpx] rounded-[18rpx] px-3 text-sm',
     'field-textarea': 'field-input min-h-[160rpx] px-4 py-3 leading-6',
+    // 深色模式叠加 class：背景深色自动配浅色文字
+    // 用法：class="card-soft on-dark"  或  class="surface-soft on-dark-subtle"
+    'on-dark': 'dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700',
+    'on-dark-subtle': 'dark:bg-slate-800 dark:text-slate-200',
   },
   theme: {
     colors: {
