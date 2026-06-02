@@ -4,6 +4,7 @@ import type { LocalFlower, WeatherSnapshot } from '@/interfaces'
 import { computed, ref, watch } from 'vue'
 import { fetchAiChat } from '@/api'
 import { useFreeTierLimits } from '@/hooks/useFreeTierLimits'
+import CloseButton from './app/CloseButton.vue'
 
 interface Props {
   visible: boolean
@@ -73,10 +74,11 @@ function handleClose(): void {
     @tap="handleClose"
   >
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
+      class="relative w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
       @tap.stop="() => {}"
     >
       <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
+      <CloseButton @click="handleClose" />
 
       <view class="mb-4 flex items-center justify-between gap-3">
         <view>

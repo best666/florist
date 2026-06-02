@@ -8,6 +8,7 @@ import {
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { usePreparedImageAssets } from '@/hooks/usePreparedImageAssets'
 import AppImage from './app/AppImage.vue'
+import CloseButton from './app/CloseButton.vue'
 import SubmitBtn from './app/SubmitBtn.vue'
 
 interface UserProfilePopupProps {
@@ -114,11 +115,12 @@ function handleSubmit(): void {
   <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 backdrop-blur-[6rpx]" :class="modalClass"
     :style="maskMotionStyle" @tap="closePopup">
     <view
-      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform"
+      class="relative max-h-[90vh] w-full rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform"
       :class="panelClass" :style="panelMotionStyle" @tap.stop="() => { }">
       <view class="mb-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
+        <CloseButton @click="closePopup" />
         <view class="flex items-start justify-between gap-3">
           <view>
             <text class="block text-[38rpx] font-800 leading-tight text-app-ink">

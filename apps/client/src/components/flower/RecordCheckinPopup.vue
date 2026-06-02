@@ -15,6 +15,7 @@ import {
   showGentleToast,
 } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
+import CloseButton from '../app/CloseButton.vue'
 import ImagePicker from '../app/ImagePicker.vue'
 import InfoPopover from '../app/InfoPopover.vue'
 import SubmitBtn from '../app/SubmitBtn.vue'
@@ -133,12 +134,13 @@ function handleSubmit(): void {
   <view class="fixed inset-0 z-70 flex items-end bg-slate-900/34 backdrop-blur-[6rpx]" :class="modalClass"
     :style="maskMotionStyle" @tap="closePopup">
     <view
-      class="max-h-[90vh] w-full rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
+      class="relative max-h-[90vh] w-full rounded-t-[40rpx] bg-[var(--color-surface)] px-5 pb-6 pt-4 shadow-[0_-18rpx_60rpx_rgba(15,23,42,0.14)] will-change-transform dark:bg-slate-900"
       :class="panelClass" :style="panelMotionStyle" @tap.stop="() => { }">
       <view class="mb-4" @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
 
+        <CloseButton @click="closePopup" />
         <view class="flex items-start justify-between gap-3">
           <view>
             <view class="flex items-center gap-1">

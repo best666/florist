@@ -4,6 +4,7 @@ import { requestH5PhoneCode } from '@/api'
 import { ClientPlatform } from '@/interfaces'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { handleCatchAndToast, showGentleToast } from '@/utils'
+import CloseButton from './app/CloseButton.vue'
 import SubmitBtn from './app/SubmitBtn.vue'
 
 interface AuthLoginPopupProps {
@@ -140,7 +141,7 @@ onBeforeUnmount(() => {
     @tap="handleMaskTap"
   >
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
+      class="relative w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)]"
       :style="panelMotionStyle"
       @tap.stop="() => {}"
     >
@@ -151,6 +152,7 @@ onBeforeUnmount(() => {
         @touchcancel.stop="handleTouchEnd"
       >
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
+        <CloseButton @click="closePopup" />
         <view class="mb-5 flex flex-col gap-2 text-center">
           <text class="text-lg font-700 text-app-ink">
             {{ isH5 ? '手机号验证登录' : '微信小程序登录' }}

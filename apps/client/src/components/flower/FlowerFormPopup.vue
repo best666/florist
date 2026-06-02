@@ -13,6 +13,7 @@ import { useFlowerTaxonomyStore } from '@/store'
 import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/utils'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { useCustomOptionEditor } from '@/hooks/useCustomOptionEditor'
+import CloseButton from '../app/CloseButton.vue'
 import ImagePicker from '../app/ImagePicker.vue'
 import InfoPopover from '../app/InfoPopover.vue'
 import SubmitBtn from '../app/SubmitBtn.vue'
@@ -506,13 +507,7 @@ function handleFertilizedDateChange(event: { detail: { value: string } }): void 
       :style="panelMotionStyle"
       @tap.stop="() => {}"
     >
-      <button
-        class="absolute right-2 top-2 h-8 w-8 flex items-center justify-center rounded-full border-none bg-[#FFF5E9] text-lg text-[#C28652] shadow-[0_8rpx_18rpx_rgba(233,161,90,0.14)] dark:bg-slate-800 dark:text-[#F3C58E]"
-        hover-class="opacity-92"
-        @tap="closePopup"
-      >
-        <text class="leading-none">×</text>
-      </button>
+      <CloseButton @click="closePopup" />
       <view
         class="py-4"
         @touchstart.stop="handleTouchStart"

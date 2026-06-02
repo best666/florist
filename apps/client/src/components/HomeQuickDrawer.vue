@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import ActionHintButton from './ActionHintButton.vue'
+import CloseButton from './app/CloseButton.vue'
 
 interface HomeQuickDrawerAction {
   readonly key: string
@@ -49,26 +50,20 @@ function handleSelect(key: string): void {
     :class="props.modelValue ? 'pointer-events-auto' : 'pointer-events-none'" :style="maskMotionStyle"
     @tap="closeDrawer">
     <view
-      class="w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
+      class="relative w-full max-w-[720rpx] rounded-[36rpx] bg-[var(--color-surface)] px-5 py-5 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.18)] dark:bg-slate-900"
       :style="panelMotionStyle" @tap.stop="() => { }">
       <view @touchstart.stop="handleTouchStart" @touchmove.stop.prevent="handleTouchMove"
         @touchend.stop="handleTouchEnd" @touchcancel.stop="handleTouchEnd">
         <view class="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <view class="mb-5 flex items-start justify-between gap-3">
-          <view class="min-w-0 flex-1">
-            <text class="block text-lg font-800 text-app-ink dark:text-slate-100">
-              花园工具抽屉
-            </text>
-            <text class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">
-              把低频但重要的功能收进这里，首页只保留你最常操作的入口。
-            </text>
-          </view>
-          <button
-            class="h-10 w-10 flex items-center justify-center rounded-full border-none bg-slate-100 text-lg text-app-muted shadow-[0_8rpx_18rpx_rgba(148,163,184,0.16)] dark:bg-slate-800 dark:text-slate-200"
-            hover-class="opacity-92" @tap="closeDrawer">
-            <text class="leading-none">×</text>
-          </button>
+        <view class="mb-5">
+          <text class="block text-lg font-800 text-app-ink dark:text-slate-100">
+            花园工具抽屉
+          </text>
+          <text class="mt-2 block text-sm leading-6 text-app-muted dark:text-slate-300">
+            把低频但重要的功能收进这里，首页只保留你最常操作的入口。
+          </text>
         </view>
+        <CloseButton @click="closeDrawer" />
       </view>
 
       <view class="flex flex-col gap-3">

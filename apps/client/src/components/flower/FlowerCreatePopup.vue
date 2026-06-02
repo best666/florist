@@ -4,6 +4,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { createDefaultFlowerFormValues, type FlowerFormValues } from '@/interfaces'
 import { suggestFlowerTaxonomy, type TaxonomySuggestion } from '@/api/ai'
 import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/utils'
+import CloseButton from '../app/CloseButton.vue'
 import ImagePicker from '../app/ImagePicker.vue'
 import InfoPopover from '../app/InfoPopover.vue'
 import SubmitBtn from '../app/SubmitBtn.vue'
@@ -116,6 +117,7 @@ function handleClose(): void {
         <text class="block text-[44rpx] font-900 leading-tight text-app-ink">新增一盆小可爱</text>
         <InfoPopover content="先写上名字就可以创建啦，品类和状态会自动设置，创建后随时可以编辑调整。" icon="help" />
       </view>
+      <CloseButton @click="handleClose" />
 
       <!-- 名称 -->
       <view class="mt-6">
