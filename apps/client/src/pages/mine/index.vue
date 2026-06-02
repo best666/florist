@@ -14,6 +14,7 @@ import MineThemeSelector from '@/components/MineThemeSelector.vue'
 import UserProfilePopup from '@/components/UserProfilePopup.vue'
 import AppBottomNav from '@/components/AppBottomNav.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
+import PageHero from '@/components/PageHero.vue'
 import { updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
@@ -193,26 +194,13 @@ function goToCommunity(): void {
     :class="themeClass"
   >
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-5 pb-[140rpx]">
-      <view
-        class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)]"
-      >
-        <view class="flex items-start justify-between gap-4">
-          <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted"> 我的花园 </view>
-            <view class="mt-3 text-[50rpx] font-900 leading-[1.18] text-app-ink">
-              把照护数据、提醒和备份，都安静收在这里
-            </view>
-            <view class="mt-3 text-[28rpx] leading-7 text-app-muted">
-              {{ mineTip }}
-            </view>
-          </view>
-          <view
-            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/60 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.38)]"
-          >
-            🪴
-          </view>
-        </view>
-      </view>
+      <PageHero
+        badge="我的花园"
+        title="把照护数据、提醒和备份，都安静收在这里"
+        :tip="mineTip"
+        tip-icon="help"
+        emoji="🪴"
+      />
 
       <MineAuthCard
         :current-user="currentUser"

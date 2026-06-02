@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import InfoPopover from './InfoPopover.vue'
 import TagLabel from './TagLabel.vue'
 import { useEncryptedStorage } from '@/hooks/useEncryptedStorage'
 
@@ -61,15 +62,15 @@ function handleToggle(): void {
   <view class="card-soft rounded-[32rpx] dark:bg-slate-900">
     <view class="flex items-start justify-between gap-3">
       <view class="min-w-0 flex-1">
-        <text class="block text-base font-800 text-app-ink dark:text-slate-100">
-          {{ props.title }}
-        </text>
-        <text
-          v-if="props.description"
-          class="mt-1 block text-xs leading-6 text-app-muted dark:text-slate-300"
-        >
-          {{ props.description }}
-        </text>
+        <view class="flex items-center gap-1">
+          <text class="block text-base font-800 text-app-ink text-nowrap dark:text-slate-100">
+            {{ props.title }}
+          </text>
+          <InfoPopover
+            v-if="props.description"
+            :content="props.description"
+          />
+        </view>
       </view>
 
       <view class="flex items-center gap-2">

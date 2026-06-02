@@ -8,6 +8,7 @@ import AppButton from '@/components/AppButton.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
 import InfoPopover from '@/components/InfoPopover.vue'
+import PageHero from '@/components/PageHero.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
@@ -206,26 +207,12 @@ async function handleUndoLatestRecord(): Promise<void> {
 <template>
   <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
-      <view
-        class="hero-shell app-fade-up bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)]">
-        <view class="flex items-start justify-between gap-4">
-          <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
-              养护记录打卡簿
-            </view>
-            <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
-              每一次照顾，都给它留一个轻轻的脚印
-            </view>
-            <view class="mt-2 text-body text-app-muted dark:text-slate-200">
-              {{ recordTip }}
-            </view>
-          </view>
-          <view
-            class="app-float-soft flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
-            🌼
-          </view>
-        </view>
-      </view>
+      <PageHero
+        badge="养护记录打卡簿"
+        title="每一次照顾，都给它留一个轻轻的脚印"
+        :tip="recordTip"
+        emoji="🌼"
+      />
 
       <view class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
         <view class="flex items-center justify-between gap-3">

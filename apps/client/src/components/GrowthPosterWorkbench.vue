@@ -437,25 +437,17 @@ onBeforeUnmount(() => {
     </view>
   </CollapsibleSection>
 
-  <view class="card-soft rounded-[32rpx] transition-all duration-300 dark:bg-slate-900">
-    <view class="flex items-start justify-between gap-3">
-      <view>
-        <text class="block text-base font-800 text-app-ink dark:text-slate-100">海报预览</text>
-        <text class="mt-1 block text-sm leading-6 text-app-muted dark:text-slate-300">
-          海报会自动拼接最近图片，并排入植株名称和养护天数。
-        </text>
-      </view>
-      <TagLabel
-        :text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'"
-        :tone="isMemberUnlocked ? 'mint' : 'slate'"
-        :icon="isMemberUnlocked ? '✓' : '△'"
-        size="md"
-      />
-    </view>
-
+  <CollapsibleSection
+    title="海报预览"
+    description="海报会自动选取最近的 4 张照片拼接排版，并标注植株名称和累计养护天数。会员支持高清无水印导出。"
+    :tag-text="isMemberUnlocked ? '高清无水印' : '普通清晰度 + 水印'"
+    :tag-tone="isMemberUnlocked ? 'mint' : 'slate'"
+    :tag-icon="isMemberUnlocked ? '✓' : '△'"
+    default-expanded
+  >
     <view
       v-if="posterImagePath"
-      class="mt-4 rounded-[32rpx] bg-linear-to-b from-[#FFF8F2] to-[#F5FFF9] p-4 dark:from-slate-800 dark:to-slate-900"
+      class="rounded-[32rpx] bg-linear-to-b from-[#FFF8F2] to-[#F5FFF9] p-4 dark:from-slate-800 dark:to-slate-900"
     >
       <AppImage
         class="mx-auto w-full max-w-[560rpx] rounded-[28rpx] bg-[var(--color-surface)] object-cover shadow-[0_16rpx_40rpx_rgba(148,163,184,0.16)] dark:bg-slate-900"
@@ -466,7 +458,7 @@ onBeforeUnmount(() => {
     </view>
     <view
       v-else
-      class="mt-4 rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-app-ivory/70 px-4 py-8 text-center text-sm leading-6 text-app-muted dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+      class="rounded-[28rpx] border border-dashed border-[#D9E8E1] bg-app-ivory/70 px-4 py-8 text-center text-sm leading-6 text-app-muted dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
     >
       生成后会在这里看到海报预览。
     </view>
@@ -488,7 +480,7 @@ onBeforeUnmount(() => {
         @click="handleSavePoster"
       />
     </view>
-  </view>
+  </CollapsibleSection>
 
   <canvas
     canvas-id="growthPosterCanvas"

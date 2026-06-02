@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import InfoPopover from '@/components/InfoPopover.vue'
+import PageHero from '@/components/PageHero.vue'
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { ABOUT_TIPS } from '@/interfaces/page-tips'
@@ -17,16 +18,12 @@ const featureList = [
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
-      <view
-        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]">
-        <view class="badge-soft bg-[var(--color-surface)]/80 text-app-muted">关于我们</view>
-        <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink">
-          养花人是一款把照护过程慢慢沉淀下来的花园工具
-        </view>
-        <view class="mt-2 text-sm leading-6 text-app-muted">
-          {{ aboutTip }}
-        </view>
-      </view>
+      <PageHero
+        badge="关于我们"
+        title="养花人是一款把照护过程慢慢沉淀下来的花园工具"
+        :tip="aboutTip"
+        emoji="🌸"
+      />
 
       <view class="card-soft rounded-[32rpx]">
         <view class="flex items-center gap-1">

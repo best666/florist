@@ -8,6 +8,7 @@ import AppBottomNav from '@/components/AppBottomNav.vue'
 import CollapsibleSection from '@/components/CollapsibleSection.vue'
 import EmptyEmpty from '@/components/EmptyEmpty.vue'
 import InfoPopover from '@/components/InfoPopover.vue'
+import PageHero from '@/components/PageHero.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
 import { useFlowerStore, useFlowerTaxonomyStore, useMemberStore, useRecordStore } from '@/store'
@@ -194,24 +195,12 @@ onShow(async () => {
   <view
     class="page-shell safe-pb bg-linear-to-b from-[var(--color-ivory)] via-[var(--color-cream)] to-[var(--color-ivory)]" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[140rpx]">
-      <view
-        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)] transition-all duration-300">
-        <view class="flex items-start justify-between gap-4">
-          <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
-              成长相册 + 海报生成保存
-            </view>
-            <view class="mt-3 flex items-center gap-2 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
-              把它从第一张照片到现在的模样，轻轻串成一条成长线
-              <InfoPopover content="选择一盆植物，相册会自动收集它的档案照片和打卡配图按时间排列。还能把最近的变化拼成一张柔和的海报保存分享。" />
-            </view>
-          </view>
-          <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
-            📸
-          </view>
-        </view>
-      </view>
+      <PageHero
+        badge="成长相册 + 海报生成保存"
+        title="把它从第一张照片到现在的模样，轻轻串成一条成长线"
+        tip="选择一盆植物，相册会自动收集它的档案照片和打卡配图按时间排列。还能把最近的变化拼成一张柔和的海报保存分享。"
+        emoji="📸"
+      />
 
       <view v-if="pageMessage"
         class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">

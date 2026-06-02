@@ -7,6 +7,7 @@ import AuthLoginPopup from '@/components/AuthLoginPopup.vue'
 import AppButton from '@/components/AppButton.vue'
 import AppImage from '@/components/AppImage.vue'
 import InfoPopover from '@/components/InfoPopover.vue'
+import PageHero from '@/components/PageHero.vue'
 import SubmitBtn from '@/components/SubmitBtn.vue'
 import TagLabel from '@/components/TagLabel.vue'
 import { fetchPlantDiagnosis, fetchTripCarePlan } from '@/api'
@@ -353,26 +354,12 @@ function handleOpenHistoryImage(imageUrl: string): void {
   <view
     class="page-shell safe-pb bg-linear-to-b from-[var(--color-ivory)] via-[var(--color-cream)] to-[var(--color-ivory)]" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-6">
-      <view
-        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]">
-        <view class="flex items-start justify-between gap-4">
-          <view class="flex-1">
-            <view class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100">
-              AI 病虫害识别 + 出差养护方案
-            </view>
-            <view class="mt-3 text-[42rpx] font-900 leading-tight text-app-ink dark:text-slate-50">
-              先帮你看图，再把它出差这几天安顿好
-            </view>
-            <view class="mt-2 text-sm leading-6 text-app-muted dark:text-slate-200">
-              {{ doctorTip }}
-            </view>
-          </view>
-          <view
-            class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/58 text-[64rpx] shadow-[inset_0_0_0_2rpx_rgba(255,255,255,0.35)] dark:bg-[var(--color-surface)]/8">
-            🔎
-          </view>
-        </view>
-      </view>
+      <PageHero
+        badge="AI 病虫害识别 + 出差养护方案"
+        title="先帮你看图，再把它出差这几天安顿好"
+        :tip="doctorTip"
+        emoji="🔎"
+      />
 
       <view v-if="pageMessage"
         class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)] dark:bg-amber-500/14 dark:text-amber-100">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
+import { useElementRect } from '@/hooks/useElementRect'
 
 interface InfoPopoverProps {
   content: string
@@ -15,36 +16,30 @@ const arrowStyle = ref<Record<string, string>>({})
 const cardStyle = ref<Record<string, string>>({})
 const iconRef = ref<any>(null)
 const uid = `tip-${Math.random().toString(36).slice(2, 8)}`
+const { getRect } = useElementRect()
 
 async function open(): Promise<void> {
   visible.value = true
-  await nextTick()
+  const rect = await getRect(iconRef.value, `#${uid}`)
+  if (!rect) return
 
-  const query = uni.createSelectorQuery().in(iconRef.value)
-  query.select(`#${uid}`).boundingClientRect((rect: any) => {
-    if (rect && rect.width > 0) {
-      const cx = rect.left + rect.width / 2 // icon 水平中心
+  const cx = rect.left + rect.width / 2
+  const arrowTop = rect.bottom + 6
 
-      // 三角 — 指向 icon 中心
-      const arrowTop = rect.bottom + 6
-      arrowStyle.value = {
-        left: `${cx}px`,
-        top: `${arrowTop}px`,
-        transform: 'translateX(-50%)',
-        fontSize: '28rpx',
-        lineHeight: '1',
-        zIndex: '1',
-      }
+  arrowStyle.value = {
+    left: `${cx}px`,
+    top: `${arrowTop}px`,
+    transform: 'translateX(-50%)',
+    fontSize: '28rpx',
+    lineHeight: '1',
+    zIndex: '1',
+  }
 
-      // 卡片 — 屏幕水平居中，三角下方
-      const cardTop = arrowTop + 24
-      cardStyle.value = {
-        left: '50%',
-        top: `${cardTop}px`,
-        transform: 'translateX(-50%)',
-      }
-    }
-  }).exec()
+  cardStyle.value = {
+    left: '50%',
+    top: `${arrowTop + 24}px`,
+    transform: 'translateX(-50%)',
+  }
 }
 
 function close(): void {
@@ -66,12 +61,10 @@ function close(): void {
   </text>
 
   <view v-if="visible" class="fixed inset-0 z-50" @tap="close">
-    <!-- ▲ 三角 — 指向 icon 中心 -->
     <text
       class="absolute text-[var(--color-surface)] dark:text-slate-800"
       :style="arrowStyle"
     >▲</text>
-    <!-- 卡片 — 跟随 icon 定位，不超出屏幕 -->
     <view
       class="absolute w-[560rpx] max-w-[88vw] rounded-[20rpx] bg-[var(--color-surface)] px-5 py-4 shadow-[0_12rpx_40rpx_rgba(15,23,42,0.18)] dark:bg-slate-800"
       :style="cardStyle"

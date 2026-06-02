@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import TagLabel from '@/components/TagLabel.vue'
-import InfoPopover from '@/components/InfoPopover.vue'
+import PageHero from '@/components/PageHero.vue'
 import ActionHintButton from '@/components/ActionHintButton.vue'
 import { FLORIST_SHOP_PRODUCTS, SHOP_CATEGORY_DEFINITIONS, getShopCategoryLabel, openExternalLink } from '@/utils'
 import { usePageTheme } from '@/hooks/usePageTheme'
@@ -21,21 +21,12 @@ async function handleOpenProduct(url: string): Promise<void> {
 <template>
   <view class="page-shell safe-pb min-h-screen bg-linear-to-b from-app-ivory via-[var(--color-cream)] to-app-ivory" :class="themeClass">
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-8">
-      <view
-        class="hero-shell bg-linear-to-br from-[var(--color-blush)] via-[var(--color-cream)] to-[var(--color-mint)] px-5 py-5 shadow-[var(--shadow-hero)]">
-        <view class="flex items-start justify-between gap-4">
-          <view class="flex-1">
-            <view class="badge-soft">极简养花商城</view>
-            <view class="mt-3 flex items-center gap-2 text-[42rpx] font-900 leading-tight text-app-ink">
-              只保留养花刚需，不做复杂营销和交易流程
-              <InfoPopover content="花盆、肥料、药剂、工具、营养土 — 五类基础商品。没有弹窗推送、没有强制跳转、也不做站内下单，安静挑选。" />
-            </view>
-          </view>
-          <view class="flex h-[150rpx] w-[150rpx] items-center justify-center rounded-full bg-[var(--color-surface)]/60 text-[64rpx]">
-            🛍️
-          </view>
-        </view>
-      </view>
+      <PageHero
+        badge="极简养花商城"
+        title="只保留养花刚需，不做复杂营销和交易流程"
+        tip="花盆、肥料、药剂、工具、营养土 — 五类基础商品。没有弹窗推送、没有强制跳转、也不做站内下单，安静挑选。"
+        emoji="🛍️"
+      />
 
       <view v-if="pageMessage"
         class="rounded-[28rpx] bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-700 shadow-[0_12rpx_28rpx_rgba(251,191,36,0.12)]">
