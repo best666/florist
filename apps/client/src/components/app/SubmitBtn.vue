@@ -47,9 +47,9 @@ const emit = defineEmits<{
 }>()
 
 const gradientClassMap: Record<SubmitButtonVariant, string> = {
-  mint: 'from-[#84dbc6] via-[#b6ecde] to-[#fff0c8]',
-  blush: 'from-[#f5c1d8] via-[#f7d7e5] to-[#ffefcf]',
-  sunrise: 'from-[#ffc39e] via-[#ffd8b3] to-[#fff1ca]',
+  mint: 'from-[#5cc4a8] via-[#8ddbc8] to-[#e8d58a]',
+  blush: 'from-[#e8a0b8] via-[#ecc4d4] to-[#f5d89e]',
+  sunrise: 'from-[#f0a878] via-[#f5c090] to-[#f5d89e]',
 }
 
 const sizeClassMap: Record<NonNullable<SubmitBtnProps['size']>, string> = {
@@ -84,8 +84,7 @@ function handleTap(): void {
   <button
     class="relative overflow-hidden bg-linear-to-r font-800 tracking-[0.02em] text-app-ink shadow-[var(--shadow-lift)]"
     :class="buttonClass" :disabled="isInactive" hover-class="opacity-95" @tap="handleTap">
-    <view class="pointer-events-none absolute inset-y-0 right-[-20%] w-[38%] rotate-12 bg-[var(--color-surface)]/26 blur-[8rpx]" />
-    <view class="relative z-1 flex items-center justify-center gap-2 whitespace-nowrap leading-none">
+    <view class="relative flex items-center justify-center gap-2 whitespace-nowrap leading-none">
       <view v-if="props.loading"
         class="h-4 w-4 animate-spin rounded-full border-2 border-app-ink/20 border-t-app-ink" />
       <text class="whitespace-nowrap leading-none">{{ buttonText }}</text>
