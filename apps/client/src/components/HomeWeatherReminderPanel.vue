@@ -46,6 +46,23 @@ const cityDisplayName = computed(() => {
 
 const weatherTagText = computed(() => props.state.weather?.weatherText ?? '等待天气')
 
+const weatherTagEmoji = computed(() => {
+  const text = weatherTagText.value
+  if (text.includes('雨')) return '🌧️'
+  if (text.includes('雪')) return '🌨️'
+  if (text.includes('雷')) return '⛈️'
+  if (text.includes('雾') || text.includes('霾')) return '🌫️'
+  if (text.includes('多云')) return '⛅'
+  if (text.includes('阴')) return '☁️'
+  if (text.includes('晴')) return '☀️'
+  return ''
+})
+
+const weatherTagWithEmoji = computed(() => {
+  const emoji = weatherTagEmoji.value
+  return emoji ? `${emoji} ${weatherTagText.value}` : weatherTagText.value
+})
+
 const weatherUpdateText = computed(() => {
   if (!props.state.weather) {
     return '还没有拉到天气，先定位或选城市。'
@@ -150,8 +167,9 @@ function emitReminderText(event: { detail: { value: string } }): void {
         </text>
       </view>
       <TagLabel
-        :text="weatherTagText"
+        :text="weatherTagWithEmoji"
         tone="mint"
+        :show-dot="false"
       />
     </view>
 

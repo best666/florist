@@ -35,6 +35,7 @@ import { useAuthStore, useFlowerStore, useFlowerTaxonomyStore, useMemberStore, u
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { HOME_TIPS } from '@/interfaces/page-tips'
+import { DEFAULT_CITY_OPTIONS, formatCityDisplayName } from '@/interfaces'
 import { formatDateTime, getFlowerDisplayName, getTimeAgo, showGentleSuccess, showGentleToast } from '@/utils'
 
 const themeClass = usePageTheme()
@@ -58,6 +59,34 @@ const {
   updateReminderConfig,
 } = useLocationWeatherReminder()
 
+const heroCityName = computed(() => {
+  const raw = formatCityDisplayName(
+    weatherReminderState.city ?? weatherReminderState.weather?.city ?? DEFAULT_CITY_OPTIONS[0] ?? null,
+  )
+  // 有区名时只展示区，例如 "杭州市西湖区" → "西湖区"
+  const districtMatch = raw.match(/(\S+区)/)
+  return districtMatch ? districtMatch[1] : raw
+})
+
+const heroWeatherText = computed(() => weatherReminderState.weather?.weatherText ?? '')
+
+const heroWeatherEmoji = computed(() => {
+  const text = heroWeatherText.value
+  if (text.includes('雨')) return '🌧️'
+  if (text.includes('雪')) return '🌨️'
+  if (text.includes('雷')) return '⛈️'
+  if (text.includes('雾') || text.includes('霾')) return '🌫️'
+  if (text.includes('多云')) return '⛅'
+  if (text.includes('阴')) return '☁️'
+  if (text.includes('晴')) return '☀️'
+  return ''
+})
+
+const heroTemperature = computed(() => {
+  const t = weatherReminderState.weather?.temperature
+  return t != null ? `${Math.round(t)}°` : ''
+})
+
 const viewportWidth = ref(uni.getSystemInfoSync().windowWidth)
 const isFormVisible = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
@@ -78,6 +107,7 @@ const isCarePromptVisible = ref(false)
 const selectedDetailFlower = ref<LocalFlower | null>(null)
 const isDetailPopupVisible = ref(false)
 const isAiAdviceExpanded = ref(false)
+const isWeatherPanelExpanded = ref(true)
 
 const {
   state: singleFlowerAiState,
@@ -336,6 +366,14 @@ function handleCarePromptSelect(key: string): void {
   } else if (key === 'album') {
     handleOpenGrowthAlbum()
   }
+}
+
+function handleHeroWeatherTap(): void {
+  // 先展开面板，等渲染完成再滚动
+  isWeatherPanelExpanded.value = true
+  setTimeout(() => {
+    uni.pageScrollTo({ selector: '#weather-panel', duration: 300 })
+  }, 100)
 }
 
 function handleOpenCreate(): void {
@@ -597,9 +635,22 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         <view class="flex items-start justify-between gap-4">
           <view class="flex-1">
             <view
-              class="badge-soft bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100"
+              class="flex items-center gap-2 flex-nowrap overflow-hidden"
+              @tap="handleHeroWeatherTap"
             >
-              {{ isOffline ? '离线花园' : '今日花园' }}
+              <view
+                class="badge-soft flex-none bg-[var(--color-surface)]/78 text-app-muted dark:bg-[var(--color-surface)]/10 dark:text-slate-100"
+              >
+                {{ isOffline ? '离线花园' : '今日花园' }}
+              </view>
+              <view class="flex min-w-0 items-center gap-1 truncate text-2xs text-app-muted/80 dark:text-slate-300">
+                <text class="whitespace-nowrap">📍 {{ heroCityName }}</text>
+                <template v-if="heroWeatherText">
+                  <text class="flex-none text-app-muted/30 dark:text-slate-500">·</text>
+                  <text class="truncate whitespace-nowrap font-700 text-app-ink dark:text-slate-100">{{ heroWeatherEmoji }} {{ heroWeatherText }} {{ heroTemperature }}</text>
+                </template>
+                <text v-else class="whitespace-nowrap text-app-muted/50 dark:text-slate-500">获取天气</text>
+              </view>
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
               今天也把花园照顾得软乎乎的
@@ -666,12 +717,14 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         </view>
       </view>
 
-      <CollapsibleSection
+      <view id="weather-panel">
+        <CollapsibleSection
         title="天气提醒与花园节奏"
         tag-text="今日照护"
         tag-tone="mint"
         tag-icon="✓"
-        :default-expanded="true"
+        :expanded="isWeatherPanelExpanded"
+        @update:expanded="isWeatherPanelExpanded = $event"
       >
         <HomeWeatherReminderPanel
           :state="weatherReminderState"
@@ -691,6 +744,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
           @update-reminder-text="handleReminderTextInput"
         />
       </CollapsibleSection>
+      </view>
       <CollapsibleSection
         title="筛选植物卡片"
         :tag-text="`${filteredFlowers.length} 株`"
