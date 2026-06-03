@@ -17,7 +17,7 @@ import AppBottomNav from '@/components/app/AppBottomNav.vue'
 import CollapsibleSection from '@/components/app/CollapsibleSection.vue'
 import PageHero from '@/components/app/PageHero.vue'
 import SubmitBtn from '@/components/app/SubmitBtn.vue'
-import { bindPhoneToAccount, requestH5PhoneCode, updateCurrentUser } from '@/api'
+import { bindPhoneToAccount, requestBindPhoneCode, updateCurrentUser } from '@/api'
 import { useAuthSessionActions } from '@/hooks/useAuthSessionActions'
 import { useLocationWeatherReminder } from '@/hooks/useLocationWeatherReminder'
 import { usePageTheme } from '@/hooks/usePageTheme'
@@ -76,7 +76,7 @@ async function handleRequestBindPhoneCode(): Promise<void> {
   }
   bindPhoneRequestingCode.value = true
   try {
-    const result = await requestH5PhoneCode({ phoneNumber: bindPhoneNumber.value.trim() })
+    const result = await requestBindPhoneCode({ phoneNumber: bindPhoneNumber.value.trim() })
     if (result.verificationCode) bindPhoneCode.value = result.verificationCode
     let seconds = result.cooldownSeconds
     bindPhoneCountdown.value = seconds
@@ -100,7 +100,7 @@ async function handleSubmitBindPhone(): Promise<void> {
   }
   bindPhoneSubmitting.value = true
   try {
-    const user = await bindPhoneToAccount(bindPhoneNumber.value.trim())
+    const user = await bindPhoneToAccount(bindPhoneNumber.value.trim(), bindPhoneCode.value.trim())
     authStore.patchCurrentUser(user)
     // 绑定后可能触发数据迁移（跨端合并），需要同步最新数据
     await authStore.refreshGardenContext()

@@ -60,9 +60,29 @@ export function loginWithWechatMiniProgram(payload: WechatMiniProgramLoginPayloa
   })
 }
 
-/** 为当前登录用户绑定手机号，实现跨端账号统一 */
-export function bindPhoneToAccount(phoneNumber: string): Promise<IUser> {
-  return http.post<IUser>('/auth/bind-phone', { phoneNumber }, {
+export interface BindPhoneCodePayload {
+  phoneNumber: string
+}
+
+export interface BindPhoneCodeResponse {
+  delivered: true
+  message: string
+  maskedPhoneNumber: string
+  cooldownSeconds: number
+  verificationCode?: string
+}
+
+/** 发送绑定手机号的短信验证码 */
+export function requestBindPhoneCode(payload: BindPhoneCodePayload): Promise<BindPhoneCodeResponse> {
+  return http.post<BindPhoneCodeResponse, BindPhoneCodePayload>('/auth/bind-phone/send-code', payload, {
+    loadingText: '正在发送验证码',
+    skipErrorToast: true,
+  })
+}
+
+/** 为当前登录用户绑定手机号（需短信验证码），实现跨端账号统一 */
+export function bindPhoneToAccount(phoneNumber: string, code: string): Promise<IUser> {
+  return http.post<IUser>('/auth/bind-phone', { phoneNumber, code }, {
     loadingText: '正在绑定手机号',
     skipErrorToast: true,
   })

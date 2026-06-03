@@ -35,6 +35,10 @@ export interface ServerEnvSource {
   readonly H5_LOGIN_NICKNAME?: string;
   readonly WECHAT_MINI_PROGRAM_APP_ID?: string;
   readonly WECHAT_MINI_PROGRAM_SECRET?: string;
+  readonly ALIYUN_SMS_ACCESS_KEY_ID?: string;
+  readonly ALIYUN_SMS_ACCESS_KEY_SECRET?: string;
+  readonly ALIYUN_SMS_SIGN_NAME?: string;
+  readonly ALIYUN_SMS_TEMPLATE_CODE?: string;
   readonly APP_LOG_LEVELS?: string;
   readonly EXPOSE_INTERNAL_ERROR_DETAILS?: string;
 }
@@ -70,6 +74,10 @@ export interface ServerEnvConfig {
   readonly h5LoginNickname: string;
   readonly wechatMiniProgramAppId: string;
   readonly wechatMiniProgramSecret: string;
+  readonly aliyunSmsAccessKeyId: string;
+  readonly aliyunSmsAccessKeySecret: string;
+  readonly aliyunSmsSignName: string;
+  readonly aliyunSmsTemplateCode: string;
   readonly appLogLevels: LogLevel[];
   readonly exposeInternalErrorDetails: boolean;
 }
@@ -105,6 +113,10 @@ export const SERVER_ENV_DEFAULTS = {
   h5LoginNickname: '',
   wechatMiniProgramAppId: '',
   wechatMiniProgramSecret: '',
+  aliyunSmsAccessKeyId: '',
+  aliyunSmsAccessKeySecret: '',
+  aliyunSmsSignName: '',
+  aliyunSmsTemplateCode: '',
   appLogLevels: ['log', 'warn', 'error', 'debug', 'verbose'] as LogLevel[],
   exposeInternalErrorDetails: true,
 } as const;
@@ -282,6 +294,22 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.WECHAT_MINI_PROGRAM_SECRET,
       SERVER_ENV_DEFAULTS.wechatMiniProgramSecret,
     ),
+    aliyunSmsAccessKeyId: normalizeString(
+      envSource.ALIYUN_SMS_ACCESS_KEY_ID,
+      SERVER_ENV_DEFAULTS.aliyunSmsAccessKeyId,
+    ),
+    aliyunSmsAccessKeySecret: normalizeString(
+      envSource.ALIYUN_SMS_ACCESS_KEY_SECRET,
+      SERVER_ENV_DEFAULTS.aliyunSmsAccessKeySecret,
+    ),
+    aliyunSmsSignName: normalizeString(
+      envSource.ALIYUN_SMS_SIGN_NAME,
+      SERVER_ENV_DEFAULTS.aliyunSmsSignName,
+    ),
+    aliyunSmsTemplateCode: normalizeString(
+      envSource.ALIYUN_SMS_TEMPLATE_CODE,
+      SERVER_ENV_DEFAULTS.aliyunSmsTemplateCode,
+    ),
     appLogLevels: normalizeLogLevels(
       envSource.APP_LOG_LEVELS,
       normalizeServerMode(process.env.NODE_ENV) === 'production'
@@ -331,6 +359,10 @@ export function validateServerEnv(
     H5_LOGIN_NICKNAME: parsedEnv.h5LoginNickname,
     WECHAT_MINI_PROGRAM_APP_ID: parsedEnv.wechatMiniProgramAppId,
     WECHAT_MINI_PROGRAM_SECRET: parsedEnv.wechatMiniProgramSecret,
+    ALIYUN_SMS_ACCESS_KEY_ID: parsedEnv.aliyunSmsAccessKeyId,
+    ALIYUN_SMS_ACCESS_KEY_SECRET: parsedEnv.aliyunSmsAccessKeySecret,
+    ALIYUN_SMS_SIGN_NAME: parsedEnv.aliyunSmsSignName,
+    ALIYUN_SMS_TEMPLATE_CODE: parsedEnv.aliyunSmsTemplateCode,
     APP_LOG_LEVELS: parsedEnv.appLogLevels.join(','),
     EXPOSE_INTERNAL_ERROR_DETAILS: String(parsedEnv.exposeInternalErrorDetails),
   };

@@ -7,6 +7,7 @@ import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-ano
 import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
 import { RequestH5PhoneCodeDto } from './dto/request-h5-phone-code.dto';
+import { SendBindPhoneCodeDto } from './dto/send-bind-phone-code.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -37,12 +38,17 @@ export class AuthController {
     return this.authService.requestH5PhoneCode(payload);
   }
 
+  @Post('bind-phone/send-code')
+  public sendBindPhoneCode(@Body() payload: SendBindPhoneCodeDto) {
+    return this.authService.sendBindPhoneCode(payload.phoneNumber);
+  }
+
   @Post('bind-phone')
   public bindPhone(
     @CurrentUserId() userId: string | undefined,
     @Body() payload: BindPhoneDto,
   ): Promise<IUser> {
-    return this.authService.bindPhone(payload.phoneNumber, userId);
+    return this.authService.bindPhone(payload.phoneNumber, payload.code, userId);
   }
 
   @Get('session')

@@ -4,6 +4,7 @@ import { UserLoginType } from '@florist/contracts';
 import { ConfigService } from '@nestjs/config';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
+import { SmsService } from '../../common/services/sms.service';
 import type { ServerEnvConfig } from '../../config/server-env';
 import { UsersService } from '../users/users.service';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
@@ -42,6 +43,7 @@ export class AuthService {
   public constructor(
     private readonly usersService: UsersService,
     private readonly runtimeCacheService: RuntimeCacheService,
+    private readonly smsService: SmsService,
     configService: ConfigService,
   ) {
     this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
@@ -146,7 +148,67 @@ export class AuthService {
     });
   }
 
-  public async bindPhone(phoneNumber: string, userId?: string) {
+  public async sendBindPhoneCode(phoneNumber: string) {
+    const normalizedPhone = phoneNumber.trim();
+    const cacheKey = `auth:bind-phone-code:${normalizedPhone}`;
+    const cooldownCacheKey = `auth:bind-phone-code:cooldown:${normalizedPhone}`;
+    const cooldownMs = 60_000;
+    const codeExpiresMs = 5 * 60 * 1000;
+
+    const nextAllowedAt = this.runtimeCacheService.get<number>(cooldownCacheKey);
+    if (nextAllowedAt !== null && nextAllowedAt > Date.now()) {
+      const remainingSeconds = Math.max(Math.ceil((nextAllowedAt - Date.now()) / 1000), 1);
+      throw new HttpException(
+        `请求过于频繁，请在 ${remainingSeconds} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    const code = this.smsService.generateCode();
+
+    // 发送短信（未配置阿里云短信时跳过发送，仅用于本地开发）
+    try {
+      await this.smsService.sendVerificationCode(normalizedPhone, code);
+    } catch (error) {
+      throw new HttpException(
+        '短信验证码发送失败，请稍后再试',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+
+    this.runtimeCacheService.set(cooldownCacheKey, Date.now() + cooldownMs, cooldownMs);
+    this.runtimeCacheService.set(cacheKey, code, codeExpiresMs);
+
+    const isDev = this.isDevelopmentRuntime() && !this.smsService.configured;
+
+    return {
+      delivered: true,
+      message: isDev
+        ? '开发环境验证码已生成，已自动填入（未配置阿里云短信）。'
+        : '验证码已发送，请注意查收。',
+      maskedPhoneNumber: this.maskPhoneNumber(normalizedPhone),
+      cooldownSeconds: Math.floor(cooldownMs / 1000),
+      ...(isDev ? { verificationCode: code } : {}),
+    };
+  }
+
+  public async bindPhone(phoneNumber: string, code: string, userId?: string) {
+    const normalizedPhone = phoneNumber.trim();
+    const normalizedCode = code.trim();
+    const cacheKey = `auth:bind-phone-code:${normalizedPhone}`;
+
+    const storedCode = this.runtimeCacheService.get<string>(cacheKey);
+
+    if (!storedCode) {
+      throw new UnauthorizedException('验证码已过期，请重新获取');
+    }
+
+    if (normalizedCode !== storedCode) {
+      this.runtimeCacheService.delete(cacheKey);
+      throw new UnauthorizedException('验证码不正确');
+    }
+
+    this.runtimeCacheService.delete(cacheKey);
     return this.usersService.bindPhoneToUser(phoneNumber, userId);
   }
 
