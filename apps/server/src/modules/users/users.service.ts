@@ -127,12 +127,28 @@ export class UsersService {
 
   public async buildUserSession(userId: string, isNewUser: boolean): Promise<IUserAuthSession> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    const userEntity = toUserEntity(user, this.cryptoService);
+
+    // 检测 H5 用户是否已被迁移（phoneHash 被清除）：通过确定性 ID 前缀查找新账号
+    let resolvedUser = user;
+    if (user.loginType === 'h5_phone_code' && !user.phoneHash && user.id.startsWith('h5-phone-')) {
+      const prefix = user.id.slice('h5-phone-'.length); // phoneHash 前 24 位
+      const migratedTo = await this.prisma.user.findFirst({
+        where: {
+          phoneHash: { startsWith: prefix },
+          id: { not: user.id },
+        },
+      });
+      if (migratedTo) {
+        resolvedUser = migratedTo;
+      }
+    }
+
+    const userEntity = toUserEntity(resolvedUser, this.cryptoService);
 
     return {
       user: userEntity,
       loginType: (userEntity.loginType ?? DEFAULT_LOCAL_USER_LOGIN_TYPE) as UserLoginType,
-      sessionUserId: user.id,
+      sessionUserId: resolvedUser.id,
       isNewUser,
       loggedInAt: new Date().toISOString(),
     };
