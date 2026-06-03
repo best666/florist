@@ -31,4 +31,5 @@ export interface MineStatisticsCard {
   readonly value: string
   readonly hint: string
   readonly accentClass: string
+  readonly onTap?: () => void
 }

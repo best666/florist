@@ -347,14 +347,22 @@ export class UsersService {
       return toUserEntity(updatedUser, this.cryptoService);
     }
 
-    // 3. 手机号已被占用：检查对方是否已绑定微信
+    // 3. 手机号已被占用
     if (phoneUser.wechatOpenIdHash) {
+      // 对方已绑定微信 → 如果当前用户是 H5-only（无微信），反向合并：
+      // 将当前 H5 用户的数据迁移到微信用户，两个端统一为一个账号
+      if (!currentUser.wechatOpenIdHash) {
+        return this.migrateAndBind(
+          phoneUser.id, phoneUser, currentUser, phoneHash, phoneMaskedCipher,
+        );
+      }
+      // 双方都有微信 → 两个微信用户抢同一个手机号 → 拒绝
       throw new UnauthorizedException(
         '该手机号已绑定到其他微信账号，不能重复绑定',
       );
     }
 
-    // 4. 手机号属于一个纯 H5 用户（无微信绑定）→ 合并账号
+    // 4. 手机号属于一个纯 H5 用户（无微信绑定）→ 合并到当前用户
     return this.migrateAndBind(
       userId, currentUser, phoneUser, phoneHash, phoneMaskedCipher,
     );

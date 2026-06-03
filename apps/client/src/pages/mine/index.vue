@@ -102,10 +102,12 @@ async function handleSubmitBindPhone(): Promise<void> {
   try {
     const user = await bindPhoneToAccount(bindPhoneNumber.value.trim())
     authStore.patchCurrentUser(user)
+    // 绑定后可能触发数据迁移（跨端合并），需要同步最新数据
+    await authStore.refreshGardenContext()
     bindPhoneVisible.value = false
     bindPhoneNumber.value = ''
     bindPhoneCode.value = ''
-    showGentleSuccess('手机号已绑定，数据已自动同步。')
+    showGentleSuccess('手机号已绑定，数据已同步。')
   } catch (error) {
     handleCatchAndToast(error, '手机号绑定失败')
   } finally {
@@ -148,6 +150,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(totalPlantCount.value),
     hint: '包含仍在照护中的植物和回收站临时保留项。',
     accentClass: 'from-[#CDEEDC] to-[#FFF0D9]',
+    onTap: () => uni.switchTab({ url: '/pages/index/index' }),
   },
   {
     key: 'records',
@@ -155,6 +158,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(sortedRecords.value.length),
     hint: '每一次浇水、施肥、修剪都会被温柔记下。',
     accentClass: 'from-[#FBD4E3] to-[#FFF4E7]',
+    onTap: () => uni.switchTab({ url: '/pages/record/index' }),
   },
   {
     key: 'survival',
@@ -162,6 +166,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(survivalPlantCount.value),
     hint: '当前仍在花园里继续陪伴你的植物数量。',
     accentClass: 'from-[#D7E9FF] to-[#FFF9DD]',
+    onTap: () => uni.switchTab({ url: '/pages/index/index' }),
   },
   {
     key: 'days',
@@ -169,6 +174,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(careDays.value),
     hint: '从第一盆植物入住开始累计的陪伴时间。',
     accentClass: 'from-[#FFE8C5] to-[#F8D7CE]',
+    onTap: () => uni.switchTab({ url: '/pages/record/index' }),
   },
 ])
 
@@ -228,7 +234,7 @@ const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
     if (runtimePlatform.value === ClientPlatform.MpWeixin && !currentUser.value?.phoneMasked) {
       const confirmed = await showGentleConfirm({
         title: '同步多端数据',
-        content: '建议绑定一个手机号，这样 H5 端和小程序端的花园数据就能互通同步了。',
+        content: '检测到你还没有绑定手机号。绑定后 H5 端和小程序端的数据会合并为一个账号，所有植株和养护记录都会互通，换设备登录也能看到全部数据。',
         confirmText: '立即绑定',
       })
       if (confirmed) bindPhoneVisible.value = true

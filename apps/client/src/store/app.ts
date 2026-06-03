@@ -53,7 +53,7 @@ export const useAppStore = defineStore('app', {
       this.syncStatus = 'failed'
       this.syncMessage = message
     },
-    async syncLocalGarden(message?: string): Promise<void> {
+    async syncLocalGarden(message?: string, options?: { forceFullMerge?: boolean }): Promise<void> {
       if (syncLocalGardenRequest) {
         return syncLocalGardenRequest
       }
@@ -79,7 +79,14 @@ export const useAppStore = defineStore('app', {
 
           await memberStore.initializeMembership()
           await flowerStore.cleanupRecycleBin()
-          await Promise.all([flowerStore.initializeGarden(), recordStore.initializeRecordCenter()])
+
+          // 强制完整合并时使用 refreshGardenContext（双向同步），否则用增量初始化
+          if (options?.forceFullMerge) {
+            await authStore.refreshGardenContext()
+          } else {
+            await Promise.all([flowerStore.initializeGarden(), recordStore.initializeRecordCenter()])
+          }
+
           memberStore.syncMembershipStatus()
           this.markSyncFinished(new Date().toISOString())
         } catch (error) {

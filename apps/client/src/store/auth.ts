@@ -62,8 +62,12 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
+      // 如果绑定/合并后用户 ID 发生了变化（跨端反向合并），同步更新 sessionUserId
+      const sessionUserId = user.id !== this.session.sessionUserId ? user.id : this.session.sessionUserId
+
       this.applySession({
         ...this.session,
+        sessionUserId,
         user,
       })
     },

@@ -7,6 +7,10 @@ interface MineStatisticsGridProps {
 }
 
 const props = defineProps<MineStatisticsGridProps>()
+
+function handleTap(card: MineStatisticsCard): void {
+  card.onTap?.()
+}
 </script>
 
 <template>
@@ -15,6 +19,9 @@ const props = defineProps<MineStatisticsGridProps>()
       v-for="card in props.cards"
       :key="card.key"
       class="surface-soft app-fade-up rounded-[30rpx] p-4"
+      :class="card.onTap ? 'app-pressable' : ''"
+      :hover-class="card.onTap ? 'opacity-80' : ''"
+      @tap="handleTap(card)"
     >
       <view :class="`mb-3 h-[12rpx] rounded-full bg-linear-to-r ${card.accentClass}`" />
       <view class="flex items-center gap-1">

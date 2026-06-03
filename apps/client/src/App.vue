@@ -44,10 +44,13 @@ const runtimeBannerText = computed(() => (
     : syncMessage.value
 ))
 
-async function syncAppRuntime(message: string, showSuccess = false): Promise<void> {
-  await appStore.syncLocalGarden(message)
+async function syncAppRuntime(
+  message: string,
+  options?: { showSuccess?: boolean; forceFullMerge?: boolean },
+): Promise<void> {
+  await appStore.syncLocalGarden(message, { forceFullMerge: options?.forceFullMerge })
 
-  if (showSuccess && !appStore.isOffline) {
+  if (options?.showSuccess && !appStore.isOffline) {
     showGentleSuccess('网络回来了，离线记录已经重新对齐。')
   }
 }
@@ -61,9 +64,29 @@ function openLoginPopup(): void {
   loginPopupVisible.value = true
 }
 
+async function promptBindPhoneIfNeeded(): Promise<void> {
+  // 小程序端微信登录后检测：未绑定手机号则提示绑定，以同步多端数据
+  if (runtimePlatform.value !== ClientPlatform.MpWeixin) return
+  if (authStore.currentUser?.phoneMasked) return
+
+  await new Promise(r => setTimeout(r, 500))
+  const confirmed = await uni.showModal({
+    title: '绑定手机号同步数据',
+    content: '检测到你还没有绑定手机号。绑定后 H5 端和小程序端的数据会合并为一个账号，所有植株和养护记录都会互通，换设备登录也能看到全部数据。',
+    confirmText: '立即绑定',
+    cancelText: '稍后再说',
+  })
+  if (confirmed.confirm) {
+    uni.switchTab({ url: '/pages/mine/index' })
+  }
+}
+
 const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
   onCloseLoginPopup: () => {
     loginPopupVisible.value = false
+  },
+  onLoginSuccess: async () => {
+    await promptBindPhoneIfNeeded()
   },
 })
 
@@ -106,7 +129,7 @@ watch(
     }
 
     if (previousOffline) {
-      void syncAppRuntime('网络回来了，正在把离线记录重新对齐。', true)
+      void syncAppRuntime('网络回来了，正在把离线记录重新对齐。', { showSuccess: true, forceFullMerge: true })
     }
   },
 )
