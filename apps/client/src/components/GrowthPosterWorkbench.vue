@@ -334,7 +334,7 @@ onBeforeUnmount(() => {
     tag-tone="cream"
     tag-icon="★"
   >
-    <view class="mt-4 grid gap-3 md:grid-cols-2">
+    <view class="mt-4 flex flex-col gap-12rpx">
       <view
         v-for="template in allTemplates"
         :key="template.id"
@@ -389,7 +389,7 @@ onBeforeUnmount(() => {
       生成后会在这里看到海报预览。
     </view>
 
-    <view class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+    <view class="mt-4 flex flex-col gap-12rpx">
       <SubmitBtn
         text="生成成长海报"
         loading-text="海报生成中..."

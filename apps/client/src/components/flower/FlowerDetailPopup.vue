@@ -169,26 +169,26 @@ function handleFabClick(): void {
           <!-- 基础信息 -->
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-2xs text-app-muted/70 dark:text-app-muted">基础信息</text>
-            <view class="mt-2 grid grid-cols-2 gap-2">
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+            <view class="mt-2 flex flex-wrap gap-8rpx">
+              <view class="surface-soft w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">品类</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCategoryLabel(props.flower) }}
                 </text>
               </view>
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+              <view class="surface-soft w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">位置</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerPlacementLabel(props.flower) }}
                 </text>
               </view>
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+              <view class="surface-soft w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">难度</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCareDifficultyLabel(props.flower) }}
                 </text>
               </view>
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+              <view class="surface-soft w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">状态</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ flowerTaxonomyStore.resolveFlowerCareStatusLabel(props.flower) }}
@@ -200,9 +200,9 @@ function handleFabClick(): void {
           <!-- 养护信息 -->
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-2xs text-app-muted/70 dark:text-app-muted">养护记录</text>
-            <view class="mt-2 grid grid-cols-2 gap-2">
+            <view class="mt-2 flex flex-wrap gap-8rpx">
               <view
-                class="surface-soft app-pressable rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
+                class="surface-soft app-pressable w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
                 hover-class="opacity-80"
                 @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Watering)"
               >
@@ -212,7 +212,7 @@ function handleFabClick(): void {
                 </text>
               </view>
               <view
-                class="surface-soft app-pressable rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
+                class="surface-soft app-pressable w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
                 hover-class="opacity-80"
                 @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Fertilizing)"
               >

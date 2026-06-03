@@ -241,21 +241,6 @@ onShow(async () => {
             </button>
           </view>
         </scroll-view>
-
-        <view
-          v-if="selectedFlower"
-          class="mt-3 flex flex-wrap gap-2"
-        >
-          <TagLabel
-            :text="selectedFlowerCategoryLabel"
-            tone="blush"
-            icon="✿"
-          />
-          <TagLabel
-            :text="selectedFlowerStatusLabel"
-            :status="selectedFlower.careStatus"
-          />
-        </view>
       </view>
 
       <EmptyEmpty
@@ -292,7 +277,7 @@ onShow(async () => {
           :selected-flower="selectedFlower"
           :care-days="careDays"
           :album-items="albumItems"
-                  />
+        />
       </template>
     </view>
 

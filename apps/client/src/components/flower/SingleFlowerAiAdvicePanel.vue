@@ -163,8 +163,8 @@ function handleGenerate(): void {
         </text>
       </view>
 
-      <view class="grid grid-cols-2 gap-3">
-        <view class="rounded-[24rpx] bg-[var(--color-surface)]/88 px-3 py-4 dark:bg-slate-900">
+      <view class="flex gap-12rpx">
+        <view class="flex-1 rounded-[24rpx] bg-[var(--color-surface)]/88 px-3 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-app-muted/70 dark:text-app-muted">今天优先做</text>
           <view class="mt-2 flex flex-col gap-2">
             <text
@@ -177,7 +177,7 @@ function handleGenerate(): void {
           </view>
         </view>
 
-        <view class="rounded-[24rpx] bg-[var(--color-surface)]/88 px-3 py-4 dark:bg-slate-900">
+        <view class="flex-1 rounded-[24rpx] bg-[var(--color-surface)]/88 px-3 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-app-muted/70 dark:text-app-muted">今天先别急着做</text>
           <view class="mt-2 flex flex-col gap-2">
             <text

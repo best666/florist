@@ -40,20 +40,20 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
       <!-- 使用统计 -->
       <view class="card-soft rounded-[32rpx]">
         <text class="block text-base font-800 text-app-ink">今日使用</text>
-        <view class="mt-4 grid grid-cols-2 gap-3">
-          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
+        <view class="mt-4 flex flex-wrap gap-12rpx">
+          <view class="w-[calc(50%-6rpx)] rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
             <text class="block text-2xs text-app-muted">AI 天气建议</text>
             <text class="mt-1 block text-lg font-800" :class="freeTier.weatherAdviceExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
               {{ freeTier.weatherAdviceRemaining.value }} 次剩余
             </text>
           </view>
-          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
+          <view class="w-[calc(50%-6rpx)] rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
             <text class="block text-2xs text-app-muted">AI 养护咨询</text>
             <text class="mt-1 block text-lg font-800" :class="freeTier.consultationExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
               {{ freeTier.consultationRemaining.value }} 次剩余
             </text>
           </view>
-          <view class="rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3 col-span-2">
+          <view class="w-full rounded-[24rpx] bg-[var(--color-cream)]/50 px-4 py-3">
             <text class="block text-2xs text-app-muted">照片上传（共 {{ MAX_FREE_PHOTO_UPLOADS }} 张额度）</text>
             <text class="mt-1 block text-lg font-800" :class="freeTier.photoUploadsExceeded.value ? 'text-[var(--color-blush)]' : 'text-[var(--color-sage)]'">
               {{ freeTier.photoUploadsRemaining.value }} 张剩余
@@ -104,7 +104,7 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
           <text class="mt-1 block text-sm text-app-muted">切换后全局配色即时生效。</text>
         </view>
 
-        <view class="mt-4 grid grid-cols-2 gap-3">
+        <view class="mt-4 flex flex-wrap gap-12rpx">
           <button
             v-for="theme in themeSkins"
             :key="theme.id"

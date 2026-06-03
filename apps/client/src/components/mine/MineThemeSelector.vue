@@ -15,11 +15,11 @@ function handleApplyTheme(themeId: (typeof THEME_SKIN_DEFINITIONS)[number]['id']
 </script>
 
 <template>
-  <view class="mt-4 grid grid-cols-3 gap-3">
+  <view class="mt-4 flex gap-12rpx">
     <button
       v-for="theme in themeSkins"
       :key="theme.id"
-      class="btn-base flex-col rounded-[20rpx] px-3 py-3"
+      class="btn-base flex-1 flex-col rounded-[20rpx] px-3 py-3"
       :class="
         currentThemeId === theme.id
           ? 'bg-linear-to-br from-[var(--color-gold)]/30 to-[var(--color-mint)]/30'

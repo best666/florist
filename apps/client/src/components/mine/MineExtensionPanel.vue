@@ -31,7 +31,7 @@ const visualizedStats = computed(() => {
 </script>
 
 <template>
-  <view class="grid gap-3">
+  <view class="flex flex-col gap-12rpx">
     <view class="mt-1 flex flex-col gap-4">
       <view
         v-for="item in visualizedStats"

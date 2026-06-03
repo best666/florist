@@ -16,11 +16,11 @@ function handleTap(card: MineStatisticsCard): void {
 </script>
 
 <template>
-  <view class="grid grid-cols-2 gap-3">
+  <view class="flex flex-wrap gap-12rpx">
     <view
       v-for="card in props.cards"
       :key="card.key"
-      class="surface-soft app-fade-up rounded-[30rpx] p-4"
+      class="surface-soft box-border w-[calc((100%-12rpx)/2)] app-fade-up rounded-[30rpx] p-4"
       :class="card.navigateTo ? 'app-pressable' : ''"
       :hover-class="card.navigateTo ? 'opacity-80' : ''"
       @tap="handleTap(card)"

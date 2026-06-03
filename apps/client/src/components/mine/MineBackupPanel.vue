@@ -157,9 +157,9 @@ async function handleClearAllLocalData(): Promise<void> {
     本地备份会用 AES 加密保存在设备中，恢复时需要粘贴备份串。请妥善保管备份内容。
   </view>
 
-  <view class="mt-4 grid grid-cols-2 gap-3">
+  <view class="mt-4 flex gap-12rpx">
     <button
-      class="btn-panel surface-soft bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
+      class="btn-panel flex-1 surface-soft bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
       hover-class="opacity-92"
       :loading="isGeneratingBackup"
       @tap="handleGenerateBackup"
@@ -167,7 +167,7 @@ async function handleClearAllLocalData(): Promise<void> {
       一键生成备份
     </button>
     <button
-      class="btn-panel surface-soft bg-[var(--color-blush)]/20 text-[var(--color-ink)]"
+      class="btn-panel flex-1 surface-soft bg-[var(--color-blush)]/20 text-[var(--color-ink)]"
       hover-class="opacity-92"
       :loading="isClearingData"
       @tap="handleClearAllLocalData"

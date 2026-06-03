@@ -83,9 +83,9 @@ async function handleRestoreLocationPermission(): Promise<void> {
       </view>
     </view>
 
-    <view class="grid grid-cols-2 gap-3">
+    <view class="flex gap-12rpx">
       <button
-        class="btn-panel gap-2 bg-[var(--color-cream)]/40 text-[var(--color-ink)]"
+        class="btn-panel flex-1 gap-2 bg-[var(--color-cream)]/40 text-[var(--color-ink)]"
         hover-class="opacity-92"
         @tap="handleOpenPermissionSetting"
       >
@@ -95,7 +95,7 @@ async function handleRestoreLocationPermission(): Promise<void> {
         <text>打开权限设置</text>
       </button>
       <button
-        class="btn-panel gap-2 bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
+        class="btn-panel flex-1 gap-2 bg-[var(--color-mint)]/20 text-[var(--color-sage)]"
         hover-class="opacity-92"
         @tap="handleRestoreLocationPermission"
       >

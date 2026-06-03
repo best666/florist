@@ -214,12 +214,12 @@ function emitReminderText(event: { detail: { value: string } }): void {
     <!-- Weather metrics -->
     <view
       v-if="weatherMetrics.length > 0"
-      class="mt-4 grid grid-cols-2 gap-3"
+      class="mt-4 flex flex-wrap gap-12rpx"
     >
       <view
         v-for="metric in weatherMetrics"
         :key="metric.key"
-        class="rounded-[24rpx] bg-slate-50/80 px-4 py-4 dark:bg-slate-800/60"
+        class="w-[calc(50%-6rpx)] rounded-[24rpx] bg-slate-50/80 px-4 py-4 dark:bg-slate-800/60"
       >
         <view
           class="h-2 w-12 rounded-full bg-linear-to-r"
@@ -390,9 +390,9 @@ function emitReminderText(event: { detail: { value: string } }): void {
 
       <view
         v-if="showReminderSettings"
-        class="mt-4 grid grid-cols-2 gap-3"
+        class="mt-4 flex gap-12rpx"
       >
-        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+        <view class="flex-1 rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-app-muted/70 dark:text-app-muted">提醒小时</text>
           <input
             :value="String(props.state.reminderConfig.reminderHour)"
@@ -401,7 +401,7 @@ function emitReminderText(event: { detail: { value: string } }): void {
             @input="emitReminderHour"
           />
         </view>
-        <view class="rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
+        <view class="flex-1 rounded-[24rpx] bg-[var(--color-surface)] px-4 py-4 dark:bg-slate-900">
           <text class="block text-2xs text-app-muted/70 dark:text-app-muted">提醒分钟</text>
           <input
             :value="String(props.state.reminderConfig.reminderMinute)"

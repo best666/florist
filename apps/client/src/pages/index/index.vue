@@ -226,9 +226,6 @@ const selectedAdviceFlower = computed<LocalFlower | null>(() => {
 
 const singleFlowerAiTodayUsedCount = computed(() => singleFlowerAiTodayCount())
 
-
-const flowerGridClass = computed(() => 'grid-cols-3')
-
 const attentionCount = computed(
   () =>
     activeFlowers.value.filter(
@@ -594,7 +591,6 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
     handleOpenMine()
     return
   }
-
 }
 </script>
 
@@ -618,13 +614,21 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
               >
                 {{ isOffline ? '离线花园' : '今日花园' }}
               </view>
-              <view class="flex min-w-0 items-center gap-1 truncate text-2xs text-app-muted/80 dark:text-slate-300">
+              <view
+                class="flex min-w-0 items-center gap-1 truncate text-2xs text-app-muted/80 dark:text-slate-300"
+              >
                 <text class="whitespace-nowrap">📍 {{ heroCityName }}</text>
                 <template v-if="heroWeatherText">
                   <text class="flex-none text-app-muted/30 dark:text-slate-500">·</text>
-                  <text class="truncate whitespace-nowrap font-700 text-app-ink dark:text-slate-100">{{ heroWeatherEmoji }} {{ heroWeatherText }} {{ heroTemperature }}</text>
+                  <text class="truncate whitespace-nowrap font-700 text-app-ink dark:text-slate-100"
+                    >{{ heroWeatherEmoji }} {{ heroWeatherText }} {{ heroTemperature }}</text
+                  >
                 </template>
-                <text v-else class="whitespace-nowrap text-app-muted/50 dark:text-slate-500">获取天气</text>
+                <text
+                  v-else
+                  class="whitespace-nowrap text-app-muted/50 dark:text-slate-500"
+                  >获取天气</text
+                >
               </view>
             </view>
             <view class="mt-3 text-title font-900 leading-tight text-app-ink dark:text-slate-50">
@@ -671,11 +675,13 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         网络暂时休息中，你的所有操作都会安全保存在本地，联网后会自动同步。
       </view>
 
-      <view class="grid grid-cols-3 gap-3">
+      <view
+        class="flex flex-wrap gap-12rpx"
+      >
         <view
           v-for="card in summaryCards"
           :key="card.key"
-          class="surface-soft app-fade-up px-4 py-4 dark:bg-slate-900"
+          class="surface-soft flex-1 app-fade-up px-4 py-4 dark:bg-slate-900"
           hover-class="opacity-92"
           @tap="handleSummaryCardTap(card.key)"
         >
@@ -694,31 +700,31 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
 
       <view id="weather-panel">
         <CollapsibleSection
-        title="天气提醒与花园节奏"
-        tag-text="今日照护"
-        tag-tone="mint"
-        tag-icon="✓"
-        :expanded="isWeatherPanelExpanded"
-        @update:expanded="isWeatherPanelExpanded = $event"
-      >
-        <HomeWeatherReminderPanel
-          :state="weatherReminderState"
-          :flowers="activeFlowers"
-          :ai-advice="aiAdvice"
-          :loading-ai-advice="loadingAiAdvice"
-          :ai-advice-message="aiAdviceMessage"
-          @locate="locateCity"
-          @open-permission="requestLocationPermissionAgain"
-          @search-city="searchCities"
-          @select-city="setManualCity"
-          @toggle-reminder="handleToggleReminderEnabled"
-          @update-reminder-hour="handleReminderHourInput"
-          @update-reminder-minute="handleReminderMinuteInput"
-          @update-quiet-start-hour="handleQuietStartHourInput"
-          @update-quiet-end-hour="handleQuietEndHourInput"
-          @update-reminder-text="handleReminderTextInput"
-        />
-      </CollapsibleSection>
+          title="天气提醒与花园节奏"
+          tag-text="今日照护"
+          tag-tone="mint"
+          tag-icon="✓"
+          :expanded="isWeatherPanelExpanded"
+          @update:expanded="isWeatherPanelExpanded = $event"
+        >
+          <HomeWeatherReminderPanel
+            :state="weatherReminderState"
+            :flowers="activeFlowers"
+            :ai-advice="aiAdvice"
+            :loading-ai-advice="loadingAiAdvice"
+            :ai-advice-message="aiAdviceMessage"
+            @locate="locateCity"
+            @open-permission="requestLocationPermissionAgain"
+            @search-city="searchCities"
+            @select-city="setManualCity"
+            @toggle-reminder="handleToggleReminderEnabled"
+            @update-reminder-hour="handleReminderHourInput"
+            @update-reminder-minute="handleReminderMinuteInput"
+            @update-quiet-start-hour="handleQuietStartHourInput"
+            @update-quiet-end-hour="handleQuietEndHourInput"
+            @update-reminder-text="handleReminderTextInput"
+          />
+        </CollapsibleSection>
       </view>
       <CollapsibleSection
         title="筛选植物卡片"
@@ -841,8 +847,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       <view
         id="flower-grid"
         v-if="filteredFlowers.length > 0"
-        class="grid gap-3"
-        :class="flowerGridClass"
+        class="flex flex-wrap gap-12rpx"
       >
         <FlowerCard
           v-for="flower in filteredFlowers"

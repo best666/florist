@@ -113,16 +113,17 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       </view>
     </view>
 
-    <view class="mt-5 grid grid-cols-2 gap-3">
+    <view class="mt-5 flex gap-12rpx">
       <TagLabel
         :text="authTagText"
         :tone="props.isAuthenticated ? 'mint' : 'slate'"
         :icon="props.isAuthenticated ? '✓' : '○'"
         size="md"
+        class="flex-1"
       />
       <button
         v-if="!props.isAuthenticated"
-        class="btn-panel surface-soft min-h-[80rpx] bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
+        class="btn-panel flex-1 surface-soft min-h-[80rpx] bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
         hover-class="opacity-92"
         :loading="props.loading"
         @tap="emit('login')"
@@ -131,7 +132,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       </button>
       <view
         v-if="props.isAuthenticated"
-        class="flex items-center justify-end"
+        class="flex items-center flex-1 justify-end"
       >
         <button
           class="btn-base h-[64rpx] min-h-[64rpx] rounded-full bg-transparent px-3 text-[24rpx] text-[#9A8D80]"

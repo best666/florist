@@ -142,6 +142,11 @@ function handleSwitchFlower(flowerId: string): void {
   activeTab.value = 'single'
 }
 
+function handleClearFlowerFilter(): void {
+  selectedFlowerId.value = ''
+  activeTab.value = 'all'
+}
+
 function openCheckin(actionType = DEFAULT_RECORD_ACTION_TYPE): void {
   currentActionType.value = actionType
   isCheckinVisible.value = true
@@ -231,17 +236,17 @@ async function handleUndoLatestRecord(): Promise<void> {
           />
         </view>
 
-        <view class="mt-4 grid grid-cols-3 gap-3">
+        <view class="mt-4 flex flex-wrap gap-12rpx">
           <button
             v-for="option in RECORD_ACTION_OPTIONS"
             :key="option.value"
-            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800"
+            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800 w-[calc((100%-24rpx)/3)]"
             :class="currentActionType === option.value ? '' : 'border-transparent'"
-            :style="
-              currentActionType === option.value
+            :style="{
+              ...(currentActionType === option.value
                 ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
-                : {}
-            "
+                : {}),
+            }"
             hover-class="opacity-92"
             @tap="openCheckin(option.value)"
           >
@@ -251,7 +256,9 @@ async function handleUndoLatestRecord(): Promise<void> {
             <text class="mt-2 block text-sm font-800 text-app-ink dark:text-slate-100">
               {{ option.label }}
             </text>
-            <text class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-app-muted">
+            <text
+              class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-app-muted break-words whitespace-normal"
+            >
               {{ option.description }}
             </text>
           </button>
@@ -281,7 +288,10 @@ async function handleUndoLatestRecord(): Promise<void> {
       <!-- 筛选：紧凑两行，不折叠 -->
       <view class="card-soft rounded-[24rpx] bg-[var(--color-surface)] px-4 py-3 dark:bg-slate-900">
         <!-- 第一行：植株 -->
-        <scroll-view scroll-x class="whitespace-nowrap">
+        <scroll-view
+          scroll-x
+          class="whitespace-nowrap"
+        >
           <view class="flex items-center gap-1.5 pb-0.5">
             <button
               class="btn-chip"
@@ -291,7 +301,7 @@ async function handleUndoLatestRecord(): Promise<void> {
                   : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'
               "
               hover-class="opacity-92"
-              @tap="selectedFlowerId = ''; activeTab = 'all'"
+              @tap="handleClearFlowerFilter"
             >
               全部植株
             </button>
@@ -313,7 +323,10 @@ async function handleUndoLatestRecord(): Promise<void> {
         </scroll-view>
 
         <!-- 第二行：养护类型 -->
-        <scroll-view scroll-x class="mt-2 whitespace-nowrap">
+        <scroll-view
+          scroll-x
+          class="mt-2 whitespace-nowrap"
+        >
           <view class="flex items-center gap-1.5">
             <button
               class="btn-chip"
