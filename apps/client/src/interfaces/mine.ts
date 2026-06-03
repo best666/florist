@@ -31,5 +31,6 @@ export interface MineStatisticsCard {
   readonly value: string
   readonly hint: string
   readonly accentClass: string
-  readonly onTap?: () => void
+  /** 点击时跳转的 tab 页面路径，不设置则不跳转 */
+  readonly navigateTo?: string
 }

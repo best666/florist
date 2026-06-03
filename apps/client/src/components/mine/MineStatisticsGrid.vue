@@ -9,7 +9,9 @@ interface MineStatisticsGridProps {
 const props = defineProps<MineStatisticsGridProps>()
 
 function handleTap(card: MineStatisticsCard): void {
-  card.onTap?.()
+  if (card.navigateTo) {
+    uni.navigateTo({ url: card.navigateTo })
+  }
 }
 </script>
 
@@ -19,8 +21,8 @@ function handleTap(card: MineStatisticsCard): void {
       v-for="card in props.cards"
       :key="card.key"
       class="surface-soft app-fade-up rounded-[30rpx] p-4"
-      :class="card.onTap ? 'app-pressable' : ''"
-      :hover-class="card.onTap ? 'opacity-80' : ''"
+      :class="card.navigateTo ? 'app-pressable' : ''"
+      :hover-class="card.navigateTo ? 'opacity-80' : ''"
       @tap="handleTap(card)"
     >
       <view :class="`mb-3 h-[12rpx] rounded-full bg-linear-to-r ${card.accentClass}`" />

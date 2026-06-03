@@ -150,7 +150,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(totalPlantCount.value),
     hint: '包含仍在照护中的植物和回收站临时保留项。',
     accentClass: 'from-[#CDEEDC] to-[#FFF0D9]',
-    onTap: () => uni.switchTab({ url: '/pages/index/index' }),
+    navigateTo: '/pages/index/index',
   },
   {
     key: 'records',
@@ -158,7 +158,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(sortedRecords.value.length),
     hint: '每一次浇水、施肥、修剪都会被温柔记下。',
     accentClass: 'from-[#FBD4E3] to-[#FFF4E7]',
-    onTap: () => uni.switchTab({ url: '/pages/record/index' }),
+    navigateTo: '/pages/record/index',
   },
   {
     key: 'survival',
@@ -166,7 +166,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(survivalPlantCount.value),
     hint: '当前仍在花园里继续陪伴你的植物数量。',
     accentClass: 'from-[#D7E9FF] to-[#FFF9DD]',
-    onTap: () => uni.switchTab({ url: '/pages/index/index' }),
+    navigateTo: '/pages/index/index',
   },
   {
     key: 'days',
@@ -174,7 +174,7 @@ const statisticsCards = computed<ReadonlyArray<MineStatisticsCard>>(() => [
     value: String(careDays.value),
     hint: '从第一盆植物入住开始累计的陪伴时间。',
     accentClass: 'from-[#FFE8C5] to-[#F8D7CE]',
-    onTap: () => uni.switchTab({ url: '/pages/record/index' }),
+    navigateTo: '/pages/record/index',
   },
 ])
 
