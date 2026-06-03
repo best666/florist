@@ -211,10 +211,16 @@ export class AuthService {
       && (!this.appEnv.wechatMiniProgramAppId || !this.appEnv.wechatMiniProgramSecret);
   }
 
-  private createDevelopmentWechatSession(code: string): ResolvedWechatSession {
+  private createDevelopmentWechatSession(_code: string): ResolvedWechatSession {
+    // 开发环境无真实微信服务器，不能使用临时 code 派生 openId（每次 uni.login() 的
+    // code 都不同，会导致每次登录创建新用户，数据不可达、手机号绑定冲突）。
+    // 使用 appId 作为命名空间保证同一小程序内 openId 稳定；未配置 appId 时回退到固定值。
+    const namespace = this.appEnv.wechatMiniProgramAppId || 'florist-dev-default';
+    const devOpenId = createHash('sha256').update(`dev-openid:${namespace}`).digest('hex');
+    const devSessionKey = createHash('sha256').update(`dev-session:${namespace}`).digest('hex');
     return {
-      openId: createHash('sha256').update(`dev-openid:${code}`).digest('hex'),
-      sessionKey: createHash('sha256').update(`dev-session:${code}`).digest('hex'),
+      openId: devOpenId,
+      sessionKey: devSessionKey,
     };
   }
 
