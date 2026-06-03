@@ -11,12 +11,12 @@ import InfoPopover from '@/components/app/InfoPopover.vue'
 import PageHero from '@/components/app/PageHero.vue'
 import TagLabel from '@/components/app/TagLabel.vue'
 import TimeLine from '@/components/TimeLine.vue'
-import { useFlowerStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
+import { useFlowerStore, useRecordStore } from '@/store'
+import { RecordActionType } from '@florist/contracts'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
   RECORD_ACTION_OPTIONS,
   getRecordActionLabel,
-  type LocalFlower,
   type LocalRecord,
   type RecordFormValues,
   type TimelineItem,
@@ -24,7 +24,14 @@ import {
 import { usePageTheme } from '@/hooks/usePageTheme'
 import { usePageTip } from '@/hooks/usePageTip'
 import { RECORD_TIPS } from '@/interfaces/page-tips'
-import { createFlowerDisplayNameMap, formatDateTime, getTimeAgo, hasRepeatedActionWithinHours, showGentleSuccess, showGentleToast } from '@/utils'
+import {
+  createFlowerDisplayNameMap,
+  formatDateTime,
+  getTimeAgo,
+  hasRepeatedActionWithinHours,
+  showGentleSuccess,
+  showGentleToast,
+} from '@/utils'
 
 const themeClass = usePageTheme()
 const { currentTip: recordTip } = usePageTip(RECORD_TIPS)
@@ -35,7 +42,6 @@ interface RecordTimelineGroup {
 }
 
 const flowerStore = useFlowerStore()
-const flowerTaxonomyStore = useFlowerTaxonomyStore()
 const recordStore = useRecordStore()
 
 const { activeFlowers } = storeToRefs(flowerStore)
@@ -46,11 +52,18 @@ const activeTab = ref<'single' | 'all'>('all')
 const isCheckinVisible = ref(false)
 const currentActionType = ref(DEFAULT_RECORD_ACTION_TYPE)
 const isSubmitting = ref(false)
+/** 当前选中过滤的养护类型，为空时展示全部 */
+const filterActionType = ref<RecordActionType | ''>('')
 
 onLoad((query) => {
   const targetFlowerId = query && typeof query.flowerId === 'string' ? query.flowerId : ''
+  const targetActionType = query && typeof query.actionType === 'string' ? query.actionType : ''
   selectedFlowerId.value = targetFlowerId
   activeTab.value = targetFlowerId ? 'single' : 'all'
+  // 校验 actionType 是否为有效的养护类型
+  if (targetActionType && RECORD_ACTION_OPTIONS.some((o) => o.value === targetActionType)) {
+    filterActionType.value = targetActionType as RecordActionType
+  }
 })
 
 onShow(async () => {
@@ -58,35 +71,19 @@ onShow(async () => {
   await recordStore.initializeRecordCenter()
 })
 
-const selectedFlower = computed<LocalFlower | null>(() => (
-  selectedFlowerId.value ? flowerStore.getFlowerById(selectedFlowerId.value) : null
-))
-
 const flowerDisplayNameMap = computed(() => createFlowerDisplayNameMap(activeFlowers.value))
-const selectedFlowerCategoryLabel = computed(() => (
-  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCategoryLabel(selectedFlower.value) : '全部植物'
-))
-const selectedFlowerStatusLabel = computed(() => (
-  selectedFlower.value ? flowerTaxonomyStore.resolveFlowerCareStatusLabel(selectedFlower.value) : '按时间查看'
-))
-
-const recordTabs = computed(() => ([
-  {
-    key: 'single' as const,
-    label: selectedFlower.value ? `${flowerDisplayNameMap.value[selectedFlower.value.id] ?? selectedFlower.value.name} 的记录` : '单植株记录',
-  },
-  {
-    key: 'all' as const,
-    label: '全部记录',
-  },
-]))
 
 const displayedRecords = computed<ReadonlyArray<LocalRecord>>(() => {
-  if (activeTab.value === 'single' && selectedFlowerId.value) {
-    return recordStore.getRecordsByFlowerId(selectedFlowerId.value)
+  let source =
+    activeTab.value === 'single' && selectedFlowerId.value
+      ? recordStore.getRecordsByFlowerId(selectedFlowerId.value)
+      : sortedRecords.value
+
+  if (filterActionType.value) {
+    source = source.filter((r) => r.actionType === filterActionType.value)
   }
 
-  return sortedRecords.value
+  return source
 })
 
 const groupedTimeline = computed<ReadonlyArray<RecordTimelineGroup>>(() => {
@@ -118,8 +115,8 @@ const groupedTimeline = computed<ReadonlyArray<RecordTimelineGroup>>(() => {
   }))
 })
 
-const undoTimelineItems = computed<ReadonlyArray<TimelineItem>>(() => (
-  recentUndoLogs.value.slice(0, 5).map(log => ({
+const undoTimelineItems = computed<ReadonlyArray<TimelineItem>>(() =>
+  recentUndoLogs.value.slice(0, 5).map((log) => ({
     id: log.id,
     title: `${getRecordActionLabel(log.actionType)} 已撤回`,
     timestamp: formatDateTime(log.revertedAt, { pattern: 'YYYY-MM-DD HH:mm' }),
@@ -127,8 +124,8 @@ const undoTimelineItems = computed<ReadonlyArray<TimelineItem>>(() => (
     status: 'dormant',
     tone: 'slate',
     tags: [getTimeAgo(log.originalCreatedAt), '撤回日志'],
-  }))
-))
+  })),
+)
 
 const latestUndoText = computed(() => {
   if (!latestUndoableRecord.value) {
@@ -153,7 +150,7 @@ function openCheckin(actionType = DEFAULT_RECORD_ACTION_TYPE): void {
 async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
   // 10 分钟内同植物同操作 → 确认弹窗，纯防误触
   const recentDuplicate = hasRepeatedActionWithinHours(
-    sortedRecords.value.map(record => ({
+    sortedRecords.value.map((record) => ({
       targetId: record.flowerId,
       actionType: record.actionType,
       createdAt: record.createdAt,
@@ -182,8 +179,7 @@ async function handleSubmitRecord(values: RecordFormValues): Promise<void> {
     await recordStore.addRecord(values)
     isCheckinVisible.value = false
     showGentleSuccess('这次打卡已经轻轻记下啦。')
-  }
-  finally {
+  } finally {
     isSubmitting.value = false
   }
 }
@@ -205,7 +201,10 @@ async function handleUndoLatestRecord(): Promise<void> {
 </script>
 
 <template>
-  <view class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100" :class="themeClass">
+  <view
+    class="page-shell safe-pb dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100"
+    :class="themeClass"
+  >
     <view class="mx-auto flex max-w-[760rpx] flex-col gap-4 pb-[172rpx]">
       <PageHero
         badge="养护记录打卡簿"
@@ -219,20 +218,33 @@ async function handleUndoLatestRecord(): Promise<void> {
           <view>
             <view class="flex items-center gap-1">
               <text class="block text-base font-800 text-app-ink dark:text-slate-100">
-                快捷打卡
+                点击选项快捷打卡
               </text>
-              <InfoPopover content="轻点一下，就把今天的照顾和心情一起收好。每种操作都支持拍照片、写备注，记录下每一次温柔的照顾。" />
+              <InfoPopover
+                content="轻点一下，就把今天的照顾和心情一起收好。每种操作都支持拍照片、写备注，记录下每一次温柔的照顾。"
+              />
             </view>
           </view>
-          <TagLabel :text="`${sortedRecords.length} 条记录`" tone="mint" />
+          <TagLabel
+            :text="`${sortedRecords.length} 条记录`"
+            tone="mint"
+          />
         </view>
 
         <view class="mt-4 grid grid-cols-3 gap-3">
-          <button v-for="option in RECORD_ACTION_OPTIONS" :key="option.value"
+          <button
+            v-for="option in RECORD_ACTION_OPTIONS"
+            :key="option.value"
             class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800"
             :class="currentActionType === option.value ? '' : 'border-transparent'"
-            :style="currentActionType === option.value ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` } : {}"
-            hover-class="opacity-92" @tap="openCheckin(option.value)">
+            :style="
+              currentActionType === option.value
+                ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
+                : {}
+            "
+            hover-class="opacity-92"
+            @tap="openCheckin(option.value)"
+          >
             <view class="text-2xl">
               {{ option.emoji }}
             </view>
@@ -246,55 +258,120 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
       </view>
 
-      <view v-if="latestUndoableRecord"
-        class="info-soft app-fade-up bg-[var(--color-mint)]/15 text-[var(--color-sage)] dark:bg-emerald-500/14 dark:text-emerald-100">
+      <view
+        v-if="latestUndoableRecord"
+        class="info-soft app-fade-up bg-[var(--color-mint)]/15 text-[var(--color-sage)] dark:bg-emerald-500/14 dark:text-emerald-100"
+      >
         <view class="flex items-start justify-between gap-3">
           <text class="flex-1">
             {{ latestUndoText }}
           </text>
           <AppButton
-            variant="pill" size="none"
+            variant="pill"
+            size="none"
             custom-class="h-9 px-4 bg-[var(--color-surface)] text-[var(--color-sage)] shadow-[var(--shadow-soft)] dark:bg-slate-900 dark:text-emerald-200"
-            hover-class="opacity-92" @tap="handleUndoLatestRecord"
+            hover-class="opacity-92"
+            @tap="handleUndoLatestRecord"
           >
             一键撤回
           </AppButton>
         </view>
       </view>
 
-      <CollapsibleSection title="记录范围与筛选" description="切换单株/全部、快速选植物，都收进这一层。"
-        :tag-text="activeTab === 'single' ? '单株视角' : '全部视角'" tag-tone="cream" tag-icon="⌕" :default-expanded="true">
-        <view class="surface-soft flex items-center gap-2 rounded-full bg-[var(--color-surface)]/66 p-1 dark:bg-slate-800">
-          <button v-for="tab in recordTabs" :key="tab.key" class="btn-segment flex-1"
-            :class="activeTab === tab.key ? 'bg-[var(--color-surface)] text-app-ink shadow-[0_10rpx_22rpx_rgba(148,163,184,0.14)] dark:bg-slate-900 dark:text-slate-100' : 'bg-transparent text-app-muted/80 dark:text-app-muted/70'"
-            hover-class="opacity-92" @tap="activeTab = tab.key">
-            <text class="truncate">{{ tab.label }}</text>
-          </button>
-        </view>
-
-        <scroll-view scroll-x class="mt-4 whitespace-nowrap">
-          <view class="flex items-center gap-2 pb-1">
-            <button v-for="flower in activeFlowers" :key="flower.id" class="btn-chip"
-              :class="selectedFlowerId === flower.id ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]' : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'"
-              hover-class="opacity-92" @tap="handleSwitchFlower(flower.id)">
+      <!-- 筛选：紧凑两行，不折叠 -->
+      <view class="card-soft rounded-[24rpx] bg-[var(--color-surface)] px-4 py-3 dark:bg-slate-900">
+        <!-- 第一行：植株 -->
+        <scroll-view scroll-x class="whitespace-nowrap">
+          <view class="flex items-center gap-1.5 pb-0.5">
+            <button
+              class="btn-chip"
+              :class="
+                !selectedFlowerId
+                  ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]'
+                  : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'
+              "
+              hover-class="opacity-92"
+              @tap="selectedFlowerId = ''; activeTab = 'all'"
+            >
+              全部植株
+            </button>
+            <button
+              v-for="flower in activeFlowers"
+              :key="flower.id"
+              class="btn-chip"
+              :class="
+                selectedFlowerId === flower.id
+                  ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]'
+                  : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'
+              "
+              hover-class="opacity-92"
+              @tap="handleSwitchFlower(flower.id)"
+            >
               {{ flowerDisplayNameMap[flower.id] ?? flower.name }}
             </button>
           </view>
         </scroll-view>
 
-        <view v-if="selectedFlower" class="mt-3 flex flex-wrap gap-2">
-          <TagLabel :text="selectedFlowerCategoryLabel" tone="blush" icon="✿" />
-          <TagLabel :text="selectedFlowerStatusLabel" :status="selectedFlower.careStatus" />
-        </view>
-      </CollapsibleSection>
+        <!-- 第二行：养护类型 -->
+        <scroll-view scroll-x class="mt-2 whitespace-nowrap">
+          <view class="flex items-center gap-1.5">
+            <button
+              class="btn-chip"
+              :class="
+                filterActionType === ''
+                  ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]'
+                  : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'
+              "
+              hover-class="opacity-92"
+              @tap="filterActionType = ''"
+            >
+              全部养护
+            </button>
+            <button
+              v-for="option in RECORD_ACTION_OPTIONS"
+              :key="option.value"
+              class="btn-chip"
+              :class="
+                filterActionType === option.value
+                  ? 'bg-app-mint text-app-ink shadow-[0_10rpx_22rpx_rgba(138,216,197,0.24)]'
+                  : 'surface-soft bg-[var(--color-surface)]/72 text-app-muted dark:bg-slate-800 dark:text-slate-200'
+              "
+              hover-class="opacity-92"
+              @tap="filterActionType = filterActionType === option.value ? '' : option.value"
+            >
+              {{ option.emoji }} {{ option.label }}
+            </button>
+          </view>
+        </scroll-view>
+      </view>
 
-      <EmptyEmpty v-if="displayedRecords.length === 0" scene="record"
-        :title="activeTab === 'single' ? '这盆植物还没有专属记录' : '还没有任何养护记录'" :description="activeTab === 'single'
-          ? '先为它记下一次浇水、施肥或擦叶吧，时间轴会慢慢长出来。'
-          : '从今天开始留痕，后面的照顾节奏就会越来越清楚。'" action-text="去打卡" @action="openCheckin()" />
+      <EmptyEmpty
+        v-if="displayedRecords.length === 0"
+        scene="record"
+        :title="
+          filterActionType
+            ? `暂无${getRecordActionLabel(filterActionType)}记录`
+            : activeTab === 'single'
+              ? '这盆植物还没有专属记录'
+              : '还没有任何养护记录'
+        "
+        :description="
+          filterActionType
+            ? `还没有关于「${getRecordActionLabel(filterActionType)}」的养护记录，试试切换其他类型或去打卡。`
+            : activeTab === 'single'
+              ? '先为它记下一次浇水、施肥或擦叶吧，时间轴会慢慢长出来。'
+              : '从今天开始留痕，后面的照顾节奏就会越来越清楚。'
+        "
+        action-text="去打卡"
+        @action="openCheckin(currentActionType)"
+      />
 
-      <view v-for="group in groupedTimeline" v-else :key="group.dateLabel"
-        class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900">
+      <view
+        v-for="group in groupedTimeline"
+        v-else
+        :key="group.dateLabel"
+        class="card-soft app-fade-up rounded-[32rpx] dark:bg-slate-900"
+      >
         <view class="flex items-center justify-between gap-3">
           <view>
             <view class="flex items-center gap-1">
@@ -304,7 +381,10 @@ async function handleUndoLatestRecord(): Promise<void> {
               <InfoPopover content="按时间倒序排列，最新的记录排在最前面。向左滑动单条记录可以快速撤回。" />
             </view>
           </view>
-          <TagLabel :text="`${group.items.length} 条`" tone="blush" />
+          <TagLabel
+            :text="`${group.items.length} 条`"
+            tone="blush"
+          />
         </view>
 
         <view class="mt-4">
@@ -312,14 +392,27 @@ async function handleUndoLatestRecord(): Promise<void> {
         </view>
       </view>
 
-      <CollapsibleSection title="撤回留存日志" description="低频日志折叠收纳，默认不干扰主时间轴浏览。" :tag-text="`${recentUndoLogs.length} 条`"
-        tag-tone="slate" tag-icon="↺">
-        <TimeLine :items="undoTimelineItems" empty-text="最近还没有撤回记录，时间轴保持得很完整。" />
+      <CollapsibleSection
+        title="撤回留存日志"
+        description="低频日志折叠收纳，默认不干扰主时间轴浏览。"
+        :tag-text="`${recentUndoLogs.length} 条`"
+        tag-tone="slate"
+        tag-icon="↺"
+      >
+        <TimeLine
+          :items="undoTimelineItems"
+          empty-text="最近还没有撤回记录，时间轴保持得很完整。"
+        />
       </CollapsibleSection>
 
-      <RecordCheckinPopup v-model="isCheckinVisible" :flower-options="activeFlowers"
-        :initial-flower-id="selectedFlowerId" :initial-action-type="currentActionType" :submitting="isSubmitting"
-        @submit="handleSubmitRecord" />
+      <RecordCheckinPopup
+        v-model="isCheckinVisible"
+        :flower-options="activeFlowers"
+        :initial-flower-id="selectedFlowerId"
+        :initial-action-type="currentActionType"
+        :submitting="isSubmitting"
+        @submit="handleSubmitRecord"
+      />
     </view>
 
     <AppBottomNav active-key="record" />

@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RecordActionType } from '@florist/contracts'
 import type { LocalFlower } from '@/interfaces'
 import { getFlowerDisplayName, getTimeAgo } from '@/utils'
 import { useAuthStore, useFlowerTaxonomyStore } from '@/store'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import AppImage from '../app/AppImage.vue'
 import FloatingActionButton from '../app/FloatingActionButton.vue'
+
+function navigateToRecordPage(flowerId: string, actionType: RecordActionType): void {
+  uni.navigateTo({ url: `/pages/record/index?flowerId=${flowerId}&actionType=${actionType}` })
+}
 
 interface FlowerDetailPopupProps {
   modelValue: boolean
@@ -196,13 +201,21 @@ function handleFabClick(): void {
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-2xs text-app-muted/70 dark:text-app-muted">养护记录</text>
             <view class="mt-2 grid grid-cols-2 gap-2">
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+              <view
+                class="surface-soft app-pressable rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
+                hover-class="opacity-80"
+                @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Watering)"
+              >
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近浇水</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ props.flower.lastWateredAt ? getTimeAgo(props.flower.lastWateredAt) : '待记录' }}
                 </text>
               </view>
-              <view class="surface-soft rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900">
+              <view
+                class="surface-soft app-pressable rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
+                hover-class="opacity-80"
+                @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Fertilizing)"
+              >
                 <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近施肥</text>
                 <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
                   {{ props.flower.lastFertilizedAt ? getTimeAgo(props.flower.lastFertilizedAt) : '待记录' }}

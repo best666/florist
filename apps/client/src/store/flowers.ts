@@ -148,18 +148,25 @@ export const useFlowerStore = defineStore('flowers', {
         try {
           const center = await fetchFlowerCenter()
 
-          // 找出本地有但服务器没有的植株，推送到服务器
-          const serverIds = new Set([
-            ...center.flowers.map((f) => f.id),
-            ...center.recycleBin.map((f) => f.id),
-          ])
-          const localOnly = [
-            ...this.flowers.filter((f) => !serverIds.has(f.id)),
-            ...this.recycleBin.filter((f) => !serverIds.has(f.id)),
-          ]
+          // 构建服务器植株 ID → 对象的映射
+          const serverMap = new Map<string, LocalFlower>()
+          for (const f of center.flowers) serverMap.set(f.id, f)
+          for (const f of center.recycleBin) serverMap.set(f.id, f)
 
-          if (localOnly.length > 0) {
-            const mergedCenter = await syncFlowersBatch(localOnly)
+          // 筛选需要推送到服务器的本地植株（服务器没有 或 本地更新）
+          const allLocal = [...this.flowers, ...this.recycleBin]
+          const flowersToPush: LocalFlower[] = []
+          for (const local of allLocal) {
+            const server = serverMap.get(local.id)
+            if (!server) {
+              flowersToPush.push(local)
+            } else if (local.updatedAt > server.updatedAt) {
+              flowersToPush.push(local)
+            }
+          }
+
+          if (flowersToPush.length > 0) {
+            const mergedCenter = await syncFlowersBatch(flowersToPush)
             hydrateFlowerCenter(this, {
               flowers: mergedCenter.flowers,
               recycleBin: mergedCenter.recycleBin,
