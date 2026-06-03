@@ -39,6 +39,9 @@ const canRequestVerificationCode = computed(
     !requestingCode.value &&
     countdownSeconds.value === 0,
 )
+const canSubmitH5Login = computed(
+  () => isH5.value && /^1\d{10}$/.test(h5Form.phoneNumber.trim()) && h5Form.verificationCode.trim().length > 0,
+)
 const verificationCodeButtonText = computed(() =>
   countdownSeconds.value > 0 ? `${countdownSeconds.value}s 后重试` : '获取验证码',
 )
@@ -205,6 +208,7 @@ onBeforeUnmount(() => {
         <SubmitBtn
           text="立即登录"
           :loading="props.loading"
+          :disabled="!canSubmitH5Login"
           variant="mint"
           size="md"
           @click="handleSubmitH5"

@@ -5,14 +5,17 @@
   "packageManager": "pnpm@10.10.0",
   "scripts": {
     "dev": "bash start-dev.sh",
+    "prod": "NODE_ENV=production bash start-dev.sh",
     "dev:h5": "pnpm --filter @florist/client dev:h5",
     "dev:mp-weixin": "pnpm --filter @florist/client dev:mp-weixin",
     "dev:server": "pnpm --filter @florist/server start:dev",
+    "dev:server:test": "pnpm --filter @florist/server start:test",
     "dev:agent": "cd services/ai-agent && python3 -m app.main",
     "dev:db": "pnpm --filter @florist/server db:up",
-    "db:status": "pnpm --filter @florist/server prisma:migrate:status",
     "db:deploy": "pnpm --filter @florist/server prisma:migrate:deploy",
+    "db:init-test": "DATABASE_URL=\"mysql://florist:florist123@127.0.0.1:3307/florist_test?connection_limit=5\" pnpm --filter @florist/server prisma:migrate:deploy",
     "build": "pnpm -r build",
+    "build:prod": "NODE_ENV=production pnpm --filter @florist/client build:prod",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier . --write",
     "format:check": "prettier . --check"

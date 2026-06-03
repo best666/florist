@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "uni",
     "dev:h5": "uni",
+    "dev:test": "uni --mode test",
     "dev:mp": "uni -p mp-weixin",
     "dev:mp-weixin": "uni -p mp-weixin",
     "build": "uni build",
     "build:h5": "uni build",
+    "build:test": "uni build --mode test",
+    "build:prod": "uni build --mode production",
     "build:mp": "uni build -p mp-weixin",
     "build:mp-weixin": "uni build -p mp-weixin",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json"

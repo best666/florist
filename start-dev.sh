@@ -47,7 +47,11 @@ echo "  ✅ 后端已启动: http://localhost:3000/api"
 # ── 3. AI Agent ────────────────────────────────────────
 echo "━━━ 3/4 AI Agent (port 8000) ━━━"
 cd "$ROOT/services/ai-agent"
-python3 -m app.main &
+if [ "$NODE_ENV" = "test" ]; then
+  MYSQL_DATABASE=florist_test python3 -m app.main &
+else
+  python3 -m app.main &
+fi
 PIDS+=($!)
 sleep 3
 echo "  ✅ AI Agent 已启动: http://localhost:8000"
@@ -55,7 +59,13 @@ echo "  ✅ AI Agent 已启动: http://localhost:8000"
 # ── 4. 前端 ────────────────────────────────────────────
 echo "━━━ 4/4 前端 (H5) ━━━"
 cd "$ROOT"
-pnpm run dev:h5 &
+if [ "$NODE_ENV" = "test" ]; then
+  pnpm run dev:test &
+elif [ "$NODE_ENV" = "production" ]; then
+  pnpm run build:prod &
+else
+  pnpm run dev:h5 &
+fi
 PIDS+=($!)
 sleep 5
 echo "  ✅ 前端已启动"

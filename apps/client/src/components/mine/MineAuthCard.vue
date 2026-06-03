@@ -12,6 +12,7 @@ interface MineAuthCardProps {
   readonly isAuthenticated: boolean
   readonly loading: boolean
   readonly runtimePlatform: ClientPlatform
+  readonly syncingData?: boolean
 }
 
 const props = defineProps<MineAuthCardProps>()
@@ -20,9 +21,12 @@ const emit = defineEmits<{
   login: []
   logout: []
   'edit-profile': []
+  'bind-phone': []
+  sync: []
 }>()
 
 const isH5Platform = computed(() => props.runtimePlatform === ClientPlatform.H5)
+const phoneMasked = computed(() => props.currentUser?.phoneMasked)
 const authTitle = computed(() => props.currentUser?.nickname ?? '当前使用本地花园')
 const authSubtitle = computed(() => {
   if (!props.currentUser) {
@@ -118,7 +122,7 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
       />
       <button
         v-if="!props.isAuthenticated"
-        class="btn-panel surface-soft min-h-[92rpx] bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
+        class="btn-panel surface-soft min-h-[80rpx] bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
         hover-class="opacity-92"
         :loading="props.loading"
         @tap="emit('login')"
@@ -138,6 +142,44 @@ const authSignature = computed(() => props.currentUser?.profileSignature?.trim()
           暂时切回本地花园
         </button>
       </view>
+    </view>
+
+    <!-- 手机号绑定状态（已登录时显示） -->
+    <view
+      v-if="props.isAuthenticated"
+      class="mt-3 flex items-center justify-between"
+    >
+      <view class="flex items-center gap-2">
+        <text class="text-[22rpx] text-app-muted">📱</text>
+        <text
+          v-if="phoneMasked"
+          class="text-[22rpx] text-app-muted dark:text-slate-400"
+        >
+          已绑定 {{ phoneMasked }}
+        </text>
+        <text
+          v-else
+          class="text-[22rpx] text-app-muted dark:text-slate-400"
+        >
+          未绑定手机号
+        </text>
+      </view>
+      <button
+        v-if="phoneMasked"
+        class="btn-base h-[48rpx] min-h-[48rpx] rounded-full px-4 text-[20rpx] font-600 bg-[var(--color-mint)]/15 text-[var(--color-ink)] dark:bg-emerald-500/12 dark:text-emerald-100"
+        hover-class="opacity-80"
+        :loading="props.syncingData"
+        @tap="emit('sync')"
+      >
+        {{ props.syncingData ? '同步中' : '同步数据' }}
+      </button>
+      <text
+        v-else
+        class="text-[22rpx] text-[#7AAE9D] dark:text-emerald-300"
+        @tap="emit('bind-phone')"
+      >
+        去绑定 →
+      </text>
     </view>
   </view>
 </template>

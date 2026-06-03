@@ -60,11 +60,14 @@ const bindPhoneCode = ref('')
 const bindPhoneRequestingCode = ref(false)
 const bindPhoneSubmitting = ref(false)
 const bindPhoneCountdown = ref(0)
+const isSyncingData = ref(false)
+const canSubmitBindPhone = computed(
+  () => /^1\d{10}$/.test(bindPhoneNumber.value.trim()) && bindPhoneCode.value.trim().length > 0,
+)
 let bindPhoneTimer: ReturnType<typeof setInterval> | null = null
 
-const showBindPhoneEntry = computed(() =>
-  isAuthenticated.value && !currentUser.value?.phoneMasked,
-)
+const showBindPhoneEntry = computed(() => isAuthenticated.value)
+const isPhoneBound = computed(() => Boolean(currentUser.value?.phoneMasked))
 
 async function handleRequestBindPhoneCode(): Promise<void> {
   if (!/^1\d{10}$/.test(bindPhoneNumber.value.trim())) {
@@ -102,11 +105,23 @@ async function handleSubmitBindPhone(): Promise<void> {
     bindPhoneVisible.value = false
     bindPhoneNumber.value = ''
     bindPhoneCode.value = ''
-    showGentleSuccess('手机号已绑定，现在可以在 H5 和微信小程序之间同步数据了。')
+    showGentleSuccess('手机号已绑定，数据已自动同步。')
   } catch (error) {
     handleCatchAndToast(error, '手机号绑定失败')
   } finally {
     bindPhoneSubmitting.value = false
+  }
+}
+
+async function handleManualSync(): Promise<void> {
+  isSyncingData.value = true
+  try {
+    await authStore.refreshGardenContext()
+    showGentleSuccess('数据同步完成，H5 与小程序端花园数据已对齐。')
+  } catch (error) {
+    handleCatchAndToast(error, '同步失败，请检查网络后重试')
+  } finally {
+    isSyncingData.value = false
   }
 }
 
@@ -209,6 +224,15 @@ const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
   },
   onLoginSuccess: async () => {
     refreshLocalSnapshots()
+    // 小程序端微信登录后检测：未绑定手机号则提示绑定，以同步多端数据
+    if (runtimePlatform.value === ClientPlatform.MpWeixin && !currentUser.value?.phoneMasked) {
+      const confirmed = await showGentleConfirm({
+        title: '同步多端数据',
+        content: '建议绑定一个手机号，这样 H5 端和小程序端的花园数据就能互通同步了。',
+        confirmText: '立即绑定',
+      })
+      if (confirmed) bindPhoneVisible.value = true
+    }
   },
 })
 
@@ -265,34 +289,24 @@ function goToCommunity(): void {
         :current-user="currentUser"
         :is-authenticated="isAuthenticated"
         :loading="switchingSession"
+        :syncing-data="isSyncingData"
         :runtime-platform="runtimePlatform"
         @login="openLoginPopup"
         @edit-profile="openProfilePopup"
         @logout="handleLogoutToLocalMode"
+        @bind-phone="bindPhoneVisible = true"
+        @sync="handleManualSync"
       />
 
-      <!-- 手机号绑定入口（跨端账号统一） -->
+      <!-- 手机号绑定表单（点击 MineAuthCard 中的入口打开） -->
       <view
-        v-if="showBindPhoneEntry"
+        v-if="showBindPhoneEntry && bindPhoneVisible"
         class="card-soft rounded-[28rpx] bg-[var(--color-surface)] px-5 py-4 dark:bg-slate-900"
       >
-        <view v-if="!bindPhoneVisible" class="flex items-center justify-between gap-3">
-          <view class="min-w-0 flex-1">
-            <text class="block text-sm font-800 text-app-ink dark:text-slate-100">绑定手机号</text>
-            <text class="mt-1 block text-2xs leading-5 text-app-muted dark:text-slate-400">
-              绑定后可在 H5 和微信小程序之间同步全部数据
-            </text>
-          </view>
-          <button
-            class="btn-chip btn-chip-wide bg-[var(--color-mint)]/20 text-[var(--color-ink)] dark:bg-emerald-500/20 dark:text-emerald-100"
-            hover-class="opacity-92"
-            @tap="bindPhoneVisible = true"
-          >
-            去绑定
-          </button>
-        </view>
-        <view v-else class="flex flex-col gap-3">
-          <text class="block text-sm font-700 text-app-ink dark:text-slate-100">绑定手机号</text>
+        <view class="flex flex-col gap-3">
+          <text class="block text-sm font-700 text-app-ink dark:text-slate-100">
+            {{ isPhoneBound ? '更换绑定' : '绑定手机号' }}
+          </text>
           <input
             v-model="bindPhoneNumber"
             class="h-[80rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink dark:bg-slate-800 dark:text-slate-100"
@@ -328,8 +342,9 @@ function goToCommunity(): void {
             </button>
             <view class="flex-1">
               <SubmitBtn
-                text="确认绑定"
+                :text="isPhoneBound ? '确认更换' : '确认绑定'"
                 :loading="bindPhoneSubmitting"
+                :disabled="!canSubmitBindPhone"
                 variant="mint"
                 size="md"
                 @click="handleSubmitBindPhone"

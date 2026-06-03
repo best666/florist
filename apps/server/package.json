@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "scripts": {
     "start": "pnpm --filter @florist/contracts build && node dist/main.js",
+    "start:dev": "pnpm --filter @florist/contracts build && NODE_ENV=development nest start --watch",
+    "start:test": "pnpm --filter @florist/contracts build && NODE_ENV=test nest start --watch",
     "start:prod": "pnpm --filter @florist/contracts build && NODE_ENV=production node dist/main.js",
-    "start:dev": "pnpm --filter @florist/contracts build && nest start --watch",
     "build": "pnpm --filter @florist/contracts build && nest build",
     "build:prod": "pnpm --filter @florist/contracts build && nest build && node scripts/minify-dist.mjs",
     "db:up": "if ! docker info >/dev/null 2>&1; then echo 'Docker daemon not running. Starting Docker Desktop...' && open -a Docker && echo 'Waiting for Docker daemon...' && until docker info >/dev/null 2>&1; do sleep 2; done && echo 'Docker is ready.'; fi && docker compose -f docker-compose.mysql.yml up -d",

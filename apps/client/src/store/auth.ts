@@ -20,6 +20,8 @@ interface AuthStoreState {
   initializingSession: boolean
   switchingSession: boolean
   sessionInitialized: boolean
+  /** 最近一次成功同步的时间戳，用于判断是否有待同步的本地数据 */
+  lastSyncedAt: number | null
 }
 
 let initializeSessionRequest: Promise<void> | null = null
@@ -30,11 +32,23 @@ export const useAuthStore = defineStore('auth', {
     initializingSession: false,
     switchingSession: false,
     sessionInitialized: false,
+    lastSyncedAt: null,
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.session?.sessionUserId),
     currentUser: (state) => state.session?.user ?? (null as IUser | null),
     currentUserId: (state) => state.session?.sessionUserId ?? (null as string | null),
+    /** 本地是否有较新的数据需要推送到服务器 */
+    hasPendingSyncData(): boolean {
+      if (this.lastSyncedAt === null) return true
+      const flowerStore = useFlowerStore()
+      const recordStore = useRecordStore()
+      const allFlowers = [...flowerStore.flowers, ...flowerStore.recycleBin]
+      return (
+        allFlowers.some((f) => new Date(f.updatedAt).getTime() > this.lastSyncedAt!) ||
+        recordStore.records.some((r) => new Date(r.createdAt).getTime() > this.lastSyncedAt!)
+      )
+    },
   },
   actions: {
     applySession(session: IUserAuthSession): void {
@@ -215,6 +229,8 @@ export const useAuthStore = defineStore('auth', {
           await recordStore.initializeRecordCenter({ force: true })
         }
       }
+
+      this.lastSyncedAt = Date.now()
     },
 
     async loginByH5PhoneCode(payload: {
