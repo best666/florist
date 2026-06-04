@@ -1,39 +1,34 @@
 ---
 name: code-verify
-description: 代码校验 & 安全工具 — 语法/TS 类型/编译规范自动校验，归档高频报错
+description: 代码校验清单 — 修改后自动执行 typecheck。不单独调用，由 debug/batch-fix 完成后自动触发。
 triggers:
-  - 代码校验
-  - 代码检查
+  - 校验
   - 类型检查
-  - 编译检查
-  - code verify
-  - lint
 ---
 
-# 代码校验 & 安全工具
+# 校验清单
 
-## 前置规则
+本技能不单独调用，由 [[debug]] Phase 3 和 [[batch-fix]] Phase 2 自动触发。
 
-- **修改前先读取最新源码** — 确保基于当前版本操作，避免基于过时内容产生冲突。
-- **命令执行前预览** — 对文件系统或数据库有影响的命令，先展示将要执行的操作，减少误操作风险。
+## 执行顺序
 
-## 自动校验项
+遇错即停，不继续下一步：
 
-每次代码修改后自动执行：
-
-| 校验项 | 命令 | 适用范围 |
+| # | 命令 | 条件 |
 |---|---|---|
-| TypeScript 类型检查 | `pnpm typecheck` | 全项目 |
-| Prettier 格式检查 | `pnpm format:check` | 全项目 |
-| 服务端编译 | `pnpm --filter @florist/server build` | server 变更 |
-| 共享类型编译 | `pnpm --filter @florist/contracts build` | contracts 变更 |
+| 1 | `pnpm typecheck` | 任何修改后 |
+| 2 | `pnpm --filter @florist/contracts build` | 改了 contracts |
+| 3 | `pnpm --filter @florist/server build` | 改了 server |
 
-## 批量校验
+## 错误分类
 
-- ≥3 个文件修改时，可启用 Agent 并行校验各子项目。
-- 校验失败时，先展示错误摘要，询问用户后再进行修复。
+```
+本次修改引入: M 个 → 自动修复
+已有报错: K 个 → 过滤，不碰
+不确定: → 展示给用户确认
+```
 
-## 高频报错归档
+## 约束
 
-- 将反复出现的报错类型（类型不匹配、导入路径错误、环境变量缺失等）记录并归类。
-- 累计 ≥3 次同类型报错时，主动建议加入快捷指令库。
+- 已有报错不顺手修复
+- 格式问题不属于校验范围（Prettier 会自动处理）
