@@ -213,7 +213,7 @@ function handleSubmit(): void {
 
             <ImagePicker
               v-model="formState.images"
-              :max-count="4"
+              :max-count="3"
               upload-mode="cloud"
               asset-prefix="record-image"
               scope="record"

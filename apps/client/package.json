@@ -27,7 +27,8 @@
     "crypto-js": "^4.2.0",
     "pinia": "2.0.36",
     "pinia-plugin-persistedstate": "3.2.1",
-    "vue": "3.4.21"
+    "vue": "3.4.21",
+    "vue-advanced-cropper": "^2.8.9"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.8",

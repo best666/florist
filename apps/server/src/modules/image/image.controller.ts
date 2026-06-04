@@ -1,8 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { CompressImageDto } from './dto/compress-image.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
 import type { CompressImageResponse } from './image.service';
+import type { MulterFile } from './image.service';
 import type { UploadImageResponse } from './image.service';
 import { ImageService } from './image.service';
 
@@ -16,10 +18,12 @@ export class ImageController {
   }
 
   @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
   public uploadImage(
     @CurrentUserId() userId: string | undefined,
+    @UploadedFile() file: MulterFile,
     @Body() payload: UploadImageDto,
   ): Promise<UploadImageResponse> {
-    return this.imageService.uploadImage(payload, userId);
+    return this.imageService.uploadImage(file, payload, userId);
   }
 }

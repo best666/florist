@@ -42,6 +42,7 @@ export interface TimelineItem {
   readonly status?: Exclude<TagLabelStatus, 'custom'>
   readonly tone?: SoftTone
   readonly dotLabel?: string
+  readonly images?: ReadonlyArray<{ url: string; id: string }>
 }
 
 /**

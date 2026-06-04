@@ -1,10 +1,7 @@
-import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UploadImageDto {
-  @IsString()
-  @MaxLength(16 * 1024 * 1024)
-  public dataUrl!: string;
-
   @IsString()
   @IsIn(['avatar', 'flower', 'record'])
   public scope!: 'avatar' | 'flower' | 'record';
@@ -15,14 +12,10 @@ export class UploadImageDto {
   public cropMode?: 'none' | 'square' | 'card';
 
   @IsOptional()
-  @IsInt()
-  @Min(240)
-  @Max(1600)
+  @Type(() => Number)
   public maxWidth?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(40)
-  @Max(96)
+  @Type(() => Number)
   public quality?: number;
 }

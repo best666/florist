@@ -3,8 +3,12 @@ import type { IImageAsset } from '@florist/contracts'
 import { computed, ref } from 'vue'
 import AppImage from './AppImage.vue'
 import { useAppStore, useAuthStore } from '@/store'
-import { usePreparedImageAssets, removePreparedImageAsset } from '@/hooks/usePreparedImageAssets'
-import { showGentleToast } from '@/utils'
+import {
+  usePreparedImageAssets,
+  removePreparedImageAsset,
+  prepareAndUploadImage,
+} from '@/hooks/usePreparedImageAssets'
+import { revokeCompressedImageUrl, showGentleToast } from '@/utils'
 
 type UploadMode = 'cloud' | 'local'
 type CropMode = 'none' | 'square' | 'card'
@@ -55,17 +59,22 @@ const emit = defineEmits<{
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const { chooseUploadedImageAssets, chooseCachedImageAssets } = usePreparedImageAssets()
+const { chooseCachedImageAssets } = usePreparedImageAssets()
 const isUploading = ref(false)
+const uploadingImageIds = ref<string[]>([])
 
 const imageList = computed<IImageAsset[]>(() => [...props.modelValue])
 const remainingCount = computed(() => Math.max(0, props.maxCount - imageList.value.length))
 const canAdd = computed(() => remainingCount.value > 0 && !isUploading.value)
 
+function isImageUploading(id: string): boolean {
+  return uploadingImageIds.value.includes(id)
+}
+
 function checkGate(): boolean {
   if (props.uploadMode === 'local') return true
 
-  // 离线时云端上传不可用，但不应阻断 — 提示用户当前是离线模式
+  // 离线时云端上传暂不可用
   if (appStore.isOffline) {
     showGentleToast('当前处于离线模式，云端图片上传暂不可用。图片会先保存在本地，联网后可以重新添加。')
     return false
@@ -79,42 +88,101 @@ function checkGate(): boolean {
   return true
 }
 
+function generatePlaceholderId(): string {
+  return `uploading-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
 async function handleChooseImages(): Promise<void> {
   if (!canAdd.value) return
   if (!checkGate()) return
 
+  // 1. 选择图片 — 用户取消时 uni.chooseImage 会 reject，需要区分
+  let tempFilePaths: string[] = []
+  try {
+    const result = await uni.chooseImage({
+      count: remainingCount.value,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+    })
+    tempFilePaths = Array.isArray(result.tempFilePaths) ? result.tempFilePaths : []
+    if (!tempFilePaths.length) return
+  } catch {
+    // 用户取消选择，不提示
+    return
+  }
+
   isUploading.value = true
 
-  try {
-    const baseOptions = {
-      count: remainingCount.value,
-      maxSizeInBytes: props.maxSizeInBytes,
-    }
+  // 2. 立即创建占位图并回显到 UI
+  const placedIds: string[] = []
+  const currentImages = [...imageList.value]
 
-    let assets: IImageAsset[]
+  for (const path of tempFilePaths) {
+    const placeholderId = generatePlaceholderId()
+    placedIds.push(placeholderId)
+    currentImages.push({
+      id: placeholderId,
+      url: path,
+      createdAt: new Date().toISOString(),
+    })
+  }
 
-    if (props.uploadMode === 'cloud') {
-      assets = await chooseUploadedImageAssets({
-        ...baseOptions,
+  uploadingImageIds.value = [...placedIds]
+  emit('update:modelValue', currentImages)
+
+  // 3. 逐张压缩 + 上传，完成一张替换一张
+  const finalImages = [...currentImages]
+  let successCount = 0
+
+  for (let i = 0; i < tempFilePaths.length; i++) {
+    const filePath = tempFilePaths[i]!
+    const placeholderId = placedIds[i]
+
+    try {
+      const result = await prepareAndUploadImage(filePath, {
+        count: 1,
         assetPrefix: props.assetPrefix,
         scope: props.scope!,
         cropMode: props.cropMode,
         maxWidth: props.maxWidth,
         quality: props.quality,
+        maxSizeInBytes: props.maxSizeInBytes,
       })
-    } else {
-      assets = await chooseCachedImageAssets({
-        ...baseOptions,
-        assetPrefix: props.assetPrefix,
-      })
-    }
 
-    emit('update:modelValue', [...imageList.value, ...assets])
-  } catch {
-    // 用户取消选择时不提示
-  } finally {
-    isUploading.value = false
+      // 替换占位图为真实 asset
+      const idx = finalImages.findIndex(img => img.id === placeholderId)
+      if (idx !== -1) {
+        finalImages[idx] = result.asset
+      }
+
+      successCount += 1
+
+      // 清理压缩临时文件
+      if (result.compressedFilePath !== filePath) {
+        revokeCompressedImageUrl(result.compressedFilePath)
+      }
+    } catch (error) {
+      // 上传失败：移除占位图
+      const idx = finalImages.findIndex(img => img.id === placeholderId)
+      if (idx !== -1) {
+        finalImages.splice(idx, 1)
+      }
+
+      const msg = error instanceof Error ? error.message : '上传失败'
+      showGentleToast(`第 ${i + 1} 张图片上传失败：${msg}`)
+    } finally {
+      // 移除该图片的 loading 状态
+      uploadingImageIds.value = uploadingImageIds.value.filter(id => id !== placeholderId)
+      emit('update:modelValue', [...finalImages])
+    }
   }
+
+  // 4. 成功提示
+  if (successCount > 0) {
+    showGentleToast(`${successCount} 张图片上传成功`)
+  }
+
+  isUploading.value = false
 }
 
 function handlePreviewImage(currentUrl: string): void {
@@ -144,7 +212,7 @@ function handleSetCover(imageId: string): void {
 
 <template>
   <view class="mt-3 flex flex-wrap gap-12rpx">
-    <!-- 已上传图片卡片 -->
+    <!-- 已选图片卡片 -->
     <view
       v-for="image in imageList"
       :key="image.id"
@@ -152,6 +220,15 @@ function handleSetCover(imageId: string): void {
       :class="supportCover && coverImageId === image.id ? 'ring-2 ring-[var(--color-mint)] ring-offset-1' : ''"
       style="width: calc(33.333% - 8rpx)"
     >
+      <!-- 上传中蒙层 -->
+      <view
+        v-if="isImageUploading(image.id)"
+        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/60"
+      >
+        <view class="mb-2 h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <text class="text-2xs text-white/80">上传中</text>
+      </view>
+
       <AppImage
         :src="image.url"
         mode="aspectFill"
@@ -168,8 +245,11 @@ function handleSetCover(imageId: string): void {
         封面
       </view>
 
-      <!-- 操作按钮组 -->
-      <view class="absolute right-1 top-1 flex flex-col gap-1">
+      <!-- 操作按钮组（上传中隐藏删除按钮） -->
+      <view
+        v-if="!isImageUploading(image.id)"
+        class="absolute right-1 top-1 flex flex-col gap-1"
+      >
         <button
           v-if="supportCover && coverImageId !== image.id"
           class="btn-pill-sm h-6 min-h-6 rounded-full bg-slate-900/50 px-1.5 text-2xs text-white"

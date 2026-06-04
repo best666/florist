@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import type { IImageAsset } from '@florist/contracts'
 import { RecordActionType } from '@florist/contracts'
 import type { LocalFlower } from '@/interfaces'
-import { getFlowerDisplayName, getTimeAgo } from '@/utils'
-import { useAuthStore, useFlowerTaxonomyStore } from '@/store'
+import type { TimelineItem } from '@/interfaces'
+import {
+  getFlowerDisplayName,
+  getTimeAgo,
+  revokeCompressedImageUrl,
+  showGentleToast,
+} from '@/utils'
+import { getRecordActionMeta } from '@/interfaces'
+import { useAuthStore, useFlowerTaxonomyStore, useRecordStore } from '@/store'
+import { prepareAndUploadImage } from '@/hooks/usePreparedImageAssets'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import AppImage from '../app/AppImage.vue'
+import CropModal from '../app/CropModal.vue'
 import FloatingActionButton from '../app/FloatingActionButton.vue'
-
-function navigateToRecordPage(flowerId: string, actionType: RecordActionType): void {
-  uni.navigateTo({ url: `/pages/record/index?flowerId=${flowerId}&actionType=${actionType}` })
-}
+import TimeLine from '../TimeLine.vue'
 
 interface FlowerDetailPopupProps {
   modelValue: boolean
@@ -28,22 +35,134 @@ const emit = defineEmits<{
   delete: [flower: LocalFlower]
   'cover-tap': [flower: LocalFlower]
   'ai-advice': [flower: LocalFlower]
+  'update:cover': [payload: { flowerId: string; asset: IImageAsset }]
 }>()
 
 const flowerTaxonomyStore = useFlowerTaxonomyStore()
+const recordStore = useRecordStore()
 const authStore = useAuthStore()
+
+const isUploadingCover = ref(false)
+
+// H5 端裁剪弹窗状态
+const isCropVisible = ref(false)
+const cropImageSrc = ref('')
+// 存储裁剪 Promise 的 resolve，用于异步等待裁剪结果
+let resolveCropPromise: ((blob: Blob | null) => void) | null = null
 
 function closePopup(): void {
   emit('update:modelValue', false)
 }
 
-function handleCoverTap(): void {
+function handleCropConfirm(croppedBlob: Blob): void {
+  if (resolveCropPromise) {
+    resolveCropPromise(croppedBlob)
+    resolveCropPromise = null
+  }
+}
+
+function handleCropCancel(): void {
+  if (resolveCropPromise) {
+    resolveCropPromise(null)
+    resolveCropPromise = null
+  }
+}
+
+async function handleCoverTap(): Promise<void> {
   if (!props.flower) return
   if (!authStore.isAuthenticated) {
     uni.showToast({ title: '请先登录后上传封面', icon: 'none', duration: 2000 })
     return
   }
-  emit('cover-tap', props.flower)
+  if (isUploadingCover.value) return
+
+  // 1. 选图
+  let tempFilePaths: string[] = []
+  try {
+    // #ifdef MP-WEIXIN
+    // 小程序使用原生裁剪
+    const mpResult = await uni.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      crop: { quality: 100, width: 400, height: 300 },
+    })
+    tempFilePaths = Array.isArray((mpResult as unknown as { tempFilePaths: string[] }).tempFilePaths)
+      ? (mpResult as unknown as { tempFilePaths: string[] }).tempFilePaths
+      : []
+    // #endif
+    // #ifdef H5
+    const h5Result = await uni.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+    })
+    tempFilePaths = Array.isArray(h5Result.tempFilePaths) ? h5Result.tempFilePaths : []
+    // #endif
+    if (!tempFilePaths.length) return
+  } catch {
+    return
+  }
+
+  isUploadingCover.value = true
+
+  // #ifdef H5
+  // H5 端：弹裁剪窗，等待用户裁剪
+  const selectedPath = tempFilePaths[0]!
+
+  // 将选中的图片路径转为可跨域的 data URL 供 cropperjs 使用
+  try {
+    const blobResp = await fetch(selectedPath)
+    const blob = await blobResp.blob()
+    cropImageSrc.value = URL.createObjectURL(blob)
+    isCropVisible.value = true
+
+    const croppedBlob = await new Promise<Blob | null>((resolve) => {
+      resolveCropPromise = resolve
+    })
+
+    if (!croppedBlob) {
+      isUploadingCover.value = false
+      return // 用户取消裁剪
+    }
+
+    // 将裁剪结果转为 blob URL
+    tempFilePaths = [URL.createObjectURL(croppedBlob)]
+  } catch {
+    showGentleToast('图片处理失败，请重试')
+    isUploadingCover.value = false
+    return
+  }
+  // #endif
+
+  // 2. 压缩 + 上传（双端统一）
+  try {
+    const result = await prepareAndUploadImage(tempFilePaths[0]!, {
+      count: 1,
+      assetPrefix: 'flower-cover',
+      scope: 'flower',
+      cropMode: 'card',
+      maxWidth: 1440,
+      quality: 82,
+      maxSizeInBytes: 1.8 * 1024 * 1024,
+    })
+
+    if (result.compressedFilePath !== tempFilePaths[0]) {
+      revokeCompressedImageUrl(result.compressedFilePath)
+    }
+
+    emit('update:cover', {
+      flowerId: props.flower.id,
+      asset: result.asset,
+    })
+
+    showGentleToast('封面更新成功')
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : '上传失败'
+    showGentleToast(`封面上传失败：${msg}`)
+  } finally {
+    isUploadingCover.value = false
+  }
 }
 
 const { handleTouchEnd, handleTouchMove, handleTouchStart, maskMotionStyle, panelMotionStyle } =
@@ -72,10 +191,13 @@ const coverImage = computed(() => {
 const statusDotColor = computed(() => {
   if (!props.flower) return 'bg-slate-400'
   switch (props.flower.careStatus) {
-    case 'healthy': return 'bg-emerald-400 shadow-[0_0_6rpx_rgba(52,211,153,0.5)]'
+    case 'healthy':
+      return 'bg-emerald-400 shadow-[0_0_6rpx_rgba(52,211,153,0.5)]'
     case 'watering-needed':
-    case 'fertilizing-needed': return 'bg-amber-400 shadow-[0_0_6rpx_rgba(251,191,36,0.5)]'
-    default: return 'bg-slate-400'
+    case 'fertilizing-needed':
+      return 'bg-amber-400 shadow-[0_0_6rpx_rgba(251,191,36,0.5)]'
+    default:
+      return 'bg-slate-400'
   }
 })
 
@@ -85,8 +207,31 @@ const statusLabel = computed(() => {
 })
 
 const coverHint = computed(() => {
+  if (isUploadingCover.value) return '上传中...'
   if (!props.flower) return ''
   return props.flower.images.length > 0 ? '点击更换封面' : '点击上传封面'
+})
+
+// 养护时间线
+const recordsForFlower = computed(() => {
+  if (!props.flower) return []
+  return recordStore.getRecordsByFlowerId(props.flower.id)
+})
+
+const timelineItems = computed<TimelineItem[]>(() => {
+  return recordsForFlower.value.map((record) => {
+    const meta = getRecordActionMeta(record.actionType)
+    return {
+      id: record.id,
+      title: `${meta.emoji} ${meta.label}`,
+      timestamp: getTimeAgo(record.createdAt),
+      tone: meta.tone,
+      ...(record.note ? { description: record.note } : {}),
+      ...(record.images.length > 0
+        ? { images: record.images.map((img) => ({ url: img.url, id: img.id })) }
+        : {}),
+    } as TimelineItem
+  })
 })
 
 function handleFabClick(): void {
@@ -133,7 +278,7 @@ function handleFabClick(): void {
         class="max-h-[68vh] w-full overflow-x-hidden pr-1"
       >
         <view class="flex flex-col gap-4 pb-4">
-          <!-- 封面图：点击上传/替换 -->
+          <!-- 封面图：点击直接上传/替换 -->
           <view
             class="relative overflow-hidden rounded-[24rpx] bg-app-cream app-pressable"
             hover-class="opacity-90"
@@ -145,21 +290,38 @@ function handleFabClick(): void {
               class="h-[320rpx] w-full"
               error-text="暂无封面图"
             />
+            <!-- 上传中蒙层 -->
+            <view
+              v-if="isUploadingCover"
+              class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/50"
+            >
+              <view class="mb-2 h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <text class="text-2xs text-white/80">上传中</text>
+            </view>
             <view class="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-[#32404a]/50 to-transparent" />
             <!-- 封面提示 -->
-            <view class="absolute right-3 top-3 rounded-full bg-black/30 px-2.5 py-1 backdrop-blur-[4rpx]">
+            <view
+              class="absolute right-3 top-3 rounded-full bg-black/30 px-2.5 py-1 backdrop-blur-[4rpx] flex items-center"
+            >
               <text class="text-3xs text-white/80">{{ coverHint }}</text>
             </view>
             <view class="absolute bottom-3 left-4 right-4">
               <view class="flex items-end justify-between gap-3">
                 <view class="min-w-0 flex-1">
-                  <text class="block truncate text-lg font-800 text-white drop-shadow-[0_2rpx_6rpx_rgba(0,0,0,0.35)]">
+                  <text
+                    class="block truncate text-lg font-800 text-white drop-shadow-[0_2rpx_6rpx_rgba(0,0,0,0.35)]"
+                  >
                     {{ getFlowerDisplayName(props.flower) }}
                   </text>
                 </view>
                 <!-- 状态圆点 + 文字 -->
-                <view class="flex flex-none items-center gap-1 rounded-full bg-black/25 px-2 py-1 backdrop-blur-[4rpx]">
-                  <view class="h-2 w-2 flex-none rounded-full" :class="statusDotColor" />
+                <view
+                  class="flex flex-none items-center gap-1 rounded-full bg-black/25 px-2 py-1 backdrop-blur-[4rpx]"
+                >
+                  <view
+                    class="h-2 w-2 flex-none rounded-full"
+                    :class="statusDotColor"
+                  />
                   <text class="text-3xs leading-none text-white/90">{{ statusLabel }}</text>
                 </view>
               </view>
@@ -197,40 +359,33 @@ function handleFabClick(): void {
             </view>
           </view>
 
-          <!-- 养护信息 -->
+          <!-- 养护时间线 -->
           <view class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
-            <text class="text-2xs text-app-muted/70 dark:text-app-muted">养护记录</text>
-            <view class="mt-2 flex flex-wrap gap-8rpx">
-              <view
-                class="surface-soft app-pressable w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
-                hover-class="opacity-80"
-                @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Watering)"
+            <view class="mb-3 flex items-center justify-between">
+              <text class="text-2xs text-app-muted/70 dark:text-app-muted">养护时间线</text>
+              <text
+                class="text-3xs text-[var(--color-mint)] app-pressable"
+                @tap="emit('record', props.flower!)"
               >
-                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近浇水</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
-                  {{ props.flower.lastWateredAt ? getTimeAgo(props.flower.lastWateredAt) : '待记录' }}
-                </text>
-              </view>
-              <view
-                class="surface-soft app-pressable w-[calc(50%-4rpx)] rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
-                hover-class="opacity-80"
-                @tap="navigateToRecordPage(props.flower!.id, RecordActionType.Fertilizing)"
-              >
-                <text class="block text-2xs text-app-muted/70 dark:text-app-muted">最近施肥</text>
-                <text class="mt-0.5 block truncate text-sm font-700 text-app-ink dark:text-slate-100">
-                  {{ props.flower.lastFertilizedAt ? getTimeAgo(props.flower.lastFertilizedAt) : '待记录' }}
-                </text>
-              </view>
-            </view>
-            <view
-              v-if="props.flower.note"
-              class="surface-soft mt-2 rounded-[18rpx] px-3 py-2.5 dark:bg-slate-900"
-            >
-              <text class="block text-2xs text-app-muted/70 dark:text-app-muted">备注</text>
-              <text class="mt-0.5 block text-sm leading-5 text-app-muted dark:text-slate-300">
-                {{ props.flower.note }}
+                去打卡 +
               </text>
             </view>
+
+            <TimeLine
+              :items="timelineItems"
+              empty-text="还没有养护记录，快去打卡吧"
+            />
+          </view>
+
+          <!-- 备注 -->
+          <view
+            v-if="props.flower.note"
+            class="rounded-[24rpx] bg-app-ivory/90 p-4 dark:bg-slate-800"
+          >
+            <text class="text-2xs text-app-muted/70 dark:text-app-muted">备注</text>
+            <text class="mt-1 block text-sm leading-5 text-app-muted dark:text-slate-300">
+              {{ props.flower.note }}
+            </text>
           </view>
 
           <!-- 操作按钮 -->
@@ -276,7 +431,7 @@ function handleFabClick(): void {
         </view>
       </scroll-view>
 
-      <!-- 悬浮 AI 建议按钮（可拖拽） -->
+      <!-- 悬浮 AI 建议按钮 -->
       <FloatingActionButton
         icon="✦"
         text="AI 建议"
@@ -286,5 +441,14 @@ function handleFabClick(): void {
         @click="handleFabClick"
       />
     </view>
+
+    <!-- H5 封面裁剪弹窗 -->
+    <CropModal
+      v-model="isCropVisible"
+      :image-src="cropImageSrc"
+      :aspect-ratio="4 / 3"
+      @confirm="handleCropConfirm"
+      @cancel="handleCropCancel"
+    />
   </view>
 </template>

@@ -72,6 +72,7 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
+  const prepareAndUploadImage: typeof import('../hooks/usePreparedImageAssets').prepareAndUploadImage
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
@@ -127,6 +128,9 @@ declare global {
   // @ts-ignore
   export type { CustomOptionEditorConfig } from '../hooks/useCustomOptionEditor'
   import('../hooks/useCustomOptionEditor')
+  // @ts-ignore
+  export type { PrepareAndUploadResult } from '../hooks/usePreparedImageAssets'
+  import('../hooks/usePreparedImageAssets')
 }
 
 // for vue template auto import
@@ -200,6 +204,7 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
+    readonly prepareAndUploadImage: UnwrapRef<typeof import('../hooks/usePreparedImageAssets')['prepareAndUploadImage']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>

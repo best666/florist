@@ -379,6 +379,41 @@ function handleEditFlower(flower: LocalFlower): void {
   isFormVisible.value = true
 }
 
+async function handleUpdateCover(payload: { flowerId: string; asset: { id: string; url: string; createdAt: string } }): Promise<void> {
+  const targetFlower = flowerStore.getFlowerById(payload.flowerId)
+  if (!targetFlower) return
+
+  const nextImages = [...targetFlower.images, {
+    id: payload.asset.id,
+    url: payload.asset.url,
+    createdAt: payload.asset.createdAt,
+  }]
+
+  const values = {
+    name: targetFlower.name,
+    nickname: targetFlower.nickname ?? '',
+    category: targetFlower.category,
+    customCategoryId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCategoryId,
+    placement: targetFlower.placement,
+    customPlacementId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customPlacementId,
+    careDifficulty: targetFlower.careDifficulty,
+    customCareDifficultyId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareDifficultyId,
+    careStatus: targetFlower.careStatus,
+    customCareStatusId: flowerTaxonomyStore.flowerSelections[targetFlower.id]?.customCareStatusId,
+    coverImageId: payload.asset.id,
+    note: targetFlower.note ?? '',
+    images: nextImages,
+    lastWateredAt: targetFlower.lastWateredAt ?? '',
+    lastFertilizedAt: targetFlower.lastFertilizedAt ?? '',
+  }
+
+  try {
+    await flowerStore.upsertFlower(values, payload.flowerId)
+  } catch {
+    showGentleToast('封面同步失败，请稍后重试')
+  }
+}
+
 function handlePreviewFlower(flower: LocalFlower): void {
   const firstImage = flower.images[0]
 
@@ -948,7 +983,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         v-model="isDetailPopupVisible"
         :flower="selectedDetailFlower"
         @edit="handleEditFlower"
-        @cover-tap="handleEditFlower"
+        @update:cover="handleUpdateCover"
         @record="handleDetailNavigate($event, 'record')"
         @album="handleDetailNavigate($event, 'album')"
         @preview="handlePreviewFlower"

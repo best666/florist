@@ -30,6 +30,13 @@ const normalizedItems = computed(() => props.items)
 function resolveDotClass(item: TimelineItem): string {
   return toneDotClassMap[item.tone ?? 'mint']
 }
+
+function handlePreviewImage(images: ReadonlyArray<{ url: string }>, currentUrl: string): void {
+  uni.previewImage({
+    urls: images.map((img) => img.url),
+    current: currentUrl,
+  })
+}
 </script>
 
 <template>
@@ -93,6 +100,21 @@ function resolveDotClass(item: TimelineItem): string {
               :key="tag"
               :text="tag"
               tone="slate"
+            />
+          </view>
+
+          <!-- 图片缩略图 -->
+          <view
+            v-if="item.images?.length"
+            class="mt-3 flex flex-wrap gap-6rpx"
+          >
+            <image
+              v-for="img in item.images"
+              :key="img.id"
+              :src="img.url"
+              mode="aspectFill"
+              class="h-[72rpx] w-[72rpx] rounded-[12rpx] bg-slate-200 dark:bg-slate-700"
+              @tap.stop="handlePreviewImage(item.images!, img.url)"
             />
           </view>
 

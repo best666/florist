@@ -26,6 +26,12 @@ export interface UploadImageResponse {
   compressedBytes: number;
 }
 
+export interface MulterFile {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+}
+
 type UploadCropMode = 'none' | 'square' | 'card';
 
 const DEV_SERVER_RUNTIME_FILE = path.resolve(process.cwd(), '.runtime/dev-server.json');
@@ -219,36 +225,56 @@ export class ImageService {
     return this.compressImageInternal(payload, 'compress');
   }
 
-  public async uploadImage(payload: UploadImageDto, userIdInput?: string): Promise<UploadImageResponse> {
+  public async uploadImage(
+    file: MulterFile,
+    payload: UploadImageDto,
+    userIdInput?: string,
+  ): Promise<UploadImageResponse> {
     const userId = await this.usersService.resolveCurrentUserId(userIdInput);
 
-    const parsedImage = parseDataUrl(payload.dataUrl);
+    const imageBuffer = file.buffer;
+    const mimeType = file.mimetype;
     const cropMode = resolveCropMode(payload);
     const maxWidth = resolveUploadMaxWidth(payload.maxWidth, payload.scope);
     const quality = resolveUploadQuality(payload.quality);
     const startedAt = Date.now();
-    const metadata = await sharp(parsedImage.buffer).rotate().metadata();
-    const originalWidth = metadata.width ?? 0;
-    const originalHeight = metadata.height ?? 0;
+    const rawMetadata = await sharp(imageBuffer).metadata();
+    const orientation = rawMetadata.orientation ?? 1;
+    // EXIF orientations 5–8 involve 90° or 270° rotation, which swaps width and height.
+    // sharp().rotate() auto-applies this normalization, so we must use the post-rotation
+    // dimensions when computing the crop region — otherwise extract() fails on phone photos.
+    let originalWidth = rawMetadata.width ?? 0;
+    let originalHeight = rawMetadata.height ?? 0;
+    if (orientation >= 5 && orientation <= 8) {
+      [originalWidth, originalHeight] = [originalHeight, originalWidth];
+    }
 
     if (originalWidth <= 0 || originalHeight <= 0) {
       throw new BadRequestException('图片尺寸解析失败，请重新选择一张清晰图片');
     }
 
     const cropRegion = buildCropRegion(originalWidth, originalHeight, cropMode);
-    const format = resolveOutputFormat(parsedImage.mimeType);
-    const transformedPipeline = cropRegion
-      ? sharp(parsedImage.buffer).rotate().extract(cropRegion)
-      : sharp(parsedImage.buffer).rotate();
-    const resizedPipeline = transformedPipeline.resize({
-      width: maxWidth,
-      withoutEnlargement: true,
-    });
-    const outputBuffer = format === 'png'
-      ? await resizedPipeline.png({ quality }).toBuffer()
-      : format === 'webp'
-        ? await resizedPipeline.webp({ quality }).toBuffer()
-        : await resizedPipeline.jpeg({ quality }).toBuffer();
+    const format = resolveOutputFormat(mimeType);
+
+    let outputBuffer: Buffer;
+    try {
+      const transformedPipeline = cropRegion
+        ? sharp(imageBuffer).rotate().extract(cropRegion)
+        : sharp(imageBuffer).rotate();
+      const resizedPipeline = transformedPipeline.resize({
+        width: maxWidth,
+        withoutEnlargement: true,
+      });
+      outputBuffer = format === 'png'
+        ? await resizedPipeline.png({ quality }).toBuffer()
+        : format === 'webp'
+          ? await resizedPipeline.webp({ quality }).toBuffer()
+          : await resizedPipeline.jpeg({ quality }).toBuffer();
+    } catch (sharpError: unknown) {
+      const message = sharpError instanceof Error ? sharpError.message : String(sharpError);
+      throw new BadRequestException(`图片处理失败：${message}`);
+    }
+
     const outputMetadata = await sharp(outputBuffer).metadata();
     const extension = resolveFileExtension(format);
     const dayKey = new Date().toISOString().slice(0, 10);
@@ -275,7 +301,7 @@ export class ImageService {
       url: `${resolveServerOrigin(this.appEnv.port)}${relativeUrl}`,
       width: outputMetadata.width ?? maxWidth,
       height: outputMetadata.height ?? outputMetadata.width ?? maxWidth,
-      originalBytes: parsedImage.buffer.byteLength,
+      originalBytes: file.size,
       compressedBytes: outputBuffer.byteLength,
     };
   }

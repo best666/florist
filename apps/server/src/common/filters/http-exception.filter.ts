@@ -50,12 +50,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    await this.requestMonitorService.logException({
-      endpoint: `${request.method ?? 'UNKNOWN'} ${request.originalUrl ?? request.url ?? '/'}`,
-      statusCode,
-      ...(requestId ? { requestId: String(requestId) } : {}),
-      errorMessage: message,
-    });
+    try {
+      await this.requestMonitorService.logException({
+        endpoint: `${request.method ?? 'UNKNOWN'} ${request.originalUrl ?? request.url ?? '/'}`,
+        statusCode,
+        ...(requestId ? { requestId: String(requestId) } : {}),
+        errorMessage: message,
+      });
+    } catch (monitorError: unknown) {
+      this.logger.error(
+        '记录异常日志失败',
+        monitorError instanceof Error ? monitorError.message : String(monitorError),
+      );
+    }
 
     response.status(statusCode).json({
       success: false,
