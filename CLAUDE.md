@@ -198,3 +198,17 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## Project Skills
+
+Skills are stored in `.claude/skills/`. Invoke with `/skill-name` or by mentioning the trigger keywords.
+
+| Skill | 触发关键词 | 用途 |
+|---|---|---|
+| [debug](.claude/skills/debug.md) | 通用调试, debug | 定位根因 → 最小修改 → 输出 diff + 验证步骤 |
+| [minimal-change](.claude/skills/minimal-change.md) | 最小修改, minimal change | 精准 diff + git 提交文案 + 关联依赖校验 |
+| [batch-fix](.claude/skills/batch-fix.md) | 批量修复, batch fix | 多文件统一整改，输出修复清单 + 汇总报告 |
+| [code-verify](.claude/skills/code-verify.md) | 代码校验, code verify | 语法/TS 类型/编译自动校验，归档高频报错 |
+| [agent-schedule](.claude/skills/agent-schedule.md) | Agent 调度, agent schedule | ≥3 文件时自动拆分读→改→校验流水线 |
+| [component-library](.claude/skills/component-library.md) | 组件库管理, component library | 识别可复用逻辑，输出组件源码 + 示例 + 文档 |
+| [shortcut-commands](.claude/skills/shortcut-commands.md) | 快捷指令, shortcut | 收拢高频操作为简短别名，支持模板导入 |
