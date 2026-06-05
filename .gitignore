@@ -22,3 +22,25 @@ apps/server/.mysql
 apps/server/.runtime
 apps/server/var/backups
 apps/server/var/uploads
+
+# Logs and runtime dumps
+*.log
+*.hprof
+logs/
+
+# Local env overrides
+.env.local
+.env.*.local
+
+# IDE (full vscode dir, not just workspaces)
+.vscode/
+
+# OS
+Thumbs.db
+
+# Secrets and credentials
+credentials*
+*secret*
+
+# NPM registry auth
+.npmrc

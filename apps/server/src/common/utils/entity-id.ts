@@ -1,3 +1,6 @@
+import { randomBytes } from 'node:crypto';
+
 export function createEntityId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const random = randomBytes(4).toString('base64url').slice(0, 6);
+  return `${prefix}-${Date.now()}-${random}`;
 }

@@ -1,5 +1,5 @@
 import type { IFlower, IImageAsset } from '@florist/contracts';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import type { Flower, FlowerImage, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { createEntityId } from '../../common/utils/entity-id';
@@ -252,6 +252,15 @@ export class FlowersService {
 
     await this.prisma.$transaction(async (transaction) => {
       for (const payload of payloads) {
+        // 防止越权：检查花是否属于其他用户
+        const existing = await transaction.flower.findFirst({
+          where: { id: payload.id },
+          select: { userId: true },
+        });
+        if (existing && existing.userId !== userId) {
+          throw new UnauthorizedException('您无权同步此花卉');
+        }
+
         await transaction.flower.upsert({
           where: { id: payload.id },
           update: {
