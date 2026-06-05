@@ -229,7 +229,7 @@ function handleSubmit(): void {
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-sm font-700 text-app-ink dark:text-slate-100">打卡类型</text>
             <view
-              class="mt-3 flex flex-wrap gap-12rpx"
+              class="mt-3 grid grid-cols-3 gap-12rpx"
             >
               <button
                 v-for="option in RECORD_ACTION_OPTIONS"
@@ -240,12 +240,9 @@ function handleSubmit(): void {
                     ? 'bg-[var(--color-surface)] shadow-[0_12rpx_28rpx_rgba(148,163,184,0.14)] dark:bg-slate-900'
                     : 'bg-[var(--color-surface)]/60 border-transparent dark:bg-slate-900/70'
                 "
-                :style="{
-                  width: 'calc(33.333% - 8rpx)',
-                  ...(formState.actionType === option.value
-                    ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
-                    : {}),
-                }"
+                :style="formState.actionType === option.value
+                  ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
+                  : {}"
                 hover-class="opacity-92"
                 @tap="formState.actionType = option.value"
               >

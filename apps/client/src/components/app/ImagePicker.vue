@@ -211,14 +211,13 @@ function handleSetCover(imageId: string): void {
 </script>
 
 <template>
-  <view class="mt-3 flex flex-wrap gap-12rpx">
+  <view class="mt-3 grid grid-cols-3 gap-12rpx">
     <!-- 已选图片卡片 -->
     <view
       v-for="image in imageList"
       :key="image.id"
       class="group relative overflow-hidden rounded-[24rpx] bg-[var(--color-surface)] dark:bg-slate-900"
       :class="supportCover && coverImageId === image.id ? 'ring-2 ring-[var(--color-mint)] ring-offset-1' : ''"
-      style="width: calc(33.333% - 8rpx)"
     >
       <!-- 上传中蒙层 -->
       <view

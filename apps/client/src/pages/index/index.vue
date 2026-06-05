@@ -379,15 +379,21 @@ function handleEditFlower(flower: LocalFlower): void {
   isFormVisible.value = true
 }
 
-async function handleUpdateCover(payload: { flowerId: string; asset: { id: string; url: string; createdAt: string } }): Promise<void> {
+async function handleUpdateCover(payload: {
+  flowerId: string
+  asset: { id: string; url: string; createdAt: string }
+}): Promise<void> {
   const targetFlower = flowerStore.getFlowerById(payload.flowerId)
   if (!targetFlower) return
 
-  const nextImages = [...targetFlower.images, {
-    id: payload.asset.id,
-    url: payload.asset.url,
-    createdAt: payload.asset.createdAt,
-  }]
+  const nextImages = [
+    ...targetFlower.images,
+    {
+      id: payload.asset.id,
+      url: payload.asset.url,
+      createdAt: payload.asset.createdAt,
+    },
+  ]
 
   const values = {
     name: targetFlower.name,
@@ -710,9 +716,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
         网络暂时休息中，你的所有操作都会安全保存在本地，联网后会自动同步。
       </view>
 
-      <view
-        class="flex flex-wrap gap-12rpx"
-      >
+      <view class="flex flex-wrap gap-12rpx">
         <view
           v-for="card in summaryCards"
           :key="card.key"
@@ -882,7 +886,7 @@ function handleSelectQuickDrawerAction(actionKey: string): void {
       <view
         id="flower-grid"
         v-if="filteredFlowers.length > 0"
-        class="flex flex-wrap gap-12rpx"
+        class="grid grid-cols-3 gap-12rpx"
       >
         <FlowerCard
           v-for="flower in filteredFlowers"

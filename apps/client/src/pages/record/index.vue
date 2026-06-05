@@ -236,17 +236,17 @@ async function handleUndoLatestRecord(): Promise<void> {
           />
         </view>
 
-        <view class="mt-4 flex flex-wrap gap-12rpx">
+        <view class="mt-4 grid grid-cols-3 gap-12rpx">
           <button
             v-for="option in RECORD_ACTION_OPTIONS"
             :key="option.value"
-            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800 w-[calc((100%-24rpx)/3)]"
+            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800"
             :class="currentActionType === option.value ? '' : 'border-transparent'"
-            :style="{
-              ...(currentActionType === option.value
+            :style="
+              currentActionType === option.value
                 ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
-                : {}),
-            }"
+                : {}
+            "
             hover-class="opacity-92"
             @tap="openCheckin(option.value)"
           >

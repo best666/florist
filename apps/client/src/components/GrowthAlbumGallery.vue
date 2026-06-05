@@ -76,11 +76,9 @@ function handlePreviewAlbum(
 
     <view
       v-if="albumItems.length > 0"
-      class="mt-4 flex flex-wrap"
-      style="gap: 12rpx"
+      class="mt-4 grid grid-cols-2 gap-12rpx"
     >
       <view
-        style="width: calc(50% - 6rpx)"
         v-for="item in albumItems"
         :key="item.id"
         class="rounded-[28rpx] bg-app-ivory/90 p-3 shadow-[0_12rpx_28rpx_rgba(148,163,184,0.08)] transition-all duration-300 active:scale-[0.98] dark:bg-slate-800"

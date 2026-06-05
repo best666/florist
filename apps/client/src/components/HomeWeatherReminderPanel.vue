@@ -214,12 +214,12 @@ function emitReminderText(event: { detail: { value: string } }): void {
     <!-- Weather metrics -->
     <view
       v-if="weatherMetrics.length > 0"
-      class="mt-4 flex flex-wrap gap-12rpx"
+      class="mt-4 grid grid-cols-2 gap-12rpx"
     >
       <view
         v-for="metric in weatherMetrics"
         :key="metric.key"
-        class="w-[calc(50%-6rpx)] rounded-[24rpx] bg-slate-50/80 px-4 py-4 dark:bg-slate-800/60"
+        class="rounded-[24rpx] bg-slate-50/80 px-4 py-4 dark:bg-slate-800/60"
       >
         <view
           class="h-2 w-12 rounded-full bg-linear-to-r"
