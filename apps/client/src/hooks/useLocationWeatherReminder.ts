@@ -130,7 +130,9 @@ function getFallbackCity(): CityOption | null {
 }
 
 // 模块级共享状态，确保所有调用方拿到同一份数据
+// useCount 跟踪组件引用数，只在首个挂载/最后一个卸载时启停
 let sharedInstance: ReturnType<typeof createWeatherReminderInstance> | null = null
+let instanceUseCount = 0
 
 function createWeatherReminderInstance() {
   const cityStorage = useEncryptedStorage<CityOption>(CITY_CACHE_KEY)
@@ -434,8 +436,14 @@ function createWeatherReminderInstance() {
     void ensureInitialLocationPermissionRequest()
   })
 
+  instanceUseCount++
+
   onBeforeUnmount(() => {
-    stopReminderPolling()
+    // 只有最后一个使用该单例的组件卸载时才真正停止轮询
+    if (--instanceUseCount <= 0) {
+      instanceUseCount = 0
+      stopReminderPolling()
+    }
   })
 
   return {

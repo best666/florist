@@ -57,8 +57,8 @@ export function recycleFlower(flowerId: string): Promise<IFlower> {
 
 /** 批量同步本地植株到服务器（登录后首次同步） */
 export function syncFlowersBatch(items: ReadonlyArray<LocalFlower>): Promise<FlowerCenterResponse> {
-  // 剔除仅本地使用的字段（emoji 等），避免服务端校验报错
-  const cleanItems = items.map(({ emoji: _, ...rest }) => rest)
+  // 剔除仅本地使用的字段，避免服务端校验报错或字段冲突
+  const cleanItems = items.map(({ emoji: _, isDeleted: _d, deletedAt: _da, pendingPurgeAt: _pp, ...rest }) => rest)
   return http.post<FlowerCenterResponse>('/flowers/sync/batch', { items: cleanItems }, {
     showLoading: false,
     skipErrorToast: true,

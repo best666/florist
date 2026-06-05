@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -30,6 +31,7 @@ services:
   ai-agent:
     image: ${SERVER_IMAGE}-agent:${IMAGE_TAG}
     restart: unless-stopped
+    stop_grace_period: 45s
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,6 +64,7 @@ services:
   server:
     image: ${SERVER_IMAGE}:${IMAGE_TAG}
     restart: unless-stopped
+    stop_grace_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
