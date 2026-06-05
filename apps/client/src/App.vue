@@ -50,7 +50,10 @@ async function syncAppRuntime(
   message: string,
   options?: { showSuccess?: boolean; forceFullMerge?: boolean },
 ): Promise<void> {
-  await appStore.syncLocalGarden(message, { forceFullMerge: options?.forceFullMerge })
+  const syncOptions = options?.forceFullMerge !== undefined
+    ? { forceFullMerge: options.forceFullMerge }
+    : undefined
+  await appStore.syncLocalGarden(message, syncOptions)
 
   if (options?.showSuccess && !appStore.isOffline) {
     showGentleSuccess('网络回来了，离线记录已经重新对齐。')

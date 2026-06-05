@@ -278,7 +278,7 @@ async function executeRequest<TResponse>(
   return new Promise<TResponse>((resolve, reject) => {
     const uniRequestOptions: UniApp.RequestOptions = {
       url: options.url,
-      method: options.method,
+      method: options.method as 'GET' | 'POST',
       header: options.header,
       timeout: options.timeout,
       success: response => {
@@ -509,6 +509,28 @@ export const http = {
       url,
       method: RequestMethod.Put,
       data: data as RequestBody,
+    })
+  },
+  patch<TResponse, TBody = RequestBody>(
+    url: string,
+    data?: TBody,
+    options?: Omit<RequestOptions<TBody>, 'url' | 'method' | 'data'>,
+  ): Promise<TResponse> {
+    return request<TResponse>({
+      ...options,
+      url,
+      method: RequestMethod.Patch,
+      data: data as RequestBody,
+    })
+  },
+  delete<TResponse = void>(
+    url: string,
+    options?: Omit<RequestOptions<undefined>, 'url' | 'method'>,
+  ): Promise<TResponse> {
+    return request<TResponse>({
+      ...options,
+      url,
+      method: RequestMethod.Delete,
     })
   },
 }

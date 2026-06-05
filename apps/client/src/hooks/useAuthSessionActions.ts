@@ -1,6 +1,6 @@
 import type { IUserAuthSession } from '@florist/contracts'
 import { useAuthStore } from '@/store'
-import { handleCatchAndToast, showGentleSuccess } from '@/utils'
+import { handleCatchAndToast, showGentleSuccess, showGentleToast } from '@/utils'
 
 interface UseAuthSessionActionsOptions {
   readonly onLoginSuccess?: (session: IUserAuthSession) => void | Promise<void>

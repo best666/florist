@@ -1,5 +1,5 @@
 import { TaxonomyType } from '@florist/contracts'
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common'
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator'
 import { UsersService } from '../users/users.service'
 import { CreateTaxonomyItemDto, UpdateTaxonomyItemDto, SyncTaxonomyItemDto } from './dto/taxonomy.dto'
@@ -34,7 +34,16 @@ export class TaxonomyController {
     return this.taxonomyService.createItem(resolvedUserId, dto)
   }
 
-  @Patch(':id')
+  @Post('sync')
+  public async syncBatch(
+    @CurrentUserId() userId: string | undefined,
+    @Body() items: SyncTaxonomyItemDto[],
+  ) {
+    const resolvedUserId = await this.resolveUserId(userId)
+    return this.taxonomyService.syncBatch(resolvedUserId, items)
+  }
+
+  @Post(':id')
   public async updateItem(
     @Param('id') id: string,
     @CurrentUserId() userId: string | undefined,
@@ -44,21 +53,12 @@ export class TaxonomyController {
     return this.taxonomyService.updateItem(id, resolvedUserId, dto)
   }
 
-  @Delete(':id')
+  @Post(':id/delete')
   public async deleteItem(
     @Param('id') id: string,
     @CurrentUserId() userId: string | undefined,
   ) {
     const resolvedUserId = await this.resolveUserId(userId)
     return this.taxonomyService.deleteItem(id, resolvedUserId)
-  }
-
-  @Post('sync')
-  public async syncBatch(
-    @CurrentUserId() userId: string | undefined,
-    @Body() items: SyncTaxonomyItemDto[],
-  ) {
-    const resolvedUserId = await this.resolveUserId(userId)
-    return this.taxonomyService.syncBatch(resolvedUserId, items)
   }
 }

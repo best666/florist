@@ -23,13 +23,13 @@ export function updateTaxonomyItem(
   id: string,
   dto: { label?: string; baseValue?: string; sortOrder?: number },
 ): Promise<IFlowerTaxonomyItem> {
-  return http.patch<IFlowerTaxonomyItem>(`/taxonomy/${id}`, dto, {
+  return http.post<IFlowerTaxonomyItem>(`/taxonomy/${id}`, dto, {
     skipErrorToast: true,
   })
 }
 
 export function deleteTaxonomyItem(id: string): Promise<void> {
-  return http.delete(`/taxonomy/${id}`, {
+  return http.post<void>(`/taxonomy/${id}/delete`, undefined, {
     skipErrorToast: true,
   })
 }
@@ -43,7 +43,7 @@ export function syncTaxonomyItems(
     sortOrder?: number
   }>,
 ): Promise<IFlowerTaxonomyItem[]> {
-  return http.post<IFlowerTaxonomyItem[]>('/taxonomy/sync', items, {
+  return http.post<IFlowerTaxonomyItem[], Array<Record<string, unknown>>>('/taxonomy/sync', items as unknown as Record<string, unknown>[], {
     skipErrorToast: true,
   })
 }
