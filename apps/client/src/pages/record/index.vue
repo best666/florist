@@ -2,6 +2,7 @@
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import RecordActionGrid from '@/components/flower/RecordActionGrid.vue'
 import RecordCheckinPopup from '@/components/flower/RecordCheckinPopup.vue'
 import AppBottomNav from '@/components/app/AppBottomNav.vue'
 import AppButton from '@/components/app/AppButton.vue'
@@ -236,33 +237,11 @@ async function handleUndoLatestRecord(): Promise<void> {
           />
         </view>
 
-        <view class="mt-4 grid grid-cols-3 gap-12rpx">
-          <button
-            v-for="option in RECORD_ACTION_OPTIONS"
-            :key="option.value"
-            class="app-pressable min-h-[122rpx] rounded-[26rpx] border-2 border-solid bg-[var(--color-surface)]/76 px-3 py-3 text-left shadow-[var(--shadow-soft)] dark:bg-slate-800"
-            :class="currentActionType === option.value ? '' : 'border-transparent'"
-            :style="
-              currentActionType === option.value
-                ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
-                : {}
-            "
-            hover-class="opacity-92"
-            @tap="openCheckin(option.value)"
-          >
-            <view class="text-2xl">
-              {{ option.emoji }}
-            </view>
-            <text class="mt-2 block text-sm font-800 text-app-ink dark:text-slate-100">
-              {{ option.label }}
-            </text>
-            <text
-              class="mt-1 block text-2xs leading-5 text-app-muted/80 dark:text-app-muted break-words whitespace-normal"
-            >
-              {{ option.description }}
-            </text>
-          </button>
-        </view>
+        <RecordActionGrid
+          :selected-action-type="currentActionType"
+          variant="page"
+          @select="openCheckin"
+        />
       </view>
 
       <view

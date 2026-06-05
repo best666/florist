@@ -3,13 +3,13 @@ import { RecordActionType } from '@florist/contracts'
 import { computed, reactive, ref, watch } from 'vue'
 import {
   DEFAULT_RECORD_ACTION_TYPE,
-  RECORD_ACTION_OPTIONS,
   createDefaultRecordFormValues,
   getRecordActionMeta,
   type LocalFlower,
   type RecordFormValues,
 } from '@/interfaces'
 import { containsIllegalCharacters, isBlankString, showGentleToast } from '@/utils'
+import RecordActionGrid from './RecordActionGrid.vue'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import ImagePicker from '../app/ImagePicker.vue'
 import InfoPopover from '../app/InfoPopover.vue'
@@ -228,35 +228,11 @@ function handleSubmit(): void {
 
           <view class="rounded-[28rpx] bg-app-ivory/90 p-4 dark:bg-slate-800">
             <text class="text-sm font-700 text-app-ink dark:text-slate-100">打卡类型</text>
-            <view
-              class="mt-3 grid grid-cols-3 gap-12rpx"
-            >
-              <button
-                v-for="option in RECORD_ACTION_OPTIONS"
-                :key="option.value"
-                class="app-pressable min-h-[110rpx] rounded-[24rpx] border-2 border-solid px-3 py-3 text-left"
-                :class="
-                  formState.actionType === option.value
-                    ? 'bg-[var(--color-surface)] shadow-[0_12rpx_28rpx_rgba(148,163,184,0.14)] dark:bg-slate-900'
-                    : 'bg-[var(--color-surface)]/60 border-transparent dark:bg-slate-900/70'
-                "
-                :style="formState.actionType === option.value
-                  ? { borderColor: `var(--color-${option.tone === 'slate' ? 'muted' : option.tone})` }
-                  : {}"
-                hover-class="opacity-92"
-                @tap="formState.actionType = option.value"
-              >
-                <view class="text-2xl">
-                  {{ option.emoji }}
-                </view>
-                <text class="mt-2 block text-sm font-700 text-app-ink dark:text-slate-100">
-                  {{ option.label }}
-                </text>
-                <text class="mt-1 block text-2xs leading-5 text-app-muted/70 dark:text-app-muted" style="overflow-wrap: break-word">
-                  {{ option.description }}
-                </text>
-              </button>
-            </view>
+            <RecordActionGrid
+              :selected-action-type="formState.actionType"
+              variant="popup"
+              @select="formState.actionType = $event"
+            />
           </view>
         </view>
       </scroll-view>
