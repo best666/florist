@@ -40,9 +40,37 @@ const themeClass = usePageTheme()
       </view>
 
       <view class="card-soft rounded-[32rpx]">
-        <text class="block text-base font-800 text-app-ink">4. 你的控制权</text>
+        <text class="block text-base font-800 text-app-ink">4. 数据存储与保留</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          你的植物数据和养护记录存储在本地设备和云端服务器上。备份文件默认保留 14 天，你可以随时手动删除或重新生成。登录账户注销时，云端数据将在 30 天内清除。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">5. 第三方服务</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          天气数据由 Open-Meteo 和 OpenStreetMap 提供；AI 建议通过 DeepSeek 大模型生成。这些服务仅接收必要的查询参数（城市名、天气数据、植物状态），不包含你的个人身份信息。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">6. 儿童隐私</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          本应用面向所有年龄段的植物爱好者。如果你未满 14 周岁，请在监护人的陪同下阅读本协议并决定是否继续使用。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">7. 你的控制权</text>
         <text class="mt-3 block text-sm leading-7 text-app-muted">
           你可以随时在个人中心执行备份、恢复或清空本地数据，也可以打开系统权限设置调整定位、相册和通知相关授权。清空操作不可撤回，请在执行前先做好备份。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">8. 关于我们</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          植愈日记由植愈日记开发团队开发和运营。如果你对隐私保护或数据处理有任何疑问，可以通过应用内的「反馈与建议」功能联系我们。
         </text>
       </view>
     </view>

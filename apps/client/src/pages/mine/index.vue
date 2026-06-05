@@ -362,6 +362,7 @@ function goToCommunity(): void {
 
       <MineStatisticsGrid :cards="statisticsCards" />
 
+      <!-- #ifndef MP-WEIXIN -->
       <view
         class="card-soft rounded-[28rpx] dark:bg-slate-900 app-pressable"
         hover-class="opacity-92"
@@ -378,6 +379,7 @@ function goToCommunity(): void {
           <text class="text-app-muted">→</text>
         </view>
       </view>
+      <!-- #endif -->
 
       <CollapsibleSection
         title="皮肤主题"

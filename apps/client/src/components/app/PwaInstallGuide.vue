@@ -108,6 +108,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <!-- #ifdef H5 -->
   <view
     v-if="visible"
     class="fixed bottom-6 left-4 right-4 z-80 animate-bounce-in rounded-[28rpx] bg-white px-5 py-4 shadow-[0_18rpx_60rpx_rgba(15,23,42,0.22)] dark:bg-slate-800"
@@ -189,6 +190,7 @@ onBeforeUnmount(() => {
       </button>
     </template>
   </view>
+  <!-- #endif -->
 </template>
 
 <style scoped>

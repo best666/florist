@@ -30,6 +30,7 @@ export function useTheme() {
 
   /** H5：将 CSS 变量和背景渐变注入到页面级元素 */
   function applyThemeToH5(themeSkinId: ThemeSkinId): void {
+    // #ifdef H5
     const platform = appStore.runtimePlatform ?? getRuntimePlatform()
     if (platform !== ClientPlatform.H5) return
 
@@ -65,6 +66,7 @@ export function useTheme() {
     }
 
     applyToPageBody()
+    // #endif
   }
 
   /** 完整应用一套主题 */

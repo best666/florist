@@ -40,9 +40,23 @@ const themeClass = usePageTheme()
       </view>
 
       <view class="card-soft rounded-[32rpx]">
-        <text class="block text-base font-800 text-app-ink">4. 协议更新</text>
+        <text class="block text-base font-800 text-app-ink">4. 知识产权</text>
         <text class="mt-3 block text-sm leading-7 text-app-muted">
-          当产品能力、权限使用方式或数据处理策略发生明显变化时，我们会同步更新说明页面。继续使用即视为你接受更新后的协议内容。
+          应用内的图标、界面设计、文案和代码均属于植愈日记开发团队。未经许可，不得复制、修改或分发本应用的任何部分用于商业目的。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">5. 协议更新与法律适用</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          当产品能力、权限使用方式或数据处理策略发生明显变化时，我们会同步更新说明页面。继续使用即视为你接受更新后的协议内容。本协议适用中华人民共和国法律。
+        </text>
+      </view>
+
+      <view class="card-soft rounded-[32rpx]">
+        <text class="block text-base font-800 text-app-ink">6. 联系我们</text>
+        <text class="mt-3 block text-sm leading-7 text-app-muted">
+          植愈日记由植愈日记开发团队开发和运营。如果你对本协议有任何疑问，可以通过应用内的「反馈与建议」功能联系我们。
         </text>
       </view>
     </view>
