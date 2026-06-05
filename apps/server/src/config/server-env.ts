@@ -353,6 +353,8 @@ export function validateServerEnv(
     AI_PROXY_BASE_URL: parsedEnv.aiProxyBaseUrl,
     AI_PROXY_API_KEY: parsedEnv.aiProxyApiKey,
     AI_PROXY_MODEL: parsedEnv.aiProxyModel,
+    AI_AGENT_URL: parsedEnv.aiAgentUrl,
+    AI_AGENT_API_KEY: parsedEnv.aiAgentApiKey,
     AI_DAILY_QUOTA: String(parsedEnv.aiDailyQuota),
     AI_CACHE_TTL_MS: String(parsedEnv.aiCacheTtlMs),
     WEATHER_CACHE_TTL_MS: String(parsedEnv.weatherCacheTtlMs),

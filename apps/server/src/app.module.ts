@@ -4,6 +4,8 @@ import { APP_FILTER } from '@nestjs/core';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import type { ServerEnvConfig } from './config/server-env';
 import { appConfig } from './config/app.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { RequestTraceInterceptor } from './common/interceptors/request-trace.interceptor';
@@ -37,7 +39,13 @@ import { WeatherModule } from './modules/weather/weather.module';
       validate: validateServerEnv,
       expandVariables: true,
     }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const appEnv = configService.getOrThrow<ServerEnvConfig>('app');
+        return [{ ttl: appEnv.throttleTtlMs, limit: appEnv.throttleLimit }];
+      },
+    }),
     CommonInfraModule,
     PrismaModule,
     HealthModule,

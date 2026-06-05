@@ -30,6 +30,9 @@ services:
   ai-agent:
     image: ${SERVER_IMAGE}-agent:${IMAGE_TAG}
     restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
       - OPENAI_API_KEY=${AI_PROXY_API_KEY}
       - OPENAI_BASE_URL=${AI_PROXY_BASE_URL}
