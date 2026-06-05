@@ -22,6 +22,8 @@ const { isAuthenticated, sessionInitialized, switchingSession } = storeToRefs(au
 const { refreshNetworkStatus } = useNetworkStatus()
 const { applyTheme, start: startThemeSystem } = useTheme()
 const loginPopupVisible = ref(false)
+// 防止 onLaunch + onShow 冷启动时重复初始化
+let launchInitialized = false
 
 const themeClass = computed(() => `theme-${memberStore.memberCache.themeSkinId}`)
 const runtimeBannerVisible = computed(() => isOffline.value || syncStatus.value !== 'idle')
@@ -91,6 +93,7 @@ const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
 })
 
 onLaunch(() => {
+  launchInitialized = true
   void (async () => {
     appStore.setRuntimePlatform(getRuntimePlatform())
     refreshNetworkStatus()
@@ -108,15 +111,21 @@ onShow(() => {
   void (async () => {
     appStore.setRuntimePlatform(getRuntimePlatform())
     refreshNetworkStatus()
-    await initializeAppSession()
+
+    // onLaunch 已标记初始化，onShow 跳过重复的 session 初始化和同步
+    if (!launchInitialized) {
+      await initializeAppSession()
+    }
+
     applyTheme(memberStore.memberCache.themeSkinId)
+
+    if (!launchInitialized && !appStore.isOffline && authStore.isAuthenticated) {
+      await syncAppRuntime('正在把最近记录轻轻对齐。')
+    }
 
     if (appStore.isOffline || !authStore.isAuthenticated) {
       void flowerStore.cleanupRecycleBin()
-      return
     }
-
-    await syncAppRuntime('正在把最近记录轻轻对齐。')
   })()
 })
 

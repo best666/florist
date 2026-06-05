@@ -28,10 +28,12 @@ export function useNetworkStatus() {
         })
       },
       fail: () => {
+        // 网络状态检查失败时应保守处理，优先标记为离线
+        // 避免 APP 误认为在线后发起注定失败的请求
         networkType.value = 'unknown'
-        isOffline.value = false
+        isOffline.value = true
         appStore.setNetworkStatus({
-          isOffline: false,
+          isOffline: true,
           networkType: 'unknown',
         })
       },

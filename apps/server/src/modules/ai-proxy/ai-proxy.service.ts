@@ -676,8 +676,9 @@ export class AiProxyService {
           // 其次：直接 AI（兼容旧配置）
           if (useDirectAi) {
             try {
-              await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1)
               const result = await this.requestDirectAi<TResponse>(input.scope, input.prompt)
+              // 调用成功后才扣减配额，避免失败浪费额度
+              await this.requestMonitorService.ensureAiQuota(resolvedUserId, input.scope, 1)
               upstreamProvider = appConfig.aiProxyModel
               return result
             } catch {
