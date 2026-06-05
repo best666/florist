@@ -15,6 +15,10 @@ import {
 import { ImageAssetItemDto } from '../../../common/dto/image-asset.dto';
 
 export class CreateRecordDto {
+  @IsOptional()
+  @IsString()
+  public id?: string;
+
   @IsString()
   public flowerId!: string;
 

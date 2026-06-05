@@ -233,14 +233,18 @@ export const useRecordStore = defineStore('records', {
         return nextRecord
       }
 
+      // 客户端预生成 ID，防止网络波动时服务器已创建但响应丢失导致重复数据
+      const recordId = values.id || createEntityId('record')
+
       try {
-        const nextRecord = (await createRecord(values)) as LocalRecord
+        const nextRecord = (await createRecord({ ...values, id: recordId })) as LocalRecord
         this.records = sortRecords([nextRecord, ...this.records])
         recordCenterLastLoadedAt = Date.now()
         await useFlowerStore().initializeGarden({ force: true })
         return nextRecord
       } catch {
-        const nextRecord = buildRecordEntity(values)
+        // 使用与 API 调用相同的 ID，避免服务器已创建但本地 ID 不同导致重复
+        const nextRecord: LocalRecord = { ...buildRecordEntity(values), id: recordId }
         this.records = sortRecords([nextRecord, ...this.records])
         recordCenterLastLoadedAt = Date.now()
         return nextRecord

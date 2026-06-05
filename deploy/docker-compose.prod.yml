@@ -15,11 +15,46 @@ services:
       - --max-connections=100
     volumes:
       - mysql-data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-p${MYSQL_ROOT_PASSWORD}']
       interval: 10s
       timeout: 5s
       retries: 10
+
+  ai-agent:
+    image: ${SERVER_IMAGE}-agent:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=${AI_PROXY_API_KEY}
+      - OPENAI_BASE_URL=${AI_PROXY_BASE_URL}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - SQLITE_PATH=/app/data/florist_agent.db
+      - CHROMA_PERSIST_DIR=/app/data/chroma
+      - API_KEY=${AI_AGENT_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - agent-data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://localhost:8000/health")']
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   server:
     image: ${SERVER_IMAGE}:${IMAGE_TAG}
@@ -32,6 +67,7 @@ services:
       PORT: 3000
       GLOBAL_PREFIX: ${GLOBAL_PREFIX}
       CORS_ORIGIN: ${CORS_ORIGIN}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}?connection_limit=10
       DATABASE_ENCRYPTION_KEY: ${DATABASE_ENCRYPTION_KEY}
       DATABASE_SSL_ENABLED: 'false'
@@ -43,6 +79,8 @@ services:
       AI_PROXY_BASE_URL: ${AI_PROXY_BASE_URL}
       AI_PROXY_API_KEY: ${AI_PROXY_API_KEY}
       AI_PROXY_MODEL: ${AI_PROXY_MODEL}
+      AI_AGENT_URL: ${AI_AGENT_URL}
+      AI_AGENT_API_KEY: ${AI_AGENT_API_KEY}
       AI_DAILY_QUOTA: ${AI_DAILY_QUOTA}
       AI_CACHE_TTL_MS: ${AI_CACHE_TTL_MS}
       WEATHER_CACHE_TTL_MS: ${WEATHER_CACHE_TTL_MS}
@@ -62,6 +100,12 @@ services:
     volumes:
       - server-uploads:/workspace/apps/server/var/uploads
       - server-backups:/workspace/apps/server/var/backups
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
     healthcheck:
       test:
         - CMD-SHELL
@@ -81,8 +125,15 @@ services:
         condition: service_healthy
     ports:
       - '${CLIENT_HTTP_PORT}:80'
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
 volumes:
   mysql-data:
   server-uploads:
   server-backups:
+  agent-data:

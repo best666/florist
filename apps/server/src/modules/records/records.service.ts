@@ -100,7 +100,7 @@ export class RecordsService {
     const userId = await this.resolveUserId(userIdInput);
     await this.flowersService.getFlowerById(payload.flowerId, userId);
 
-    const recordId = createEntityId('record');
+    const recordId = payload.id || createEntityId('record');
     const createdAt = new Date();
 
     await this.prisma.$transaction(async (transaction) => {

@@ -4,6 +4,7 @@ import type { KeyValueOption } from './base'
 import type { SoftTone } from './components'
 
 export interface RecordFormValues {
+  id?: string
   flowerId: string
   actionType: RecordActionType
   note: string

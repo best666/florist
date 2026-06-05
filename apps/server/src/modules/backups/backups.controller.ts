@@ -1,7 +1,9 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AdminAuthGuard } from '../admin/admin-auth.guard';
 import { BackupsService, type BackupStatusResponse } from './backups.service';
 
 @Controller('backups')
+@UseGuards(AdminAuthGuard)
 export class BackupsController {
   public constructor(private readonly backupsService: BackupsService) {}
 

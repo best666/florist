@@ -34,7 +34,6 @@ export interface MulterFile {
 
 type UploadCropMode = 'none' | 'square' | 'card';
 
-const DEV_SERVER_RUNTIME_FILE = path.resolve(process.cwd(), '.runtime/dev-server.json');
 const UPLOAD_ROOT_DIR = path.resolve(process.cwd(), 'var/uploads');
 
 function resolveOutputFormat(mimeType: string): 'png' | 'jpeg' | 'webp' {
@@ -124,22 +123,6 @@ function buildCropRegion(
     width,
     height: croppedHeight,
   };
-}
-
-function resolveServerOrigin(fallbackPort: number): string {
-  try {
-    const content = fs.readFileSync(DEV_SERVER_RUNTIME_FILE, 'utf8');
-    const runtimeInfo = JSON.parse(content) as { origin?: string };
-
-    if (runtimeInfo.origin) {
-      return runtimeInfo.origin;
-    }
-  }
-  catch {
-    // ignore runtime file read failures and fall back to configured port.
-  }
-
-  return `http://127.0.0.1:${fallbackPort}`;
 }
 
 function parseDataUrl(dataUrl: string): { mimeType: string, buffer: Buffer } {
@@ -298,7 +281,7 @@ export class ImageService {
     });
 
     return {
-      url: `${resolveServerOrigin(this.appEnv.port)}${relativeUrl}`,
+      url: `${this.appEnv.publicBaseUrl}${relativeUrl}`,
       width: outputMetadata.width ?? maxWidth,
       height: outputMetadata.height ?? outputMetadata.width ?? maxWidth,
       originalBytes: file.size,

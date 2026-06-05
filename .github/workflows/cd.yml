@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: florist-production-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-push:
@@ -79,6 +79,16 @@ jobs:
           tags: |
             ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-client:${{ steps.image_tag.outputs.value }}
             ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-client:latest
+
+      - name: Build and push AI agent image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/ai-agent
+          file: services/ai-agent/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server-agent:${{ steps.image_tag.outputs.value }}
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server-agent:latest
 
   deploy:
     needs: build-and-push

@@ -4,7 +4,7 @@ import { CreateRecordDto } from './create-record.dto';
 
 export class SyncRecordDto extends CreateRecordDto {
   @IsString()
-  public id!: string;
+  declare public id: string;
 
   @IsDateString()
   public createdAt!: string;

@@ -7,6 +7,7 @@ export interface ServerEnvSource {
   readonly PORT?: string;
   readonly GLOBAL_PREFIX?: string;
   readonly CORS_ORIGIN?: string;
+  readonly PUBLIC_BASE_URL?: string;
   readonly DATABASE_URL?: string;
   readonly MYSQL_URL?: string;
   readonly DATABASE_ENCRYPTION_KEY?: string;
@@ -47,6 +48,7 @@ export interface ServerEnvConfig {
   readonly port: number;
   readonly globalPrefix: string;
   readonly corsOrigin: string;
+  readonly publicBaseUrl: string;
   readonly databaseUrl: string;
   readonly databaseEncryptionKey: string;
   readonly databaseSslEnabled: boolean;
@@ -86,6 +88,7 @@ export const SERVER_ENV_DEFAULTS = {
   port: 3000,
   globalPrefix: 'api',
   corsOrigin: 'http://localhost:9000',
+  publicBaseUrl: 'http://127.0.0.1:3000',
   databaseUrl: 'mysql://florist:florist123@127.0.0.1:3307/florist?connection_limit=5',
   databaseEncryptionKey: 'replace-with-32-char-secret-key',
   databaseSslEnabled: false,
@@ -189,6 +192,10 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.CORS_ORIGIN,
       SERVER_ENV_DEFAULTS.corsOrigin,
     ),
+    publicBaseUrl: normalizeString(
+      envSource.PUBLIC_BASE_URL,
+      SERVER_ENV_DEFAULTS.publicBaseUrl,
+    ).replace(/\/$/, ''),
     databaseUrl,
     databaseEncryptionKey: normalizeString(
       envSource.DATABASE_ENCRYPTION_KEY,
@@ -333,6 +340,7 @@ export function validateServerEnv(
     PORT: String(parsedEnv.port),
     GLOBAL_PREFIX: parsedEnv.globalPrefix,
     CORS_ORIGIN: parsedEnv.corsOrigin,
+    PUBLIC_BASE_URL: parsedEnv.publicBaseUrl,
     DATABASE_URL: parsedEnv.databaseUrl,
     MYSQL_URL: parsedEnv.databaseUrl,
     DATABASE_ENCRYPTION_KEY: parsedEnv.databaseEncryptionKey,
