@@ -96,7 +96,7 @@ function hydrateFlowerCenter(state: FlowerState, center: FlowerState): void {
   // 用服务器数据覆盖/补充：服务器较新则取代本地，服务器独有则新增
   for (const [id, serverFlower] of serverMap) {
     const localFlower = mergedMap.get(id)
-    if (!localFlower || serverFlower.updatedAt >= localFlower.updatedAt) {
+    if (!localFlower || serverFlower.updatedAt > localFlower.updatedAt) {
       mergedMap.set(id, serverFlower)
     }
   }

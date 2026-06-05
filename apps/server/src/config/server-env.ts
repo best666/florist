@@ -1,4 +1,5 @@
 import path from 'node:path';
+import process from 'node:process';
 import type { LogLevel } from '@nestjs/common';
 
 export type ServerRuntimeMode = 'development' | 'production' | 'test';
@@ -176,13 +177,35 @@ export function getServerEnvFilePaths(nodeEnv?: string): string[] {
   ];
 }
 
+/**
+ * 生产模式下校验关键配置是否已从默认值更换。
+ * 打印警告而不是抛异常，避免因一个配置阻止排查其他问题。
+ */
+function warnProductionDefaults(config: ServerEnvConfig): void {
+  const checks: Array<{ key: string; value: string; fallback: string }> = [
+    { key: 'DATABASE_ENCRYPTION_KEY', value: config.databaseEncryptionKey, fallback: SERVER_ENV_DEFAULTS.databaseEncryptionKey },
+    { key: 'ADMIN_PASSWORD', value: config.adminPassword, fallback: SERVER_ENV_DEFAULTS.adminPassword },
+    { key: 'ADMIN_SESSION_SECRET', value: config.adminSessionSecret, fallback: SERVER_ENV_DEFAULTS.adminSessionSecret },
+    { key: 'AI_PROXY_API_KEY', value: config.aiProxyApiKey, fallback: SERVER_ENV_DEFAULTS.aiProxyApiKey },
+    { key: 'AI_AGENT_API_KEY', value: config.aiAgentApiKey, fallback: SERVER_ENV_DEFAULTS.aiAgentApiKey },
+  ];
+
+  for (const check of checks) {
+    if (check.value === check.fallback) {
+      console.warn(
+        `[Florist Production] ⚠️  ${check.key} 使用了默认值，生产环境请通过环境变量覆盖。`,
+      );
+    }
+  }
+}
+
 export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
   const databaseUrl = normalizeString(
     envSource.DATABASE_URL,
     normalizeString(envSource.MYSQL_URL, SERVER_ENV_DEFAULTS.databaseUrl),
   );
 
-  return {
+  const config: ServerEnvConfig = {
     port: normalizeNumber(envSource.PORT, SERVER_ENV_DEFAULTS.port),
     globalPrefix: normalizeString(
       envSource.GLOBAL_PREFIX,
@@ -328,6 +351,12 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       normalizeServerMode(process.env.NODE_ENV) !== 'production',
     ),
   };
+
+  if (normalizeServerMode(process.env.NODE_ENV) === 'production') {
+    warnProductionDefaults(config);
+  }
+
+  return config;
 }
 
 export function validateServerEnv(

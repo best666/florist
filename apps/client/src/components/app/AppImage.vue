@@ -48,11 +48,12 @@ function handleLoad(): void {
 function handleError(): void {
   if (currentSrc.value !== props.fallbackSrc) {
     currentSrc.value = props.fallbackSrc
-    failed.value = true
+    // fallback 本身就是一张友好的占位图，不展示错误遮罩
     loading.value = false
     return
   }
 
+  // fallback 图片也加载失败时才展示错误
   failed.value = true
   loading.value = false
 }
