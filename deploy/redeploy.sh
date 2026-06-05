@@ -42,19 +42,22 @@ check_health() {
 }
 
 FAILED=0
+CLIENT_PORT="${CLIENT_HTTP_PORT:-80}"
 
 check_health "Server" "http://127.0.0.1:3000/${API_PREFIX}/health" || FAILED=1
 check_health "AI Agent" "http://127.0.0.1:8000/health" || FAILED=1
-check_health "Client" "http://127.0.0.1:80/" || FAILED=1
-
-docker image prune -af --filter 'until=168h'
+check_health "Client" "http://127.0.0.1:${CLIENT_PORT}/" || FAILED=1
 
 if [ "$FAILED" -eq 1 ]; then
   echo ""
   echo "!!! Deployment health check failed. Check logs with:"
   echo "    docker compose -f docker-compose.prod.yml logs --tail 50"
+  echo "    Old images preserved for manual rollback."
   exit 1
 fi
 
 echo ""
 echo "All services healthy. Deployment successful."
+
+# 仅在成功部署后清理旧镜像，确保失败时旧镜像可用于回滚
+docker image prune -af --filter 'until=168h'
