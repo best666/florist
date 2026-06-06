@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
-    "postinstall": "cd services/ai-agent && (command -v python3 >/dev/null 2>&1 && python3 -m pip install -r requirements.txt --quiet 2>/dev/null || true)",
+    "postinstall": "(cd services/ai-agent 2>/dev/null && command -v python3 >/dev/null 2>&1 && python3 -m pip install -r requirements.txt --quiet 2>/dev/null) || true",
     "dev": "bash start-dev.sh",
     "prod": "NODE_ENV=production bash start-dev.sh",
     "dev:h5": "pnpm --filter @florist/client dev:h5",
