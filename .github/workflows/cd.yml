@@ -44,6 +44,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Mirror MySQL image to GHCR
+        run: |
+          docker pull mysql:8.4
+          docker tag mysql:8.4 ghcr.io/${{ steps.registry_owner.outputs.value }}/mysql:8.4
+          docker push ghcr.io/${{ steps.registry_owner.outputs.value }}/mysql:8.4
+
       - name: Build and push server image
         uses: docker/build-push-action@v6
         with:
