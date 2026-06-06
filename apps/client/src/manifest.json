@@ -32,7 +32,7 @@
   },
   "quickapp": {},
   "mp-weixin": {
-    "appid": "wxee9091e63a6d00c1",
+    "appid": "wx0000000000000000",
     "setting": {
       "urlCheck": false,
       "es6": true,
@@ -49,7 +49,9 @@
         "desc": "获取你所在城市的天气信息，为你的植物提供更精准的养护建议"
       }
     },
-    "requiredPrivateInfos": ["getLocation"]
+    "requiredPrivateInfos": [
+      "getLocation"
+    ]
   },
   "mp-alipay": {
     "usingComponents": true

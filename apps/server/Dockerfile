@@ -23,10 +23,12 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /workspace
 COPY --from=build /workspace /workspace
+COPY --from=build /pnpm /pnpm
 WORKDIR /workspace/apps/server
 RUN mkdir -p var/uploads var/backups .runtime && \
     useradd --create-home --shell /bin/bash florist && \
-    chown -R florist:florist /workspace
+    chown -R florist:florist /workspace && \
+    chown -R florist:florist /pnpm
 USER florist
 EXPOSE 3000
 CMD ["sh", "./docker-entrypoint.sh"]
