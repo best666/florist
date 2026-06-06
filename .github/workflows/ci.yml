@@ -19,6 +19,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.10.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,8 +27,27 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Get pnpm store path
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build shared contracts
+        run: pnpm --filter @florist/contracts build
+
+      - name: Generate Prisma client
+        run: pnpm --filter @florist/server prisma:generate
 
       - name: Typecheck workspace
         run: pnpm typecheck
