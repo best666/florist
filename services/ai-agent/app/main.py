@@ -51,10 +51,10 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["POST", "GET", "OPTIONS"],
+        allow_headers=["Content-Type", "X-API-Key"],
     )
 
     from app.api.router import api_router

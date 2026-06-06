@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     server_port: int = 8000
     api_key: str = "florist-agent-api-key-change-me"
     admin_key: str = "florist-admin-key-change-me"
+    cors_origins: list[str] = ["http://localhost:9000"]
 
     # Rate Limiting
     rate_limit_user_per_minute: int = 60

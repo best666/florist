@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.agent.engine import AgentEngine
 from app.agent.types import AgentContext
-from app.api.deps import get_agent_engine
+from app.api.deps import get_agent_engine, verify_api_key
 from app.api.schemas import ChatResponse
 from app.tools.registry import tool_registry
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/tools", tags=["tools"])
 
 
 @router.get("")
-async def list_tools():
+async def list_tools(x_api_key: str = Depends(verify_api_key)):
     """返回 Agent 所有可用工具及输入 schema，供后端发现和调用。"""
     tools = tool_registry.get_anthropic_tools()
     return {
@@ -30,6 +30,7 @@ async def list_tools():
 @router.post("/moderate")
 async def moderate_content(
     body: dict,
+    x_api_key: str = Depends(verify_api_key),
     engine: AgentEngine = Depends(get_agent_engine),
 ):
     """AI 内容审核 —— 检查反馈/评论是否合规。
