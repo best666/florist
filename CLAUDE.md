@@ -211,3 +211,4 @@ Skills are stored in `.claude/skills/`. Invoke with `/skill-name` or by mentioni
 | [component-library](.claude/skills/component-library.md) | 组件库, 抽取组件 | ≥3 处重复逻辑时建议抽取，输出源码 + 示例 + 文档 |
 | [shortcut-commands](.claude/skills/shortcut-commands.md) | 快捷指令, alias | 高频操作累计 ≥3 次后建议生成别名 |
 | [ask-dont-guess](.claude/skills/ask-dont-guess.md) | 需要信息, ask first | 缺信息主动问，需决策列选项，禁止猜测 |
+| [check-sensitive](.claude/skills/check-sensitive.md) | 提交, commit, 敏感信息, 检查泄露 | 每次提交前检查 API Key、密码、Token 等敏感信息 |
