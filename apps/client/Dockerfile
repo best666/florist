@@ -27,8 +27,8 @@ ENV VITE_APP_TITLE=植愈日记
 ENV VITE_STORAGE_AES_KEY=docker-build-placeholder
 ENV VITE_STORAGE_NAMESPACE=florist
 
-RUN pnpm --filter @florist/contracts build
-RUN pnpm --filter @florist/client build:prod
+RUN echo "[Dockerfile v2] Building contracts..." && pnpm --filter @florist/contracts build
+RUN echo "[Dockerfile v2] Building client (build:prod)..." && pnpm --filter @florist/client build:prod 2>&1
 
 FROM nginx:1.27-alpine AS runner
 COPY apps/client/nginx/default.conf /etc/nginx/conf.d/default.conf
