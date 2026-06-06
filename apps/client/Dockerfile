@@ -23,9 +23,12 @@ ENV VITE_APP_PUBLIC_BASE=$VITE_APP_PUBLIC_BASE
 ENV VITE_SERVER_BASEURL=$VITE_SERVER_BASEURL
 ENV VITE_APP_PROXY_ENABLE=$VITE_APP_PROXY_ENABLE
 ENV VITE_DELETE_CONSOLE=$VITE_DELETE_CONSOLE
+ENV VITE_APP_TITLE=植愈日记
+ENV VITE_STORAGE_AES_KEY=docker-build-placeholder
+ENV VITE_STORAGE_NAMESPACE=florist
 
 RUN pnpm --filter @florist/contracts build
-RUN pnpm --filter @florist/client build:h5
+RUN pnpm --filter @florist/client build:prod
 
 FROM nginx:1.27-alpine AS runner
 COPY apps/client/nginx/default.conf /etc/nginx/conf.d/default.conf
