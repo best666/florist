@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
 
-pnpm prisma migrate deploy
+npx prisma migrate deploy
 exec node dist/main.js
