@@ -2,21 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
+# Install Python dependencies (production only, no dev packages)
 COPY pyproject.toml .
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN pip install --no-cache-dir -e "."
 
 # Copy application code
 COPY app/ ./app/
 COPY data/ ./data/
 
-# Create data directory
-RUN mkdir -p /app/data
+# Create data directory and non-root user
+RUN mkdir -p /app/data && \
+    useradd --create-home --shell /bin/bash florist && \
+    chown -R florist:florist /app
+USER florist
 
 EXPOSE 8000
 

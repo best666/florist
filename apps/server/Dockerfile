@@ -15,6 +15,7 @@ RUN pnpm install --frozen-lockfile
 FROM deps AS build
 COPY apps/server apps/server
 COPY packages/contracts packages/contracts
+RUN pnpm --filter @florist/contracts build
 RUN pnpm --filter @florist/server prisma:generate
 RUN pnpm --filter @florist/server build:prod
 
@@ -23,6 +24,9 @@ ENV NODE_ENV=production
 WORKDIR /workspace
 COPY --from=build /workspace /workspace
 WORKDIR /workspace/apps/server
-RUN mkdir -p var/uploads var/backups .runtime
+RUN mkdir -p var/uploads var/backups .runtime && \
+    useradd --create-home --shell /bin/bash florist && \
+    chown -R florist:florist /workspace
+USER florist
 EXPOSE 3000
 CMD ["sh", "./docker-entrypoint.sh"]

@@ -24,6 +24,7 @@ ENV VITE_SERVER_BASEURL=$VITE_SERVER_BASEURL
 ENV VITE_APP_PROXY_ENABLE=$VITE_APP_PROXY_ENABLE
 ENV VITE_DELETE_CONSOLE=$VITE_DELETE_CONSOLE
 
+RUN pnpm --filter @florist/contracts build
 RUN pnpm --filter @florist/client build:h5
 
 FROM nginx:1.27-alpine AS runner

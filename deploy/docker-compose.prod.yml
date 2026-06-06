@@ -11,6 +11,8 @@ services:
     stop_grace_period: 30s
     logging: *default-logging
     mem_limit: 512M
+    networks:
+      - florist-internal
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -43,6 +45,8 @@ services:
     stop_grace_period: 45s
     logging: *default-logging
     mem_limit: 400M
+    networks:
+      - florist-internal
     depends_on:
       mysql:
         condition: service_healthy
@@ -79,6 +83,8 @@ services:
     stop_grace_period: 30s
     logging: *default-logging
     mem_limit: 400M
+    networks:
+      - florist-internal
     depends_on:
       mysql:
         condition: service_healthy
@@ -148,6 +154,9 @@ services:
         condition: service_healthy
     ports:
       - '${CLIENT_HTTP_PORT}:80'
+    networks:
+      - florist-public
+      - florist-internal
     deploy:
       resources:
         limits:
@@ -160,3 +169,8 @@ volumes:
   server-uploads:
   server-backups:
   agent-data:
+
+networks:
+  florist-public:
+  florist-internal:
+    internal: true
