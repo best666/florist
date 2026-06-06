@@ -86,5 +86,8 @@ fi
 echo ""
 echo "All services healthy. Deployment successful."
 
-# 仅在成功部署后清理旧镜像，确保失败时旧镜像可用于回滚
-docker image prune -af --filter 'until=168h'
+# 仅在成功部署后清理，确保失败时旧镜像可用于回滚
+echo ""
+echo "--- Cleaning up Docker disk space ---"
+docker image prune -af
+docker builder prune -af
