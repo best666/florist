@@ -14,6 +14,8 @@ venv/
 
 # Data
 data/*.db
+data/*.db-shm
+data/*.db-wal
 data/chroma/
 
 # IDE

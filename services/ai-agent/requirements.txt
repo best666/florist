@@ -1,0 +1,37 @@
+# Web
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+sse-starlette>=2.0.0
+
+# AI
+openai>=1.0.0
+anthropic>=0.106.0
+
+# Vector
+chromadb>=0.5.0
+
+# Database
+aiomysql>=0.2.0
+aiosqlite>=0.20.0
+
+# Data
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+
+# Utilities
+httpx>=0.28.0
+python-dateutil>=2.9.0
+rank-bm25>=0.2.2
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Observability
+opentelemetry-api>=1.28.0
+opentelemetry-sdk>=1.28.0
+opentelemetry-instrumentation-fastapi>=0.49b0
+opentelemetry-exporter-otlp>=1.28.0
+prometheus-client>=0.20.0
+
+# Security
+bleach>=6.0.0

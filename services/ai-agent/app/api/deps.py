@@ -26,3 +26,7 @@ async def get_agent(request: Request) -> AgentEngine:
     """Get AgentEngine instance from app state."""
     memory_db = request.app.state.memory_db
     return AgentEngine(memory_db)
+
+
+# Alias for tools_api compatibility
+get_agent_engine = get_agent

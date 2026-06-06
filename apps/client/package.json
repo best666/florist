@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "uni",
+    "predev:h5": "pnpm --filter @florist/contracts build",
     "dev:h5": "uni",
+    "predev:test": "pnpm --filter @florist/contracts build",
     "dev:test": "uni --mode test",
+    "predev:mp": "pnpm --filter @florist/contracts build",
     "dev:mp": "uni -p mp-weixin",
+    "predev:mp-weixin": "pnpm --filter @florist/contracts build",
     "dev:mp-weixin": "uni -p mp-weixin",
     "build": "uni build",
     "build:h5": "uni build",
