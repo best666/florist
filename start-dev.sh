@@ -28,7 +28,8 @@ else
   docker compose -f "$ROOT/apps/server/docker-compose.mysql.yml" up -d
   echo "  等待 MySQL 就绪..."
   for i in $(seq 1 15); do
-    if docker exec florist-mysql mysqladmin ping -h 127.0.0.1 -uroot -proot123456 --silent 2>/dev/null; then
+    MYSQL_ROOT_PW="${MYSQL_ROOT_PASSWORD:-changeme}"
+    if docker exec florist-mysql mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PW" --silent 2>/dev/null; then
       echo "  ✅ MySQL 已就绪"
       break
     fi

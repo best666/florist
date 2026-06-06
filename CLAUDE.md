@@ -41,7 +41,7 @@ pnpm format:check           # Check formatting only
 
 ```bash
 # Wipe and recreate both databases
-docker exec florist-mysql mysql -u root -proot123456 -e "DROP DATABASE IF EXISTS florist_test; CREATE DATABASE florist_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+docker exec florist-mysql mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS florist_test; CREATE DATABASE florist_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 pnpm db:deploy              # Apply to florist (development)
 pnpm db:init-test           # Apply to florist_test
 ```
@@ -126,7 +126,7 @@ Results cached in NestJS `RuntimeCacheService` with configurable TTL.
 
 ### Database
 
-MySQL 8.4 in Docker (port 3307). Database `florist`, user `florist`/`florist123`, root `root`/`root123456`. Separate `florist_test` database for testing. Prisma with MariaDB adapter (`@prisma/adapter-mariadb`). Migrations in `apps/server/prisma/migrations/`.
+MySQL 8.4 in Docker (port 3307). Database `florist`, user `florist`/password from `MYSQL_PASSWORD` env var, root password from `MYSQL_ROOT_PASSWORD` env var. Separate `florist_test` database for testing. Prisma with MariaDB adapter (`@prisma/adapter-mariadb`). Migrations in `apps/server/prisma/migrations/`.
 
 ### Constants to Know
 

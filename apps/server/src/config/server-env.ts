@@ -90,7 +90,7 @@ export const SERVER_ENV_DEFAULTS = {
   globalPrefix: 'api',
   corsOrigin: 'http://localhost:9000',
   publicBaseUrl: 'http://127.0.0.1:3000',
-  databaseUrl: 'mysql://florist:florist123@127.0.0.1:3307/florist?connection_limit=5',
+  databaseUrl: 'mysql://user:password@127.0.0.1:3307/florist?connection_limit=5',
   databaseEncryptionKey: 'replace-with-32-char-secret-key',
   databaseSslEnabled: false,
   backupCron: '0 30 3 * * *',

@@ -28,6 +28,7 @@ apps/server/var/uploads
 logs/
 
 # Local env overrides
+.env
 .env.local
 .env.*.local
 

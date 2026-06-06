@@ -58,7 +58,7 @@ triggers:
 |---|---|---|
 | /start | `pnpm dev` | 启动全栈开发环境 |
 | /check | `pnpm typecheck` | 全项目类型检查 |
-| /db-reset | `docker exec florist-mysql mysql -u root -proot123456 -e "DROP DATABASE IF EXISTS florist_test; CREATE DATABASE florist_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" && pnpm db:deploy && pnpm db:init-test` | 重置开发 + 测试数据库 |
+| /db-reset | `docker exec florist-mysql mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS florist_test; CREATE DATABASE florist_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" && pnpm db:deploy && pnpm db:init-test` | 重置开发 + 测试数据库 |
 
 ---
 *调试中累计 ≥3 次的高频操作将自动追加至此。*
