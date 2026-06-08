@@ -53,4 +53,33 @@ export class RuntimeCacheService {
   public delete(key: string): void {
     this.cacheStore.delete(key);
   }
+
+  public exists(key: string): boolean {
+    const cacheEntry = this.cacheStore.get(key);
+
+    if (!cacheEntry) {
+      return false;
+    }
+
+    if (cacheEntry.expiresAt <= Date.now()) {
+      this.cacheStore.delete(key);
+      return false;
+    }
+
+    return true;
+  }
+
+  /** 原子递增计数器，首次调用时设置 TTL。返回递增后的值。 */
+  public increment(key: string, ttlMs: number): number {
+    const cacheEntry = this.cacheStore.get(key);
+
+    if (!cacheEntry || cacheEntry.expiresAt <= Date.now()) {
+      this.cacheStore.set(key, { value: 1, expiresAt: Date.now() + ttlMs });
+      return 1;
+    }
+
+    const nextValue = (cacheEntry.value as number) + 1;
+    this.cacheStore.set(key, { value: nextValue, expiresAt: cacheEntry.expiresAt });
+    return nextValue;
+  }
 }

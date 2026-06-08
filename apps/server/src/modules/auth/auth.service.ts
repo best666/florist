@@ -3,6 +3,7 @@ import type { IUserAuthSession } from '@florist/contracts';
 import { UserLoginType } from '@florist/contracts';
 import { ConfigService } from '@nestjs/config';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CaptchaService } from '../../common/services/captcha.service';
 import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
 import { SmsService } from '../../common/services/sms.service';
 import type { ServerEnvConfig } from '../../config/server-env';
@@ -11,6 +12,10 @@ import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-ano
 import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
 import { RequestH5PhoneCodeDto } from './dto/request-h5-phone-code.dto';
+
+/** 最小化的请求接口，用于提取客户端 IP */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClientRequest = any;
 
 interface H5PhoneCodeResponse {
   readonly delivered: true;
@@ -35,6 +40,16 @@ interface ResolvedWechatSession {
 
 const H5_PHONE_CODE_COOLDOWN_MS = 60_000;
 const H5_PHONE_CODE_EXPIRES_MS = 5 * 60 * 1000;
+const VERIFICATION_MAX_ERROR_ATTEMPTS = 3;
+
+// IP 频率限制
+const RATE_CAPTCHA_GENERATE_PER_MIN = 30;
+const RATE_CAPTCHA_VERIFY_PER_MIN = 60;
+const RATE_SMS_SEND_PER_MIN = 10;
+const RATE_SMS_SEND_PER_HOUR = 20;
+const RATE_LOGIN_PER_MIN = 20;
+const RATE_CODE_VERIFY_PER_MIN = 30;
+const SMS_DAILY_LIMIT_PER_PHONE = 10;
 
 @Injectable()
 export class AuthService {
@@ -44,48 +59,104 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly runtimeCacheService: RuntimeCacheService,
     private readonly smsService: SmsService,
+    private readonly captchaService: CaptchaService,
     configService: ConfigService,
   ) {
     this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
   }
 
-  public requestH5PhoneCode(payload: RequestH5PhoneCodeDto): H5PhoneCodeResponse {
+  public generateCaptcha(request: ClientRequest): { captchaId: string; svg: string } {
+    const clientIp = this.extractClientIp(request);
+    this.checkIpRateLimit(clientIp, 'captcha_generate', RATE_CAPTCHA_GENERATE_PER_MIN, 60_000);
+    return this.captchaService.generate();
+  }
+
+  public async requestH5PhoneCode(
+    payload: RequestH5PhoneCodeDto,
+    request: ClientRequest,
+  ): Promise<H5PhoneCodeResponse> {
     const normalizedPhone = payload.phoneNumber.trim();
+    const clientIp = this.extractClientIp(request);
+
+    // 1. 校验图形验证码（一次性消费）
+    this.checkIpRateLimit(clientIp, 'captcha_verify', RATE_CAPTCHA_VERIFY_PER_MIN, 60_000);
+    const captchaValid = this.captchaService.validate(payload.captchaId, payload.captchaAnswer);
+
+    if (!captchaValid) {
+      throw new UnauthorizedException('图形验证码不正确或已过期，请刷新后重试');
+    }
+
+    // 2. 手机号冷却检查（60s）
     const cooldownCacheKey = `auth:h5-phone-code:${normalizedPhone}`;
-    const verificationCodeCacheKey = `auth:h5-phone-code:verify:${normalizedPhone}`;
     const nextAllowedAt = this.runtimeCacheService.get<number>(cooldownCacheKey);
-
-    if (!this.appEnv.h5LoginPhone || !this.appEnv.h5LoginCode) {
-      throw new UnauthorizedException('H5 手机验证码登录尚未配置');
-    }
-
-    if (normalizedPhone !== this.appEnv.h5LoginPhone) {
-      throw new UnauthorizedException('当前开发环境未为这个手机号开放验证码');
-    }
 
     if (nextAllowedAt !== null && nextAllowedAt > Date.now()) {
       const remainingSeconds = Math.max(Math.ceil((nextAllowedAt - Date.now()) / 1000), 1);
-      throw new HttpException(`请求过于频繁，请在 ${remainingSeconds} 秒后再试`, HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException(
+        `请求过于频繁，请在 ${remainingSeconds} 秒后再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
-    this.runtimeCacheService.set(cooldownCacheKey, Date.now() + H5_PHONE_CODE_COOLDOWN_MS, H5_PHONE_CODE_COOLDOWN_MS);
-    this.runtimeCacheService.set(verificationCodeCacheKey, this.appEnv.h5LoginCode, H5_PHONE_CODE_EXPIRES_MS);
+    // 3. IP 维度短信发送频率
+    this.checkIpRateLimit(clientIp, 'sms_send', RATE_SMS_SEND_PER_MIN, 60_000);
+    this.checkIpRateLimit(clientIp, 'sms_send_hourly', RATE_SMS_SEND_PER_HOUR, 60 * 60_000);
 
-    const baseResponse: H5PhoneCodeResponse = {
+    // 4. 手机号每日上限
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dailyCount = this.runtimeCacheService.increment(
+      `sms:daily:${normalizedPhone}:${todayKey}`,
+      24 * 60 * 60 * 1000,
+    );
+
+    if (dailyCount > SMS_DAILY_LIMIT_PER_PHONE) {
+      throw new HttpException(
+        `该手机号今日验证码请求已达上限（${SMS_DAILY_LIMIT_PER_PHONE} 次），请明天再试`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    // 5. 生成验证码并发送短信
+    const code = this.smsService.generateCode();
+    const isDev = this.isDevelopmentRuntime() && !this.smsService.configured;
+
+    if (isDev) {
+      // 开发环境：未配置阿里云短信时跳过发送，直接返回验证码
+    } else {
+      try {
+        await this.smsService.sendVerificationCode(normalizedPhone, code);
+      } catch (error) {
+        throw new HttpException(
+          '短信验证码发送失败，请稍后再试',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+    }
+
+    // 6. 存储验证码和冷却时间
+    this.runtimeCacheService.set(
+      cooldownCacheKey,
+      Date.now() + H5_PHONE_CODE_COOLDOWN_MS,
+      H5_PHONE_CODE_COOLDOWN_MS,
+    );
+
+    const verificationCodeCacheKey = `auth:h5-phone-code:verify:${normalizedPhone}`;
+    const expiresAt = Date.now() + H5_PHONE_CODE_EXPIRES_MS;
+    this.runtimeCacheService.set(
+      verificationCodeCacheKey,
+      { code, errorCount: 0, expiresAt },
+      H5_PHONE_CODE_EXPIRES_MS,
+    );
+
+    return {
       delivered: true,
-      message: this.isDevelopmentRuntime()
-        ? '开发环境验证码已生成，已回填到当前登录表单，5 分钟内有效。'
+      message: isDev
+        ? '开发环境验证码已生成，已自动填入（未配置阿里云短信）。'
         : '验证码已发送，请注意查收。',
       maskedPhoneNumber: this.maskPhoneNumber(normalizedPhone),
       cooldownSeconds: Math.floor(H5_PHONE_CODE_COOLDOWN_MS / 1000),
-      ...(this.isDevelopmentRuntime()
-        ? {
-            verificationCode: this.appEnv.h5LoginCode,
-          }
-        : {}),
+      ...(isDev ? { verificationCode: code } : {}),
     };
-
-    return baseResponse;
   }
 
   public async registerAnonymousUser(payload: RegisterAnonymousUserDto): Promise<IUserAuthSession> {
@@ -116,35 +187,62 @@ export class AuthService {
     });
   }
 
-  public async loginH5PhoneUser(payload: LoginH5PhoneUserDto): Promise<IUserAuthSession> {
+  public async loginH5PhoneUser(
+    payload: LoginH5PhoneUserDto,
+    request: ClientRequest,
+  ): Promise<IUserAuthSession> {
     const normalizedPhone = payload.phoneNumber.trim();
     const normalizedCode = payload.verificationCode.trim();
+    const clientIp = this.extractClientIp(request);
+
+    // 1. IP 维度登录频率限制
+    this.checkIpRateLimit(clientIp, 'login', RATE_LOGIN_PER_MIN, 60_000);
+
+    // 2. 验证码验证频率限制（防止针对同一手机号的暴力破解）
+    this.checkIpRateLimit(clientIp, 'code_verify', RATE_CODE_VERIFY_PER_MIN, 60_000);
+
     const verificationCodeCacheKey = `auth:h5-phone-code:verify:${normalizedPhone}`;
-    const requestedVerificationCode = this.runtimeCacheService.get<string>(verificationCodeCacheKey);
+    const cachedData = this.runtimeCacheService.get<{
+      code: string;
+      errorCount: number;
+      expiresAt: number;
+    }>(verificationCodeCacheKey);
 
-    if (!this.appEnv.h5LoginPhone || !this.appEnv.h5LoginCode) {
-      throw new UnauthorizedException('H5 手机验证码登录尚未配置');
+    if (!cachedData) {
+      throw new UnauthorizedException('验证码已过期，请重新获取验证码后再试');
     }
 
-    if (normalizedPhone !== this.appEnv.h5LoginPhone) {
-      throw new UnauthorizedException('手机号或验证码不正确');
+    if (normalizedCode !== cachedData.code) {
+      const newErrorCount = cachedData.errorCount + 1;
+
+      if (newErrorCount >= VERIFICATION_MAX_ERROR_ATTEMPTS) {
+        this.runtimeCacheService.delete(verificationCodeCacheKey);
+        throw new UnauthorizedException(
+          `验证码错误次数过多，已失效，请重新获取验证码后再试`,
+        );
+      }
+
+      // 更新错误次数（使用剩余 TTL，不延长验证码整体有效期）
+      const remainingTtlMs = Math.max(cachedData.expiresAt - Date.now(), 1_000);
+      this.runtimeCacheService.set(
+        verificationCodeCacheKey,
+        { code: cachedData.code, errorCount: newErrorCount, expiresAt: cachedData.expiresAt },
+        remainingTtlMs,
+      );
+
+      throw new UnauthorizedException(
+        `验证码不正确（剩余 ${VERIFICATION_MAX_ERROR_ATTEMPTS - newErrorCount} 次尝试机会）`,
+      );
     }
 
-    if (!requestedVerificationCode) {
-      throw new UnauthorizedException('验证码不正确或已过期，请重新获取验证码后再试');
-    }
-
-    if (normalizedCode !== requestedVerificationCode) {
-      this.runtimeCacheService.delete(verificationCodeCacheKey);
-      throw new UnauthorizedException('验证码不正确或已过期，请重新获取验证码后再试');
-    }
-
+    // 验证成功，删除验证码缓存
     this.runtimeCacheService.delete(verificationCodeCacheKey);
 
+    const nickname = payload.nickname?.trim();
     return this.usersService.loginH5PhoneUser({
       phoneNumber: normalizedPhone,
       loginType: UserLoginType.H5PhoneCode,
-      nickname: payload.nickname?.trim() || this.appEnv.h5LoginNickname,
+      ...(nickname ? { nickname } : {}),
     });
   }
 
@@ -215,6 +313,39 @@ export class AuthService {
   public async getSession(userId?: string): Promise<IUserAuthSession> {
     const resolvedUserId = await this.usersService.resolveCurrentUserId(userId);
     return this.usersService.buildUserSession(resolvedUserId, false);
+  }
+
+  /** 从请求中提取客户端 IP */
+  private extractClientIp(request: ClientRequest): string {
+    const forwarded = request.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string' && forwarded.length > 0) {
+      return forwarded.split(',')[0]!.trim();
+    }
+
+    const realIp = request.headers['x-real-ip'];
+    if (typeof realIp === 'string' && realIp.length > 0) {
+      return realIp.trim();
+    }
+
+    return request.socket?.remoteAddress ?? 'unknown-ip';
+  }
+
+  /** IP 维度频率限制，超出上限时抛 HttpException */
+  private checkIpRateLimit(
+    ip: string,
+    action: string,
+    maxCount: number,
+    windowMs: number,
+  ): void {
+    const key = `rate:${action}:${ip}`;
+    const count = this.runtimeCacheService.increment(key, windowMs);
+
+    if (count > maxCount) {
+      throw new HttpException(
+        '请求过于频繁，请稍后再试',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
   }
 
   private isDevelopmentRuntime(): boolean {
