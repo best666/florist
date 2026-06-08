@@ -1,5 +1,5 @@
 import type { IUser, IUserAuthSession } from '@florist/contracts';
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { AuthService } from './auth.service';
 import { BindPhoneDto } from './dto/bind-phone.dto';
@@ -12,6 +12,11 @@ import { SendBindPhoneCodeDto } from './dto/send-bind-phone-code.dto';
 @Controller('auth')
 export class AuthController {
   public constructor(private readonly authService: AuthService) {}
+
+  @Get('h5/captcha')
+  public getH5Captcha(@Req() request: Record<string, unknown>) {
+    return this.authService.generateCaptcha(request as never);
+  }
 
   @Post('anonymous/register')
   public registerAnonymousUser(@Body() payload: RegisterAnonymousUserDto): Promise<IUserAuthSession> {
@@ -29,13 +34,19 @@ export class AuthController {
   }
 
   @Post('h5/phone/login')
-  public loginH5PhoneUser(@Body() payload: LoginH5PhoneUserDto): Promise<IUserAuthSession> {
-    return this.authService.loginH5PhoneUser(payload);
+  public loginH5PhoneUser(
+    @Body() payload: LoginH5PhoneUserDto,
+    @Req() request: Record<string, unknown>,
+  ): Promise<IUserAuthSession> {
+    return this.authService.loginH5PhoneUser(payload, request as never);
   }
 
   @Post('h5/phone/code')
-  public requestH5PhoneCode(@Body() payload: RequestH5PhoneCodeDto) {
-    return this.authService.requestH5PhoneCode(payload);
+  public requestH5PhoneCode(
+    @Body() payload: RequestH5PhoneCodeDto,
+    @Req() request: Record<string, unknown>,
+  ) {
+    return this.authService.requestH5PhoneCode(payload, request as never);
   }
 
   @Post('bind-phone/send-code')

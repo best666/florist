@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref } from 'vue'
-import { requestH5PhoneCode } from '@/api'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { fetchCaptcha, requestH5PhoneCode } from '@/api'
 import { ClientPlatform } from '@/interfaces'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { handleCatchAndToast, showGentleToast } from '@/utils'
@@ -27,20 +27,32 @@ const h5Form = reactive({
   phoneNumber: '',
   verificationCode: '',
 })
+const captchaData = reactive({
+  captchaId: '',
+  captchaAnswer: '',
+  captchaSvg: '',
+})
 const requestingCode = ref(false)
+const loadingCaptcha = ref(false)
 const countdownSeconds = ref(0)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const isH5 = computed(() => props.platform === ClientPlatform.H5)
+const captchaSvgDataUri = computed(() => {
+  if (!captchaData.captchaSvg) return ''
+  return `data:image/svg+xml,${encodeURIComponent(captchaData.captchaSvg)}`
+})
 const canRequestVerificationCode = computed(
   () =>
     isH5.value &&
-    /^1\d{10}$/.test(h5Form.phoneNumber.trim()) &&
+    /^1[3-9]\d{9}$/.test(h5Form.phoneNumber.trim()) &&
+    captchaData.captchaAnswer.trim().length > 0 &&
+    captchaData.captchaId.length > 0 &&
     !requestingCode.value &&
     countdownSeconds.value === 0,
 )
 const canSubmitH5Login = computed(
-  () => isH5.value && /^1\d{10}$/.test(h5Form.phoneNumber.trim()) && h5Form.verificationCode.trim().length > 0,
+  () => isH5.value && /^1[3-9]\d{9}$/.test(h5Form.phoneNumber.trim()) && h5Form.verificationCode.trim().length > 0,
 )
 const verificationCodeButtonText = computed(() =>
   countdownSeconds.value > 0 ? `${countdownSeconds.value}s 后重试` : '获取验证码',
@@ -97,22 +109,64 @@ function startCountdown(seconds: number): void {
   }, 1000)
 }
 
+async function loadCaptcha(): Promise<void> {
+  if (!isH5.value || loadingCaptcha.value) return
+
+  captchaData.captchaAnswer = ''
+  captchaData.captchaSvg = ''
+  loadingCaptcha.value = true
+
+  try {
+    const result = await fetchCaptcha()
+    captchaData.captchaId = result.captchaId
+    captchaData.captchaSvg = result.svg
+  } catch {
+    showGentleToast('图形验证码加载失败，请稍后刷新重试')
+  } finally {
+    loadingCaptcha.value = false
+  }
+}
+
+// 弹窗打开时自动加载验证码
+watch(
+  () => props.modelValue,
+  (visible) => {
+    if (visible && isH5.value) {
+      void loadCaptcha()
+    }
+  },
+)
+
 async function handleRequestH5Code(): Promise<void> {
   const phoneNumber = h5Form.phoneNumber.trim()
 
-  if (!/^1\d{10}$/.test(phoneNumber)) {
+  if (!/^1[3-9]\d{9}$/.test(phoneNumber)) {
     showGentleToast('请先输入正确的 11 位手机号。')
+    return
+  }
+
+  if (captchaData.captchaAnswer.trim().length === 0) {
+    showGentleToast('请先输入图形验证码答案。')
     return
   }
 
   requestingCode.value = true
 
   try {
-    const result = await requestH5PhoneCode({ phoneNumber })
+    const result = await requestH5PhoneCode({
+      phoneNumber,
+      captchaId: captchaData.captchaId,
+      captchaAnswer: captchaData.captchaAnswer.trim(),
+    })
 
     if (result.verificationCode) {
       h5Form.verificationCode = result.verificationCode
     }
+
+    // 发送成功后清除旧验证码数据，下次需重新验证
+    captchaData.captchaId = ''
+    captchaData.captchaAnswer = ''
+    captchaData.captchaSvg = ''
 
     startCountdown(result.cooldownSeconds)
     showGentleToast(
@@ -121,6 +175,8 @@ async function handleRequestH5Code(): Promise<void> {
         : `${result.message} 请留意 ${result.maskedPhoneNumber}。`,
     )
   } catch (error) {
+    // 验证码发送失败后刷新图形验证码
+    void loadCaptcha()
     handleCatchAndToast(error, '验证码暂时发送失败，请稍后再试。')
   } finally {
     requestingCode.value = false
@@ -181,6 +237,33 @@ onBeforeUnmount(() => {
           :maxlength="11"
           placeholder="请输入手机号"
         />
+        <!-- 图形验证码 -->
+        <view class="flex items-stretch gap-3">
+          <input
+            v-model="captchaData.captchaAnswer"
+            class="h-[80rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink"
+            type="number"
+            :maxlength="3"
+            placeholder="图形验证码（加减法结果）"
+          />
+          <view
+            class="flex h-[80rpx] min-h-[80rpx] min-w-[220rpx] flex-none items-center justify-center overflow-hidden rounded-[24rpx] bg-[#F5F7FA] dark:bg-slate-800"
+            @tap="loadCaptcha"
+          >
+            <image
+              v-if="captchaSvgDataUri"
+              :src="captchaSvgDataUri"
+              mode="aspectFit"
+              class="h-full w-full"
+            />
+            <text
+              v-else
+              class="text-2xs text-app-muted/70 dark:text-slate-400"
+            >
+              {{ loadingCaptcha ? '加载中...' : '点击加载' }}
+            </text>
+          </view>
+        </view>
         <view class="flex items-stretch gap-3">
           <input
             v-model="h5Form.verificationCode"

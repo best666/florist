@@ -7,8 +7,15 @@ export interface H5PhoneLoginPayload {
   nickname?: string
 }
 
+export interface CaptchaData {
+  captchaId: string
+  svg: string
+}
+
 export interface H5PhoneCodePayload {
   phoneNumber: string
+  captchaId: string
+  captchaAnswer: string
 }
 
 export interface H5PhoneCodeResponse {
@@ -23,6 +30,13 @@ export interface WechatMiniProgramLoginPayload {
   code: string
   nickname?: string
   avatarUrl?: string
+}
+
+export function fetchCaptcha(): Promise<CaptchaData> {
+  return http.get<CaptchaData>('/auth/h5/captcha', undefined, {
+    showLoading: false,
+    skipErrorToast: true,
+  })
 }
 
 export function fetchAuthSession(userId?: string): Promise<IUserAuthSession> {
