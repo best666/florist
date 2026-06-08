@@ -130,7 +130,8 @@ onShow(async () => {
     return
   }
 
-  if (!weatherReminderState.loadingLocation) {
+  // 天气正在加载中（hook 的 onMounted 触发的兜底城市天气请求）时，不重复定位
+  if (!weatherReminderState.loadingLocation && !weatherReminderState.loadingWeather) {
     await locateCity()
   }
 })

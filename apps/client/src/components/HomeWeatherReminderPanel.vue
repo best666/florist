@@ -74,6 +74,11 @@ function formatCandidateCity(city: CityOption): string {
   return formatCityDisplayName(city)
 }
 
+function safeMetricValue(raw: number | null | undefined, suffix: string): string {
+  if (raw == null || !Number.isFinite(raw)) return '--'
+  return `${Math.round(raw)}${suffix}`
+}
+
 const weatherMetrics = computed<ReadonlyArray<WeatherMetricItem>>(() => {
   if (!props.state.weather) {
     return []
@@ -83,25 +88,25 @@ const weatherMetrics = computed<ReadonlyArray<WeatherMetricItem>>(() => {
     {
       key: 'temperature',
       label: '气温',
-      value: `${Math.round(props.state.weather.temperature)}°C`,
+      value: safeMetricValue(props.state.weather.temperature, '°C'),
       accentClass: 'from-[#FFD7B8] to-[#FFF1D6]',
     },
     {
       key: 'humidity',
       label: '湿度',
-      value: `${props.state.weather.humidity}%`,
+      value: safeMetricValue(props.state.weather.humidity, '%'),
       accentClass: 'from-[#BCEFE6] to-[#E4FFF9]',
     },
     {
       key: 'precipitation',
       label: '降水',
-      value: `${props.state.weather.precipitationProbability}%`,
+      value: safeMetricValue(props.state.weather.precipitationProbability, '%'),
       accentClass: 'from-[#CFE5FF] to-[#EDF5FF]',
     },
     {
       key: 'wind',
       label: '风速',
-      value: `${props.state.weather.windSpeed} km/h`,
+      value: safeMetricValue(props.state.weather.windSpeed, ' km/h'),
       accentClass: 'from-[#F8CADB] to-[#FFF0F5]',
     },
   ]

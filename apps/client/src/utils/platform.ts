@@ -7,6 +7,46 @@ import type {
 } from '@/interfaces'
 import { showGentleConfirm, showGentleToast } from './feedback'
 
+const LOCATION_CACHE_KEY = 'device-location-cache'
+const LOCATION_CACHE_TTL_MS = 30 * 60 * 1000 // 30 分钟
+
+interface CachedDeviceLocation {
+  location: DeviceLocation
+  cachedAt: number
+}
+
+function getCachedDeviceLocation(): Nullable<DeviceLocation> {
+  try {
+    const raw = uni.getStorageSync(LOCATION_CACHE_KEY)
+    if (!raw) return null
+    const cached: CachedDeviceLocation = JSON.parse(raw)
+    if (Date.now() - cached.cachedAt > LOCATION_CACHE_TTL_MS) {
+      uni.removeStorageSync(LOCATION_CACHE_KEY)
+      return null
+    }
+    return cached.location
+  } catch {
+    return null
+  }
+}
+
+function setCachedDeviceLocation(location: DeviceLocation): void {
+  try {
+    const payload: CachedDeviceLocation = { location, cachedAt: Date.now() }
+    uni.setStorageSync(LOCATION_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    // 存储不可用时静默失败
+  }
+}
+
+export function clearDeviceLocationCache(): void {
+  try {
+    uni.removeStorageSync(LOCATION_CACHE_KEY)
+  } catch {
+    // 静默
+  }
+}
+
 export function getRuntimePlatform(): ClientPlatform {
   // #ifdef H5
   return ClientPlatform.H5
@@ -78,30 +118,42 @@ function normalizeDeviceLocation(payload: {
 }
 
 export function getCurrentDeviceLocation(): Promise<Nullable<DeviceLocation>> {
+  // 优先使用本地缓存的定位结果，避免每次刷新都弹权限
+  const cachedLocation = getCachedDeviceLocation()
+  if (cachedLocation) {
+    return Promise.resolve(cachedLocation)
+  }
+
   // #ifdef H5
   if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (result) => {
-          resolve(normalizeDeviceLocation({
+          const location = normalizeDeviceLocation({
             latitude: result.coords.latitude,
             longitude: result.coords.longitude,
             ...(typeof result.coords.accuracy === 'number' ? { accuracy: result.coords.accuracy } : {}),
-          }))
+          })
+          setCachedDeviceLocation(location)
+          resolve(location)
         },
         () => {
           uni.getLocation({
             type: 'wgs84',
             isHighAccuracy: true,
             highAccuracyExpireTime: 4_000,
-            success: (result) => resolve(normalizeDeviceLocation(result)),
+            success: (result) => {
+              const location = normalizeDeviceLocation(result)
+              setCachedDeviceLocation(location)
+              resolve(location)
+            },
             fail: () => resolve(null),
           })
         },
         {
           enableHighAccuracy: true,
-          timeout: 8_000,
-          maximumAge: 0,
+          timeout: 10_000,
+          maximumAge: 5 * 60 * 1000, // 允许浏览器使用 5 分钟内的缓存位置
         },
       )
     })
@@ -115,7 +167,11 @@ export function getCurrentDeviceLocation(): Promise<Nullable<DeviceLocation>> {
       isHighAccuracy: true,
       highAccuracyExpireTime: 4_000,
       // #endif
-      success: (result) => resolve(normalizeDeviceLocation(result)),
+      success: (result) => {
+        const location = normalizeDeviceLocation(result)
+        setCachedDeviceLocation(location)
+        resolve(location)
+      },
       fail: () => resolve(null),
     })
   })

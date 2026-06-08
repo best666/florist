@@ -20,6 +20,7 @@ import {
   DEFAULT_LOCAL_REMINDER_CONFIG,
 } from '@/interfaces'
 import {
+  clearDeviceLocationCache,
   containsIllegalCharacters,
   debounce,
   getCurrentDeviceLocation,
@@ -231,6 +232,9 @@ function createWeatherReminderInstance() {
   async function locateCity(): Promise<void> {
     state.loadingLocation = true
 
+    // 重新定位时清除旧缓存，确保获取到最新位置
+    clearDeviceLocationCache()
+
     try {
       const deviceLocation = await getCurrentDeviceLocation()
 
@@ -430,6 +434,9 @@ function createWeatherReminderInstance() {
     const fallbackCity = getFallbackCity()
 
     if (fallbackCity) {
+      // 兜底城市也写入 state.city，让 UI 正常显示城市名，避免触发不必要的定位请求
+      state.city = fallbackCity
+      cityStorage.setValue(fallbackCity)
       void refreshWeather(fallbackCity)
     }
 
