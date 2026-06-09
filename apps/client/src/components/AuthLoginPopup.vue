@@ -4,6 +4,7 @@ import { fetchCaptcha, requestH5PhoneCode } from '@/api'
 import { ClientPlatform } from '@/interfaces'
 import { useBottomSheetGesture } from '@/hooks/useBottomSheetGesture'
 import { handleCatchAndToast, showGentleToast } from '@/utils'
+import CaptchaDialog from './app/CaptchaDialog.vue'
 import CloseButton from './app/CloseButton.vue'
 import SubmitBtn from './app/SubmitBtn.vue'
 
@@ -29,25 +30,19 @@ const h5Form = reactive({
 })
 const captchaData = reactive({
   captchaId: '',
-  captchaAnswer: '',
   captchaSvg: '',
 })
 const requestingCode = ref(false)
 const loadingCaptcha = ref(false)
 const countdownSeconds = ref(0)
+const showCaptchaDialog = ref(false)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const isH5 = computed(() => props.platform === ClientPlatform.H5)
-const captchaSvgDataUri = computed(() => {
-  if (!captchaData.captchaSvg) return ''
-  return `data:image/svg+xml,${encodeURIComponent(captchaData.captchaSvg)}`
-})
 const canRequestVerificationCode = computed(
   () =>
     isH5.value &&
     /^1[3-9]\d{9}$/.test(h5Form.phoneNumber.trim()) &&
-    captchaData.captchaAnswer.trim().length > 0 &&
-    captchaData.captchaId.length > 0 &&
     !requestingCode.value &&
     countdownSeconds.value === 0,
 )
@@ -59,6 +54,7 @@ const verificationCodeButtonText = computed(() =>
 )
 
 function closePopup(): void {
+  showCaptchaDialog.value = false
   emit('update:modelValue', false)
 }
 
@@ -82,10 +78,7 @@ function handleSubmitH5(): void {
 }
 
 function clearCountdownTimer(): void {
-  if (!countdownTimer) {
-    return
-  }
-
+  if (!countdownTimer) return
   clearInterval(countdownTimer)
   countdownTimer = null
 }
@@ -93,10 +86,7 @@ function clearCountdownTimer(): void {
 function startCountdown(seconds: number): void {
   clearCountdownTimer()
   countdownSeconds.value = Math.max(Math.floor(seconds), 0)
-
-  if (countdownSeconds.value <= 0) {
-    return
-  }
+  if (countdownSeconds.value <= 0) return
 
   countdownTimer = setInterval(() => {
     if (countdownSeconds.value <= 1) {
@@ -104,7 +94,6 @@ function startCountdown(seconds: number): void {
       clearCountdownTimer()
       return
     }
-
     countdownSeconds.value -= 1
   }, 1000)
 }
@@ -112,7 +101,6 @@ function startCountdown(seconds: number): void {
 async function loadCaptcha(): Promise<void> {
   if (!isH5.value || loadingCaptcha.value) return
 
-  captchaData.captchaAnswer = ''
   captchaData.captchaSvg = ''
   loadingCaptcha.value = true
 
@@ -127,61 +115,62 @@ async function loadCaptcha(): Promise<void> {
   }
 }
 
-// 弹窗打开时自动加载验证码
-watch(
-  () => props.modelValue,
-  (visible) => {
-    if (visible && isH5.value) {
-      void loadCaptcha()
-    }
-  },
-)
-
-async function handleRequestH5Code(): Promise<void> {
+/** 点击"获取验证码"：加载验证码并弹出图形验证码弹窗 */
+async function handleRequestCodeClick(): Promise<void> {
   const phoneNumber = h5Form.phoneNumber.trim()
-
   if (!/^1[3-9]\d{9}$/.test(phoneNumber)) {
     showGentleToast('请先输入正确的 11 位手机号。')
     return
   }
+  await loadCaptcha()
+  showCaptchaDialog.value = true
+}
 
-  if (captchaData.captchaAnswer.trim().length === 0) {
-    showGentleToast('请先输入图形验证码答案。')
-    return
-  }
-
+/** 验证码弹窗确认：发送短信 */
+async function handleCaptchaConfirm(answer: string): Promise<void> {
   requestingCode.value = true
 
   try {
     const result = await requestH5PhoneCode({
-      phoneNumber,
+      phoneNumber: h5Form.phoneNumber.trim(),
       captchaId: captchaData.captchaId,
-      captchaAnswer: captchaData.captchaAnswer.trim(),
+      captchaAnswer: answer,
     })
 
     if (result.verificationCode) {
       h5Form.verificationCode = result.verificationCode
     }
 
-    // 发送成功后清除旧验证码数据，下次需重新验证
+    showCaptchaDialog.value = false
     captchaData.captchaId = ''
-    captchaData.captchaAnswer = ''
     captchaData.captchaSvg = ''
 
     startCountdown(result.cooldownSeconds)
     showGentleToast(
       result.verificationCode
         ? `${result.message} 已为你自动填入验证码。`
-        : `${result.message} 请留意 ${result.maskedPhoneNumber}。`,
+        : `验证码已发送至 ${result.maskedPhoneNumber}，请注意查收。`,
     )
   } catch (error) {
-    // 验证码发送失败后刷新图形验证码
-    void loadCaptcha()
-    handleCatchAndToast(error, '验证码暂时发送失败，请稍后再试。')
+    await loadCaptcha()
+    handleCatchAndToast(error, '验证码发送失败，请稍后再试。')
   } finally {
     requestingCode.value = false
   }
 }
+
+/** 验证码弹窗取消 */
+function handleCaptchaCancel(): void {
+  showCaptchaDialog.value = false
+  captchaData.captchaSvg = ''
+}
+
+watch(
+  () => props.modelValue,
+  (visible) => {
+    if (!visible) showCaptchaDialog.value = false
+  },
+)
 
 function handleWechatLogin(): void {
   emit('loginWechat')
@@ -230,6 +219,7 @@ onBeforeUnmount(() => {
         v-if="isH5"
         class="flex flex-col gap-3"
       >
+        <!-- 手机号输入 -->
         <input
           v-model="h5Form.phoneNumber"
           class="h-[80rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink"
@@ -237,33 +227,25 @@ onBeforeUnmount(() => {
           :maxlength="11"
           placeholder="请输入手机号"
         />
-        <!-- 图形验证码 -->
-        <view class="flex items-stretch gap-3">
-          <input
-            v-model="captchaData.captchaAnswer"
-            class="h-[80rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink"
-            type="number"
-            :maxlength="3"
-            placeholder="图形验证码（加减法结果）"
-          />
-          <view
-            class="flex h-[80rpx] min-h-[80rpx] min-w-[220rpx] flex-none items-center justify-center overflow-hidden rounded-[24rpx] bg-[#F5F7FA] dark:bg-slate-800"
-            @tap="loadCaptcha"
-          >
-            <image
-              v-if="captchaSvgDataUri"
-              :src="captchaSvgDataUri"
-              mode="aspectFit"
-              class="h-full w-full"
-            />
-            <text
-              v-else
-              class="text-2xs text-app-muted/70 dark:text-slate-400"
-            >
-              {{ loadingCaptcha ? '加载中...' : '点击加载' }}
-            </text>
-          </view>
-        </view>
+
+        <!-- 获取验证码按钮 -->
+        <button
+          class="btn-base h-[80rpx] min-h-[80rpx] justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
+          :class="
+            canRequestVerificationCode
+              ? 'bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]'
+              : 'bg-slate-100 text-app-muted/70 dark:bg-slate-800 dark:text-slate-300'
+          "
+          :disabled="!canRequestVerificationCode"
+          hover-class="opacity-92"
+          @tap="handleRequestCodeClick"
+        >
+          <text class="text-center leading-none">{{
+            requestingCode ? '发送中...' : verificationCodeButtonText
+          }}</text>
+        </button>
+
+        <!-- 短信验证码输入 + 登录按钮 -->
         <view class="flex items-stretch gap-3">
           <input
             v-model="h5Form.verificationCode"
@@ -272,30 +254,16 @@ onBeforeUnmount(() => {
             :maxlength="12"
             placeholder="请输入验证码"
           />
-          <button
-            class="btn-base h-[80rpx] min-h-[80rpx] min-w-[220rpx] flex-none justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
-            :class="
-              canRequestVerificationCode
-                ? 'bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]'
-                : 'bg-slate-100 text-app-muted/70 dark:bg-slate-800 dark:text-slate-300'
-            "
-            :disabled="!canRequestVerificationCode"
-            hover-class="opacity-92"
-            @tap="handleRequestH5Code"
-          >
-            <text class="text-center leading-none">{{
-              requestingCode ? '发送中...' : verificationCodeButtonText
-            }}</text>
-          </button>
+          <SubmitBtn
+            text="立即登录"
+            :loading="props.loading"
+            :disabled="!canSubmitH5Login"
+            variant="mint"
+            size="md"
+            class="min-w-[200rpx] flex-none"
+            @click="handleSubmitH5"
+          />
         </view>
-        <SubmitBtn
-          text="立即登录"
-          :loading="props.loading"
-          :disabled="!canSubmitH5Login"
-          variant="mint"
-          size="md"
-          @click="handleSubmitH5"
-        />
       </view>
 
       <view
@@ -322,5 +290,16 @@ onBeforeUnmount(() => {
         先看看
       </button>
     </view>
+
+    <!-- 图形验证码弹窗 -->
+    <CaptchaDialog
+      v-model="showCaptchaDialog"
+      :captcha-svg="captchaData.captchaSvg"
+      :loading="loadingCaptcha"
+      :sending="requestingCode"
+      @confirm="handleCaptchaConfirm"
+      @cancel="handleCaptchaCancel"
+      @refresh="loadCaptcha"
+    />
   </view>
 </template>
