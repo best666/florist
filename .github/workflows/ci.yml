@@ -9,7 +9,7 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -49,16 +49,28 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @florist/server prisma:generate
 
-      - name: Typecheck workspace
-        run: pnpm typecheck
-
-      - name: Build server
-        run: pnpm --filter @florist/server build
-
-      - name: Build client H5
+      # typecheck、server build、client build 并行执行，互不依赖
+      - name: Typecheck and build (parallel)
         env:
           VITE_APP_PUBLIC_BASE: /
           VITE_SERVER_BASEURL: /api
           VITE_APP_PROXY_ENABLE: 'false'
           VITE_DELETE_CONSOLE: 'true'
-        run: pnpm --filter @florist/client build:h5
+        run: |
+          set -e
+          FAIL=0
+
+          pnpm typecheck &
+          PID_TC=$!
+
+          pnpm --filter @florist/server build &
+          PID_SRV=$!
+
+          pnpm --filter @florist/client build:h5 &
+          PID_CLI=$!
+
+          wait $PID_TC || { echo "typecheck failed"; FAIL=1; }
+          wait $PID_SRV || { echo "server build failed"; FAIL=1; }
+          wait $PID_CLI || { echo "client build failed"; FAIL=1; }
+
+          exit $FAIL

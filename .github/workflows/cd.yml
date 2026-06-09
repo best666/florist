@@ -15,12 +15,81 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-push:
+  # 预检查 MySQL 镜像是否已在 GHCR 中存在，避免每次都从 Docker Hub 拉取
+  check-mysql-mirror:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 3
+    outputs:
+      needs_mirror: ${{ steps.check.outputs.needs_mirror }}
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if MySQL image exists in GHCR
+        id: check
+        run: |
+          REPO="ghcr.io/${{ github.repository_owner,, }}/mysql"
+          if docker manifest inspect "${REPO}:8.4" >/dev/null 2>&1; then
+            echo "MySQL 8.4 already exists in GHCR, skipping mirror."
+            echo "needs_mirror=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "MySQL 8.4 not found in GHCR, will mirror."
+            echo "needs_mirror=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  mirror-mysql:
+    needs: check-mysql-mirror
+    if: needs.check-mysql-mirror.outputs.needs_mirror == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mirror MySQL image to GHCR
+        run: |
+          docker pull mysql:8.4
+          docker tag mysql:8.4 ghcr.io/${{ github.repository_owner,, }}/mysql:8.4
+          docker push ghcr.io/${{ github.repository_owner,, }}/mysql:8.4
+
+  build-images:
+    needs: check-mysql-mirror
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     outputs:
       image_tag: ${{ steps.image_tag.outputs.value }}
       registry_owner: ${{ steps.registry_owner.outputs.value }}
+    strategy:
+      matrix:
+        include:
+          - name: server
+            file: apps/server/Dockerfile
+            context: .
+            image-suffix: florist-server
+            has-build-args: false
+          - name: client
+            file: apps/client/Dockerfile
+            context: .
+            image-suffix: florist-client
+            has-build-args: true
+            build-args: |
+              VITE_APP_PUBLIC_BASE=/
+              VITE_SERVER_BASEURL=/api
+              VITE_APP_PROXY_ENABLE=false
+              VITE_DELETE_CONSOLE=true
+          - name: agent
+            file: services/ai-agent/Dockerfile
+            context: services/ai-agent
+            image-suffix: florist-server-agent
+            has-build-args: false
 
     steps:
       - name: Checkout repository
@@ -44,49 +113,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mirror MySQL image to GHCR
-        run: |
-          docker pull mysql:8.4
-          docker tag mysql:8.4 ghcr.io/${{ steps.registry_owner.outputs.value }}/mysql:8.4
-          docker push ghcr.io/${{ steps.registry_owner.outputs.value }}/mysql:8.4
-
-      - name: Build and push server image
+      - name: Build and push ${{ matrix.name }} image
+        if: matrix.has-build-args == false
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: apps/server/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
           push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: |
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server:${{ steps.image_tag.outputs.value }}
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server:latest
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/${{ matrix.image-suffix }}:${{ steps.image_tag.outputs.value }}
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/${{ matrix.image-suffix }}:latest
 
-      - name: Build and push client image
+      - name: Build and push ${{ matrix.name }} image (with build-args)
+        if: matrix.has-build-args == true
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: apps/client/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
           push: true
-          build-args: |
-            VITE_APP_PUBLIC_BASE=/
-            VITE_SERVER_BASEURL=/api
-            VITE_APP_PROXY_ENABLE=false
-            VITE_DELETE_CONSOLE=true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: ${{ matrix.build-args }}
           tags: |
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-client:${{ steps.image_tag.outputs.value }}
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-client:latest
-
-      - name: Build and push AI agent image
-        uses: docker/build-push-action@v6
-        with:
-          context: services/ai-agent
-          file: services/ai-agent/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server-agent:${{ steps.image_tag.outputs.value }}
-            ghcr.io/${{ steps.registry_owner.outputs.value }}/florist-server-agent:latest
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/${{ matrix.image-suffix }}:${{ steps.image_tag.outputs.value }}
+            ghcr.io/${{ steps.registry_owner.outputs.value }}/${{ matrix.image-suffix }}:latest
 
   deploy:
-    needs: build-and-push
+    needs: build-images
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -110,8 +165,8 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           GHCR_DEPLOY_USERNAME: ${{ secrets.GHCR_DEPLOY_USERNAME }}
           GHCR_DEPLOY_TOKEN: ${{ secrets.GHCR_DEPLOY_TOKEN }}
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
-          REGISTRY_OWNER: ${{ needs.build-and-push.outputs.registry_owner }}
+          IMAGE_TAG: ${{ needs.build-images.outputs.image_tag }}
+          REGISTRY_OWNER: ${{ needs.build-images.outputs.registry_owner }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
