@@ -1,18 +1,37 @@
+# VCS
 .git
 .github
-.DS_Store
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+**/.DS_Store
+
+# Claude Code / Agent artifacts
+.claude
+.agents
+
+# Dependencies
 node_modules
 **/node_modules
+
+# Build output
 dist
 .turbo
 coverage
 apps/client/dist
 apps/client/unpackage
 apps/server/dist
+
+# Runtime / data dirs
 apps/server/.mysql
 apps/server/.runtime
 apps/server/var/backups
 apps/server/var/uploads
+
+# Env files (keep examples for build)
 apps/client/env/.env*
 !apps/client/env/.env.example
 !apps/client/env/.env.development.example
@@ -22,3 +41,15 @@ apps/server/env/.env*
 !apps/server/env/.env.development.example
 !apps/server/env/.env.production.example
 deploy/.env
+/.env
+!/.env.example
+
+# Documentation / config (not needed at runtime)
+docs
+README.md
+CLAUDE.md
+skills-lock.json
+project.config.json
+project.private.config.json
+start-dev.sh
+.prettierrc.json
