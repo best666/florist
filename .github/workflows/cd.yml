@@ -32,7 +32,7 @@ jobs:
       - name: Check if MySQL image exists in GHCR
         id: check
         run: |
-          REPO="ghcr.io/${{ github.repository_owner,, }}/mysql"
+          REPO="ghcr.io/${{ github.repository_owner }}/mysql"
           if docker manifest inspect "${REPO}:8.4" >/dev/null 2>&1; then
             echo "MySQL 8.4 already exists in GHCR, skipping mirror."
             echo "needs_mirror=false" >> "$GITHUB_OUTPUT"
@@ -57,8 +57,8 @@ jobs:
       - name: Mirror MySQL image to GHCR
         run: |
           docker pull mysql:8.4
-          docker tag mysql:8.4 ghcr.io/${{ github.repository_owner,, }}/mysql:8.4
-          docker push ghcr.io/${{ github.repository_owner,, }}/mysql:8.4
+          docker tag mysql:8.4 ghcr.io/${{ github.repository_owner }}/mysql:8.4
+          docker push ghcr.io/${{ github.repository_owner }}/mysql:8.4
 
   build-images:
     needs: check-mysql-mirror
