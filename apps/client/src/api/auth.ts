@@ -101,3 +101,30 @@ export function bindPhoneToAccount(phoneNumber: string, code: string): Promise<I
     skipErrorToast: true,
   })
 }
+
+// ── H5 一键登录 ──
+
+export interface H5OneClickAuthTokenResponse {
+  accessToken: string
+  jwtToken: string
+}
+
+export interface H5OneClickLoginPayload {
+  spToken: string
+}
+
+/** 获取 H5 一键登录的鉴权 Token（accessToken + jwtToken） */
+export function fetchH5OneClickAuthToken(): Promise<H5OneClickAuthTokenResponse> {
+  return http.post<H5OneClickAuthTokenResponse>('/auth/h5/one-click/auth-token', undefined, {
+    showLoading: false,
+    skipErrorToast: true,
+  })
+}
+
+/** H5 一键登录：提交 spToken 换取手机号并完成登录 */
+export function loginWithH5OneClick(payload: H5OneClickLoginPayload): Promise<IUserAuthSession> {
+  return http.post<IUserAuthSession, H5OneClickLoginPayload>('/auth/h5/one-click/login', payload, {
+    loadingText: '正在一键登录',
+    skipErrorToast: true,
+  })
+}

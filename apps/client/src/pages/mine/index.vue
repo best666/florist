@@ -224,7 +224,7 @@ function openProfilePopup(): void {
   profilePopupVisible.value = true
 }
 
-const { handleH5Login, handleWechatLogin } = useAuthSessionActions({
+const { handleH5Login, handleH5OneClickLogin, handleWechatLogin } = useAuthSessionActions({
   onCloseLoginPopup: () => {
     loginPopupVisible.value = false
   },
@@ -454,6 +454,7 @@ function goToCommunity(): void {
       :platform="runtimePlatform"
       :loading="switchingSession"
       @submit-h5="handleH5Login"
+      @one-click-login="handleH5OneClickLogin"
       @login-wechat="handleWechatLogin"
     />
     <UserProfilePopup

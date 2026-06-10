@@ -39,6 +39,9 @@ export interface ServerEnvSource {
   readonly WECHAT_MINI_PROGRAM_SECRET?: string;
   readonly ALIYUN_SMS_ACCESS_KEY_ID?: string;
   readonly ALIYUN_SMS_ACCESS_KEY_SECRET?: string;
+  readonly PNVS_ACCESS_KEY_ID?: string;
+  readonly PNVS_ACCESS_KEY_SECRET?: string;
+  readonly PNVS_SCHEME_CODE?: string;
   readonly ALIYUN_SMS_SIGN_NAME?: string;
   readonly ALIYUN_SMS_TEMPLATE_CODE?: string;
   readonly APP_LOG_LEVELS?: string;
@@ -80,6 +83,9 @@ export interface ServerEnvConfig {
   readonly aliyunSmsAccessKeyId: string;
   readonly aliyunSmsAccessKeySecret: string;
   readonly aliyunSmsSignName: string;
+  readonly pnvsAccessKeyId: string;
+  readonly pnvsAccessKeySecret: string;
+  readonly pnvsSchemeCode: string;
   readonly aliyunSmsTemplateCode: string;
   readonly appLogLevels: LogLevel[];
   readonly exposeInternalErrorDetails: boolean;
@@ -121,6 +127,9 @@ export const SERVER_ENV_DEFAULTS = {
   aliyunSmsAccessKeySecret: '',
   aliyunSmsSignName: '',
   aliyunSmsTemplateCode: '',
+  pnvsAccessKeyId: '',
+  pnvsAccessKeySecret: '',
+  pnvsSchemeCode: '',
   appLogLevels: ['log', 'warn', 'error', 'debug', 'verbose'] as LogLevel[],
   exposeInternalErrorDetails: true,
 } as const;
@@ -188,6 +197,9 @@ function warnProductionDefaults(config: ServerEnvConfig): void {
     { key: 'ADMIN_SESSION_SECRET', value: config.adminSessionSecret, fallback: SERVER_ENV_DEFAULTS.adminSessionSecret },
     { key: 'AI_PROXY_API_KEY', value: config.aiProxyApiKey, fallback: SERVER_ENV_DEFAULTS.aiProxyApiKey },
     { key: 'AI_AGENT_API_KEY', value: config.aiAgentApiKey, fallback: SERVER_ENV_DEFAULTS.aiAgentApiKey },
+    { key: 'PNVS_ACCESS_KEY_ID', value: config.pnvsAccessKeyId, fallback: SERVER_ENV_DEFAULTS.pnvsAccessKeyId },
+    { key: 'PNVS_ACCESS_KEY_SECRET', value: config.pnvsAccessKeySecret, fallback: SERVER_ENV_DEFAULTS.pnvsAccessKeySecret },
+    { key: 'PNVS_SCHEME_CODE', value: config.pnvsSchemeCode, fallback: SERVER_ENV_DEFAULTS.pnvsSchemeCode },
   ];
 
   for (const check of checks) {
@@ -340,6 +352,18 @@ export function resolveServerEnv(envSource: ServerEnvSource): ServerEnvConfig {
       envSource.ALIYUN_SMS_TEMPLATE_CODE,
       SERVER_ENV_DEFAULTS.aliyunSmsTemplateCode,
     ),
+    pnvsAccessKeyId: normalizeString(
+      envSource.PNVS_ACCESS_KEY_ID,
+      SERVER_ENV_DEFAULTS.pnvsAccessKeyId,
+    ),
+    pnvsAccessKeySecret: normalizeString(
+      envSource.PNVS_ACCESS_KEY_SECRET,
+      SERVER_ENV_DEFAULTS.pnvsAccessKeySecret,
+    ),
+    pnvsSchemeCode: normalizeString(
+      envSource.PNVS_SCHEME_CODE,
+      SERVER_ENV_DEFAULTS.pnvsSchemeCode,
+    ),
     appLogLevels: normalizeLogLevels(
       envSource.APP_LOG_LEVELS,
       normalizeServerMode(process.env.NODE_ENV) === 'production'
@@ -402,6 +426,9 @@ export function validateServerEnv(
     ALIYUN_SMS_ACCESS_KEY_SECRET: parsedEnv.aliyunSmsAccessKeySecret,
     ALIYUN_SMS_SIGN_NAME: parsedEnv.aliyunSmsSignName,
     ALIYUN_SMS_TEMPLATE_CODE: parsedEnv.aliyunSmsTemplateCode,
+    PNVS_ACCESS_KEY_ID: parsedEnv.pnvsAccessKeyId,
+    PNVS_ACCESS_KEY_SECRET: parsedEnv.pnvsAccessKeySecret,
+    PNVS_SCHEME_CODE: parsedEnv.pnvsSchemeCode,
     APP_LOG_LEVELS: parsedEnv.appLogLevels.join(','),
     EXPOSE_INTERNAL_ERROR_DETAILS: String(parsedEnv.exposeInternalErrorDetails),
   };

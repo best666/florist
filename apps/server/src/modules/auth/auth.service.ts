@@ -4,11 +4,13 @@ import { UserLoginType } from '@florist/contracts';
 import { ConfigService } from '@nestjs/config';
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CaptchaService } from '../../common/services/captcha.service';
+import { PnvsService } from '../../common/services/pnvs.service';
 import { RuntimeCacheService } from '../../common/services/runtime-cache.service';
 import { SmsService } from '../../common/services/sms.service';
 import type { ServerEnvConfig } from '../../config/server-env';
 import { UsersService } from '../users/users.service';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
+import { H5OneClickLoginDto } from './dto/h5-one-click-login.dto';
 import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
 import { RequestH5PhoneCodeDto } from './dto/request-h5-phone-code.dto';
@@ -49,6 +51,8 @@ const RATE_SMS_SEND_PER_MIN = 10;
 const RATE_SMS_SEND_PER_HOUR = 20;
 const RATE_LOGIN_PER_MIN = 20;
 const RATE_CODE_VERIFY_PER_MIN = 30;
+const RATE_ONE_CLICK_AUTH_TOKEN_PER_MIN = 30;
+const RATE_ONE_CLICK_LOGIN_PER_MIN = 20;
 const SMS_DAILY_LIMIT_PER_PHONE = 10;
 
 @Injectable()
@@ -60,6 +64,7 @@ export class AuthService {
     private readonly runtimeCacheService: RuntimeCacheService,
     private readonly smsService: SmsService,
     private readonly captchaService: CaptchaService,
+    private readonly pnvsService: PnvsService,
     configService: ConfigService,
   ) {
     this.appEnv = configService.getOrThrow<ServerEnvConfig>('app');
@@ -243,6 +248,39 @@ export class AuthService {
       phoneNumber: normalizedPhone,
       loginType: UserLoginType.H5PhoneCode,
       ...(nickname ? { nickname } : {}),
+    });
+  }
+
+  public async getH5OneClickAuthToken(
+    request: ClientRequest,
+  ): Promise<{ accessToken: string; jwtToken: string }> {
+    const clientIp = this.extractClientIp(request);
+
+    // IP 频率限制
+    this.checkIpRateLimit(clientIp, 'one_click_auth_token', RATE_ONE_CLICK_AUTH_TOKEN_PER_MIN, 60_000);
+
+    // 使用配置中的 publicBaseUrl 作为页面地址和请求来源
+    const pageUrl = `${this.appEnv.publicBaseUrl}/`;
+    const origin = this.appEnv.publicBaseUrl;
+
+    return this.pnvsService.getAuthToken(pageUrl, origin);
+  }
+
+  public async loginH5OneClick(
+    payload: H5OneClickLoginDto,
+    request: ClientRequest,
+  ): Promise<IUserAuthSession> {
+    const clientIp = this.extractClientIp(request);
+
+    // IP 频率限制
+    this.checkIpRateLimit(clientIp, 'one_click_login', RATE_ONE_CLICK_LOGIN_PER_MIN, 60_000);
+
+    // 调用 PNVS 获取手机号
+    const phoneNumber = await this.pnvsService.getPhoneWithToken(payload.spToken.trim());
+
+    return this.usersService.loginH5PhoneUser({
+      phoneNumber,
+      loginType: UserLoginType.H5OneClick,
     });
   }
 

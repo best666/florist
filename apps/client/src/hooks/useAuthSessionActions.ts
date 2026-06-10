@@ -32,6 +32,17 @@ export function useAuthSessionActions(options?: UseAuthSessionActionsOptions) {
     }
   }
 
+  async function handleH5OneClickLogin(): Promise<void> {
+    try {
+      const session = await authStore.loginByH5OneClick()
+      options?.onCloseLoginPopup?.()
+      await options?.onLoginSuccess?.(session)
+      showGentleSuccess(session.isNewUser ? '一键登录成功，已经为你创建新的个人花园。' : '一键登录成功，已经切换到你的个人花园。')
+    } catch (error) {
+      handleCatchAndToast(error, '一键登录暂不可用，请使用短信验证码登录。')
+    }
+  }
+
   async function handleWechatLogin(): Promise<void> {
     try {
       const session = await authStore.loginByWechatMiniProgram()
@@ -46,6 +57,7 @@ export function useAuthSessionActions(options?: UseAuthSessionActionsOptions) {
 
   return {
     handleH5Login,
+    handleH5OneClickLogin,
     handleWechatLogin,
   }
 }

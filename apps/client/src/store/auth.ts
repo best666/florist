@@ -1,6 +1,6 @@
 import type { IUser, IUserAuthSession } from '@florist/contracts'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { fetchAuthSession, loginWithH5PhoneCode, loginWithWechatMiniProgram } from '@/api'
+import { fetchAuthSession, fetchH5OneClickAuthToken, loginWithH5OneClick, loginWithH5PhoneCode, loginWithWechatMiniProgram } from '@/api'
 import { fetchFlowerCenter, syncFlowersBatch } from '@/api/flowers'
 import type { FlowerCenterResponse } from '@/api/flowers'
 import { fetchRecordCenter, syncRecordsBatch } from '@/api/records'
@@ -11,6 +11,7 @@ import {
   readAuthSessionFromStorage,
   writeAuthSessionToStorage,
 } from '@/utils'
+import { checkOneClickAvailable, getOneClickToken, loadPnvsSdk } from '@/utils/pnvs-sdk'
 import { useMemberStore } from './member'
 import { useFlowerStore } from './flowers'
 import { useRecordStore } from './records'
@@ -273,6 +274,32 @@ export const useAuthStore = defineStore('auth', {
         })
 
         const session = await loginWithWechatMiniProgram({ code })
+        this.applySession(session)
+        await this.refreshGardenContext()
+        return session
+      } finally {
+        this.switchingSession = false
+      }
+    },
+
+    async loginByH5OneClick(): Promise<IUserAuthSession> {
+      this.switchingSession = true
+
+      try {
+        // 1. 加载 PNVS SDK
+        await loadPnvsSdk()
+
+        // 2. 从服务端获取鉴权 Token
+        const { accessToken, jwtToken } = await fetchH5OneClickAuthToken()
+
+        // 3. SDK 鉴权
+        await checkOneClickAvailable(accessToken, jwtToken)
+
+        // 4. 拉起授权页获取 spToken
+        const spToken = await getOneClickToken()
+
+        // 5. 服务端完成登录
+        const session = await loginWithH5OneClick({ spToken })
         this.applySession(session)
         await this.refreshGardenContext()
         return session

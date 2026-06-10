@@ -3,6 +3,7 @@ import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
 import { AuthService } from './auth.service';
 import { BindPhoneDto } from './dto/bind-phone.dto';
+import { H5OneClickLoginDto } from './dto/h5-one-click-login.dto';
 import { LoginAnonymousUserDto, RegisterAnonymousUserDto } from './dto/login-anonymous.dto';
 import { LoginH5PhoneUserDto } from './dto/login-h5-phone.dto';
 import { LoginWechatUserDto } from './dto/login-wechat.dto';
@@ -47,6 +48,19 @@ export class AuthController {
     @Req() request: Record<string, unknown>,
   ) {
     return this.authService.requestH5PhoneCode(payload, request as never);
+  }
+
+  @Post('h5/one-click/auth-token')
+  public getH5OneClickAuthToken(@Req() request: Record<string, unknown>) {
+    return this.authService.getH5OneClickAuthToken(request as never);
+  }
+
+  @Post('h5/one-click/login')
+  public loginH5OneClick(
+    @Body() payload: H5OneClickLoginDto,
+    @Req() request: Record<string, unknown>,
+  ): Promise<IUserAuthSession> {
+    return this.authService.loginH5OneClick(payload, request as never);
   }
 
   @Post('bind-phone/send-code')

@@ -22,6 +22,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   submitH5: [payload: { phoneNumber: string; verificationCode: string }]
   loginWechat: []
+  oneClickLogin: []
 }>()
 
 const h5Form = reactive({
@@ -172,6 +173,10 @@ watch(
   },
 )
 
+function handleOneClickLogin(): void {
+  emit('oneClickLogin')
+}
+
 function handleWechatLogin(): void {
   emit('loginWechat')
 }
@@ -219,6 +224,23 @@ onBeforeUnmount(() => {
         v-if="isH5"
         class="flex flex-col gap-3"
       >
+        <!-- 一键登录按钮 -->
+        <button
+          class="btn-base h-[80rpx] min-h-[80rpx] justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none bg-[#4A8C7E] text-white dark:bg-[#3D6B5E] dark:text-[#B5E0D4]"
+          :disabled="props.loading"
+          hover-class="opacity-92"
+          @tap="handleOneClickLogin"
+        >
+          <text class="text-center leading-none">{{ props.loading ? '登录中...' : '本机号码一键登录' }}</text>
+        </button>
+
+        <!-- 分隔线 -->
+        <view class="flex items-center gap-2">
+          <view class="flex-1 h-[1rpx] bg-slate-200 dark:bg-slate-700" />
+          <text class="text-xs text-app-muted">或使用短信验证码</text>
+          <view class="flex-1 h-[1rpx] bg-slate-200 dark:bg-slate-700" />
+        </view>
+
         <!-- 手机号输入 -->
         <input
           v-model="h5Form.phoneNumber"
