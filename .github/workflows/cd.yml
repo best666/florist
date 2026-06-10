@@ -63,7 +63,7 @@ jobs:
   build-images:
     needs: check-mysql-mirror
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     outputs:
       image_tag: ${{ steps.image_tag.outputs.value }}
       registry_owner: ${{ steps.registry_owner.outputs.value }}
@@ -75,6 +75,8 @@ jobs:
             context: .
             image-suffix: florist-server
             has-build-args: false
+            base-images: |
+              node:20-bookworm-slim
           - name: client
             file: apps/client/Dockerfile
             context: .
@@ -85,11 +87,16 @@ jobs:
               VITE_SERVER_BASEURL=/api
               VITE_APP_PROXY_ENABLE=false
               VITE_DELETE_CONSOLE=true
+            base-images: |
+              node:20-bookworm-slim
+              nginx:1.27-alpine
           - name: agent
             file: services/ai-agent/Dockerfile
             context: services/ai-agent
             image-suffix: florist-server-agent
             has-build-args: false
+            base-images: |
+              python:3.11-slim
 
     steps:
       - name: Checkout repository
@@ -113,21 +120,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull base images (with retry)
+      - name: Pull base images from GHCR mirror
         run: |
-          for attempt in 1 2 3; do
-            echo "[Attempt $attempt/3] Pulling base images..."
-            if docker pull python:3.11-slim 2>/dev/null && \
-               docker pull node:20-bookworm-slim 2>/dev/null && \
-               docker pull nginx:1.27-alpine 2>/dev/null; then
-              echo "Base images pulled successfully."
-              exit 0
-            fi
-            echo "Pull failed, waiting 15s before retry..."
-            sleep 15
-          done
-          echo "WARNING: Could not pull all base images, build may be slower."
-        continue-on-error: true
+          REGISTRY="ghcr.io/${{ steps.registry_owner.outputs.value }}"
+          while IFS= read -r image; do
+            [ -z "$image" ] && continue
+            echo "Pulling ${REGISTRY}/${image}..."
+            docker pull "${REGISTRY}/${image}"
+            docker tag "${REGISTRY}/${image}" "${image}"
+          done <<< "${{ matrix.base-images }}"
+          echo "Base images ready (from GHCR)."
 
       - name: Build and push ${{ matrix.name }} image
         if: matrix.has-build-args == false
@@ -159,7 +161,7 @@ jobs:
   deploy:
     needs: build-images
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
 
     steps:
       - name: Checkout repository
