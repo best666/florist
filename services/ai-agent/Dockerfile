@@ -3,8 +3,10 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install Python dependencies (production only, no dev packages)
-COPY pyproject.toml .
-RUN pip install --no-cache-dir -e "."
+# Layer 1: copy requirements first for better Docker caching
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --retries 5 --timeout 120 -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/

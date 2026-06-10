@@ -45,7 +45,7 @@ jobs:
     needs: check-mysql-mirror
     if: needs.check-mysql-mirror.outputs.needs_mirror == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -63,7 +63,7 @@ jobs:
   build-images:
     needs: check-mysql-mirror
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     outputs:
       image_tag: ${{ steps.image_tag.outputs.value }}
       registry_owner: ${{ steps.registry_owner.outputs.value }}
@@ -75,6 +75,8 @@ jobs:
             context: .
             image-suffix: florist-server
             has-build-args: false
+            base-images: |
+              node:20-bookworm-slim
           - name: client
             file: apps/client/Dockerfile
             context: .
@@ -85,11 +87,16 @@ jobs:
               VITE_SERVER_BASEURL=/api
               VITE_APP_PROXY_ENABLE=false
               VITE_DELETE_CONSOLE=true
+            base-images: |
+              node:20-bookworm-slim
+              nginx:1.27-alpine
           - name: agent
             file: services/ai-agent/Dockerfile
             context: services/ai-agent
             image-suffix: florist-server-agent
             has-build-args: false
+            base-images: |
+              python:3.11-slim
 
     steps:
       - name: Checkout repository
@@ -112,6 +119,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull base images from GHCR mirror
+        run: |
+          REGISTRY="ghcr.io/${{ steps.registry_owner.outputs.value }}"
+          while IFS= read -r image; do
+            [ -z "$image" ] && continue
+            echo "Pulling ${REGISTRY}/${image}..."
+            docker pull "${REGISTRY}/${image}"
+            docker tag "${REGISTRY}/${image}" "${image}"
+          done <<< "${{ matrix.base-images }}"
+          echo "Base images ready (from GHCR)."
 
       - name: Build and push ${{ matrix.name }} image
         if: matrix.has-build-args == false
@@ -143,7 +161,7 @@ jobs:
   deploy:
     needs: build-images
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
 
     steps:
       - name: Checkout repository
