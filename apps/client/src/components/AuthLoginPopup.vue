@@ -37,6 +37,7 @@ const requestingCode = ref(false)
 const loadingCaptcha = ref(false)
 const countdownSeconds = ref(0)
 const showCaptchaDialog = ref(false)
+const showSmsForm = ref(false)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const isH5 = computed(() => props.platform === ClientPlatform.H5)
@@ -169,7 +170,7 @@ function handleCaptchaCancel(): void {
 watch(
   () => props.modelValue,
   (visible) => {
-    if (!visible) showCaptchaDialog.value = false
+    if (!visible) { showCaptchaDialog.value = false; showSmsForm.value = false }
   },
 )
 
@@ -224,7 +225,7 @@ onBeforeUnmount(() => {
         v-if="isH5"
         class="flex flex-col gap-3"
       >
-        <!-- 一键登录按钮 -->
+        <!-- 一键登录按钮（默认展示） -->
         <button
           class="btn-base h-[80rpx] min-h-[80rpx] justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none bg-[#4A8C7E] text-white dark:bg-[#3D6B5E] dark:text-[#B5E0D4]"
           :disabled="props.loading"
@@ -234,58 +235,66 @@ onBeforeUnmount(() => {
           <text class="text-center leading-none">{{ props.loading ? '登录中...' : '本机号码一键登录' }}</text>
         </button>
 
-        <!-- 分隔线 -->
-        <view class="flex items-center gap-2">
-          <view class="flex-1 h-[1rpx] bg-slate-200 dark:bg-slate-700" />
-          <text class="text-xs text-app-muted">或使用短信验证码</text>
-          <view class="flex-1 h-[1rpx] bg-slate-200 dark:bg-slate-700" />
+        <!-- 切换到短信验证码（蓝色文字链接） -->
+        <view
+          v-if="!showSmsForm"
+          class="text-center"
+        >
+          <text
+            class="text-sm text-[#4A90D9] dark:text-[#7EB8E6] app-pressable"
+            @tap="showSmsForm = true"
+          >
+            非本机号码？使用短信验证码登录
+          </text>
         </view>
 
-        <!-- 手机号输入 -->
-        <input
-          v-model="h5Form.phoneNumber"
-          class="h-[80rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink"
-          type="number"
-          :maxlength="11"
-          placeholder="请输入手机号"
-        />
-
-        <!-- 获取验证码按钮 -->
-        <button
-          class="btn-base h-[80rpx] min-h-[80rpx] justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
-          :class="
-            canRequestVerificationCode
-              ? 'bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]'
-              : 'bg-slate-100 text-app-muted/70 dark:bg-slate-800 dark:text-slate-300'
-          "
-          :disabled="!canRequestVerificationCode"
-          hover-class="opacity-92"
-          @tap="handleRequestCodeClick"
-        >
-          <text class="text-center leading-none">{{
-            requestingCode ? '发送中...' : verificationCodeButtonText
-          }}</text>
-        </button>
-
-        <!-- 短信验证码输入 + 登录按钮 -->
-        <view class="flex items-stretch gap-3">
+        <!-- 短信验证码表单（点击上方蓝色文字后展示） -->
+        <template v-if="showSmsForm">
+          <!-- 第一行：手机号输入 -->
           <input
-            v-model="h5Form.verificationCode"
-            class="h-[80rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink"
+            v-model="h5Form.phoneNumber"
+            class="h-[80rpx] rounded-[24rpx] bg-[var(--color-cream)]/60 px-4 text-sm text-app-ink"
             type="number"
-            :maxlength="12"
-            placeholder="请输入验证码"
+            :maxlength="11"
+            placeholder="请输入手机号"
           />
+
+          <!-- 第二行：验证码输入 + 获取验证码 -->
+          <view class="flex items-stretch gap-3">
+            <input
+              v-model="h5Form.verificationCode"
+              class="h-[80rpx] min-w-0 flex-1 rounded-[24rpx] bg-[var(--color-cream)]/40 px-4 text-sm text-app-ink"
+              type="number"
+              :maxlength="12"
+              placeholder="请输入验证码"
+            />
+            <button
+              class="btn-base h-[80rpx] min-h-[80rpx] min-w-[220rpx] flex-none justify-center rounded-[24rpx] border-none px-4 text-center text-sm font-700 leading-none"
+              :class="
+                canRequestVerificationCode
+                  ? 'bg-[#D4EFEA] text-[#4A8C7E] dark:bg-[#3D6B5E] dark:text-[#B5E0D4]'
+                  : 'bg-slate-100 text-app-muted/70 dark:bg-slate-800 dark:text-slate-300'
+              "
+              :disabled="!canRequestVerificationCode"
+              hover-class="opacity-92"
+              @tap="handleRequestCodeClick"
+            >
+              <text class="text-center leading-none">{{
+                requestingCode ? '发送中...' : verificationCodeButtonText
+              }}</text>
+            </button>
+          </view>
+
+          <!-- 第三行：立即登录按钮 -->
           <SubmitBtn
             text="立即登录"
             :loading="props.loading"
             :disabled="!canSubmitH5Login"
             variant="mint"
             size="md"
-            class="min-w-[200rpx] flex-none"
             @click="handleSubmitH5"
           />
-        </view>
+        </template>
       </view>
 
       <view
