@@ -45,7 +45,7 @@ jobs:
     needs: check-mysql-mirror
     if: needs.check-mysql-mirror.outputs.needs_mirror == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -63,7 +63,7 @@ jobs:
   build-images:
     needs: check-mysql-mirror
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     outputs:
       image_tag: ${{ steps.image_tag.outputs.value }}
       registry_owner: ${{ steps.registry_owner.outputs.value }}
@@ -113,6 +113,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pull base images (with retry)
+        run: |
+          for attempt in 1 2 3; do
+            echo "[Attempt $attempt/3] Pulling base images..."
+            if docker pull python:3.11-slim 2>/dev/null && \
+               docker pull node:20-bookworm-slim 2>/dev/null && \
+               docker pull nginx:1.27-alpine 2>/dev/null; then
+              echo "Base images pulled successfully."
+              exit 0
+            fi
+            echo "Pull failed, waiting 15s before retry..."
+            sleep 15
+          done
+          echo "WARNING: Could not pull all base images, build may be slower."
+        continue-on-error: true
+
       - name: Build and push ${{ matrix.name }} image
         if: matrix.has-build-args == false
         uses: docker/build-push-action@v6
@@ -143,7 +159,7 @@ jobs:
   deploy:
     needs: build-images
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
