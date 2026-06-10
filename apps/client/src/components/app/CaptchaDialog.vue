@@ -9,7 +9,7 @@
 interface CaptchaDialogProps {
   /** 是否展示弹窗 */
   modelValue: boolean
-  /** 验证码 SVG 字符串（原始，组件内部转为 data URI） */
+  /** 验证码 SVG 字符串（原始，通过 v-html 内联渲染） */
   captchaSvg: string
   /** 正在加载验证码图片 */
   loading?: boolean
@@ -33,11 +33,6 @@ const emit = defineEmits<{
 }>()
 
 const answer = ref('')
-
-const captchaSvgDataUri = computed(() => {
-  if (!props.captchaSvg) return ''
-  return `data:image/svg+xml,${encodeURIComponent(props.captchaSvg)}`
-})
 
 const canConfirm = computed(() => answer.value.trim().length > 0 && !props.sending)
 
@@ -90,16 +85,15 @@ watch(
         </text>
       </view>
 
-      <!-- 验证码图片（点击刷新） -->
+      <!-- 验证码图片（点击刷新，SVG 内联渲染避免 UniApp image 组件对 data URI 的兼容问题） -->
       <view
-        class="mb-4 flex h-[120rpx] items-center justify-center overflow-hidden rounded-[20rpx] bg-[#F5F7FA] dark:bg-slate-800"
+        class="mb-4 flex h-[120rpx] items-center justify-center overflow-hidden rounded-[20rpx] bg-[#F5F7FA] p-2 dark:bg-slate-800"
         @tap="handleRefresh"
       >
-        <image
-          v-if="captchaSvgDataUri"
-          :src="captchaSvgDataUri"
-          mode="aspectFit"
-          class="h-full w-full"
+        <view
+          v-if="props.captchaSvg"
+          class="captcha-svg-wrapper flex items-center justify-center"
+          v-html="props.captchaSvg"
         />
         <text
           v-else
