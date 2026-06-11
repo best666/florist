@@ -19,6 +19,28 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
+# ── 确保 Docker 运行 ──────────────────────────────────
+docker_running() {
+  docker info >/dev/null 2>&1
+}
+
+if ! docker_running; then
+  echo "🐳 Docker 未运行，尝试启动 Docker Desktop..."
+  open -a Docker 2>/dev/null || true
+  echo "  等待 Docker 启动（最长 60 秒）..."
+  for i in $(seq 1 30); do
+    if docker_running; then
+      echo "  ✅ Docker 已就绪"
+      break
+    fi
+    sleep 2
+  done
+  if ! docker_running; then
+    echo "  ❌ Docker 启动超时，请手动启动后重试"
+    exit 1
+  fi
+fi
+
 # ── 1. MySQL ──────────────────────────────────────────
 echo "━━━ 1/4 MySQL ━━━"
 if docker ps --format '{{.Names}}' | grep -q florist-mysql; then
