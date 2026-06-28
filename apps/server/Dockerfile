@@ -3,7 +3,7 @@
 FROM node:20-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN mkdir -p /pnpm && corepack enable
+RUN corepack enable
 WORKDIR /workspace
 
 FROM base AS deps
