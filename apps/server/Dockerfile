@@ -8,6 +8,7 @@ WORKDIR /workspace
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps/client/package.json apps/client/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 RUN --mount=type=cache,target=/pnpm/store pnpm install --frozen-lockfile
