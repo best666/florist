@@ -111,23 +111,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull base images from GHCR mirror
-        run: |
-          REGISTRY="ghcr.io/${{ steps.registry_owner.outputs.value }}"
-          for image in node:20-bookworm-slim nginx:1.27-alpine python:3.11-slim; do
-            docker pull "${REGISTRY}/${image}" 2>/dev/null || true
-            docker tag "${REGISTRY}/${image}" "${image}" 2>/dev/null || true
-          done
-          echo "Base images ready (from GHCR)."
-
       - name: Build and push ${{ matrix.name }} image
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
           build-args: ${{ matrix.build-args || '' }}
           tags: |
             ghcr.io/${{ steps.registry_owner.outputs.value }}/${{ matrix.image-suffix }}:${{ steps.image_tag.outputs.value }}
@@ -161,13 +152,12 @@ jobs:
           GHCR_DEPLOY_USERNAME: ${{ secrets.GHCR_DEPLOY_USERNAME }}
           GHCR_DEPLOY_TOKEN: ${{ secrets.GHCR_DEPLOY_TOKEN }}
           IMAGE_TAG: ${{ needs.build-images.outputs.image_tag }}
-          REGISTRY_OWNER: ${{ needs.build-images.outputs.registry_owner }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
-          envs: DEPLOY_PATH,GHCR_DEPLOY_USERNAME,GHCR_DEPLOY_TOKEN,IMAGE_TAG,REGISTRY_OWNER
+          envs: DEPLOY_PATH,GHCR_DEPLOY_USERNAME,GHCR_DEPLOY_TOKEN,IMAGE_TAG
           script: |
             set -eu
             cd "$DEPLOY_PATH/deploy"
