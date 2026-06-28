@@ -150,6 +150,9 @@ importers:
       mariadb:
         specifier: ^3.5.2
         version: 3.5.2
+      prisma:
+        specifier: ^7.8.0
+        version: 7.8.0(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -166,9 +169,6 @@ importers:
       '@types/compression':
         specifier: ^1.8.1
         version: 1.8.1
-      prisma:
-        specifier: ^7.8.0
-        version: 7.8.0(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       terser:
         specifier: ^5.44.0
         version: 5.47.1
