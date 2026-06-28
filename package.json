@@ -1,7 +1,7 @@
 {
   "name": "florist",
   "private": true,
-  "version": "0.1.11",
+  "version": "0.1.12",
   "packageManager": "pnpm@10.10.0",
   "scripts": {
     "postinstall": "(cd services/ai-agent 2>/dev/null && command -v python3 >/dev/null 2>&1 && python3 -m pip install -r requirements.txt --quiet 2>/dev/null) || true",
