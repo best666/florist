@@ -60,10 +60,11 @@ jobs:
           docker tag mysql:8.4 ghcr.io/${{ github.repository_owner }}/mysql:8.4
           docker push ghcr.io/${{ github.repository_owner }}/mysql:8.4
 
+  # 构建镜像不再依赖 check-mysql-mirror，与之并行执行
+  # 镜像构建不需要 MySQL，解除串行依赖可节省 ~30s
   build-images:
-    needs: check-mysql-mirror
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     outputs:
       image_tag: ${{ steps.image_tag.outputs.value }}
       registry_owner: ${{ steps.registry_owner.outputs.value }}
@@ -140,6 +141,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: deploy
 
       - name: Copy deployment files to server
         uses: appleboy/scp-action@v0.1.7

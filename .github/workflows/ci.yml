@@ -25,20 +25,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          # cache: pnpm 已使用 pnpm store path 机制缓存，无需额外 actions/cache
           cache: pnpm
-
-      - name: Get pnpm store path
-        id: pnpm-cache
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -49,7 +38,7 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @florist/server prisma:generate
 
-      # typecheck、server build、client build 并行执行，互不依赖
+      # typecheck、server build、client build 并行执行，输出分流便于排查
       - name: Typecheck and build (parallel)
         env:
           VITE_APP_PUBLIC_BASE: /
@@ -60,17 +49,17 @@ jobs:
           set -e
           FAIL=0
 
-          pnpm typecheck &
+          pnpm typecheck > /tmp/ci-typecheck.log 2>&1 &
           PID_TC=$!
 
-          pnpm --filter @florist/server build &
+          pnpm --filter @florist/server build > /tmp/ci-server-build.log 2>&1 &
           PID_SRV=$!
 
-          pnpm --filter @florist/client build:h5 &
+          pnpm --filter @florist/client build:h5 > /tmp/ci-client-build.log 2>&1 &
           PID_CLI=$!
 
-          wait $PID_TC || { echo "typecheck failed"; FAIL=1; }
-          wait $PID_SRV || { echo "server build failed"; FAIL=1; }
-          wait $PID_CLI || { echo "client build failed"; FAIL=1; }
+          wait $PID_TC || { echo "=== typecheck failed ==="; cat /tmp/ci-typecheck.log; FAIL=1; }
+          wait $PID_SRV || { echo "=== server build failed ==="; cat /tmp/ci-server-build.log; FAIL=1; }
+          wait $PID_CLI || { echo "=== client build failed ==="; cat /tmp/ci-client-build.log; FAIL=1; }
 
           exit $FAIL

@@ -3,7 +3,7 @@
 FROM node:20-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-RUN corepack enable
+RUN mkdir -p /pnpm && corepack enable
 WORKDIR /workspace
 
 FROM base AS deps
@@ -18,13 +18,19 @@ COPY packages/contracts packages/contracts
 RUN pnpm --filter @florist/contracts build
 RUN pnpm --filter @florist/server prisma:generate
 RUN pnpm --filter @florist/server build:prod
+# 删除 devDependencies，缩小最终镜像体积（prisma 已移至 dependencies 以便运行时迁移）
+RUN pnpm prune --prod
 
 FROM base AS runner
 ENV NODE_ENV=production
-WORKDIR /workspace
-COPY --from=build /workspace /workspace
-COPY --from=build /pnpm /pnpm
 WORKDIR /workspace/apps/server
+COPY --from=build /workspace/apps/server/dist ./dist
+COPY --from=build /workspace/apps/server/prisma ./prisma
+COPY --from=build /workspace/apps/server/package.json ./package.json
+COPY --from=build /workspace/apps/server/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=build /workspace/packages/contracts /workspace/packages/contracts
+COPY --from=build /workspace/node_modules /workspace/node_modules
+COPY --from=build /pnpm /pnpm
 RUN mkdir -p var/uploads var/backups .runtime && \
     useradd --create-home --shell /bin/bash florist && \
     chown -R florist:florist /workspace && \
